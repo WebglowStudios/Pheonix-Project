@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@source "../";
+
+@theme {
+  --font-sans: var(--font-main), 'Outfit', sans-serif;
+  --font-serif: var(--font-heading), 'Georgia', serif;
+}
+
+/* Base styles matching the HTML design system exactly */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-main), 'Outfit', sans-serif;
+  color: #333333;
+  line-height: 1.6;
+  background-color: #ffffff;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-heading), 'Georgia', serif;
+  letter-spacing: 1.5px;
+  line-height: 1.25;
+}
+
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; padding: 0; margin: 0; }
+*, *::before, *::after { box-sizing: border-box; }
