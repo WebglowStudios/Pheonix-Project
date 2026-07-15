@@ -125,9 +125,10 @@ const products: Product[] = [
     category: "suite",
     iconImg: "/aio.png",
     title: "All-in-One Access — Self-Directed Investing",
-    desc: "A Self-Directed Investing account that complements your advised portfolio - offering ETFs, Equity Mutual Funds, and Options trading, with access to research and tools to manage your investments with confidence.",
+    desc: "A Self-Directed Investing account that complements your advised portfolio — offering ETFs, Equity Mutual Funds, and Options trading, with research, tools, and automation to manage your investments with confidence.",
     features: [
       "ETFs, Equity MFs & Options trading",
+      "Automated trading via API integration",
       "Research & tools access",
       "Complements your advised portfolio"
     ]
