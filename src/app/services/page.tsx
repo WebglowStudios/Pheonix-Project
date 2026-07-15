@@ -161,17 +161,19 @@ export default function ServicesPage() {
 
         {/* Filters */}
         <section className="py-[40px] bg-white border-b border-[#DDD]">
-          <div className="max-w-[1200px] mx-auto px-5 flex justify-center gap-[15px] flex-wrap">
-            {filters.map((f) => (
-              <button key={f.key} onClick={() => setActiveFilter(f.key)}
-                className={`px-6 py-[10px] border rounded-[20px] font-semibold cursor-pointer transition-all text-[0.95rem] font-[inherit] ${
-                  activeFilter === f.key
-                    ? "border-[#E8740C] text-[#E8740C] bg-[#FFF3EB]"
-                    : "border-[#DDD] text-[#444] bg-white hover:border-[#E8740C] hover:text-[#E8740C] hover:bg-[#FFF3EB]"
-                }`}>
-                {f.label}
-              </button>
-            ))}
+          <div className="max-w-[1200px] mx-auto px-5">
+            <div className="flex justify-center gap-[12px] w-full max-w-[600px] mx-auto">
+              {filters.map((f) => (
+                <button key={f.key} onClick={() => setActiveFilter(f.key)}
+                  className={`flex-1 text-center py-[10px] px-[15px] border rounded-[20px] font-semibold cursor-pointer transition-all text-[0.95rem] font-[inherit] whitespace-nowrap min-w-0 ${
+                    activeFilter === f.key
+                      ? "border-[#E8740C] text-[#E8740C] bg-[#FFF3EB]"
+                      : "border-[#DDD] text-[#444] bg-white hover:border-[#E8740C] hover:text-[#E8740C] hover:bg-[#FFF3EB]"
+                  }`}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -191,7 +193,6 @@ export default function ServicesPage() {
                       ) : null}
                     </div>
                     <div className="flex-1 flex flex-col">
-                      <p className="text-[0.8rem] font-bold text-[#E8740C] uppercase mb-1">{p.category}</p>
                       <h3 className="text-[1.4rem] font-extrabold text-[#E8740C] mb-[15px] tracking-[1.5px]">{p.title}</h3>
                       <p className="text-[#444] text-[0.95rem] leading-[1.5] mb-5">{p.desc}</p>
                       <ul className="flex flex-col gap-2">

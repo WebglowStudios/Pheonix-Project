@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBuildingColumns, faShieldHalved, faLandmark, faCertificate, faChartLine, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { faBuildingColumns, faCertificate, faChartLine, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
 const quickLinks = [
@@ -16,8 +16,6 @@ const keyProducts = ["Advisory", "Asset Management", "Fixed Income"];
 
 const compliance = [
   { icon: faBuildingColumns, label: "AMFI" },
-  { icon: faShieldHalved, label: "SEBI" },
-  { icon: faLandmark, label: "RBI" },
   { icon: faCertificate, label: "BSE" },
   { icon: faChartLine, label: "NSE" },
 ];

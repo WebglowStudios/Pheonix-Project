@@ -69,7 +69,6 @@ export default function Navbar() {
         {/* Sidebar brand */}
         <div className="flex items-center gap-[10px] mb-[30px] pb-5 border-b border-[#DDD] w-full">
           <Image src="/logo.jpg" alt="Phoenix Financial" width={90} height={36} className="max-h-9 w-auto" />
-          <span className="text-[0.85rem] font-bold text-[#333] tracking-[0.5px]">Phoenix Financial</span>
         </div>
 
         {/* Links */}
@@ -100,8 +99,11 @@ export default function Navbar() {
           </div>
           <div className="flex gap-[10px] mt-1">
             <a href="https://wa.me/917021210788" target="_blank" rel="noopener noreferrer"
-              className="w-8 h-8 bg-[#F2F3F5] border border-[#DDD] rounded-full flex items-center justify-center text-[#444] text-[0.85rem] transition-all hover:bg-[#E8740C] hover:text-white hover:border-[#E8740C]">
-              <FontAwesomeIcon icon={faWhatsapp} />
+              className="flex items-center gap-[10px] text-[0.85rem] text-[#444] transition-all hover:text-[#25D366]">
+              <span className="w-[30px] h-[30px] bg-[#25D366] rounded-full flex items-center justify-center text-white text-[0.9rem] flex-shrink-0">
+                <FontAwesomeIcon icon={faWhatsapp} />
+              </span>
+              +91 70212 10788
             </a>
           </div>
         </div>

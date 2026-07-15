@@ -28,7 +28,7 @@ export default function AboutPage() {
           <div className="max-w-[1200px] mx-auto px-5">
             <h1 className="text-[3rem] font-extrabold text-[#333] mb-[15px] tracking-[1.5px]">About Phoenix Financial Services</h1>
             <p className="text-[1.2rem] text-[#444] max-w-[700px] mx-auto">
-              Wealth management demands more than good intentions — it demands structure, discipline, and expertise. Since inception, Phoenix Financial Services has delivered exactly that, partnering with families, business owners, and institutions to build financial plans built for generations.
+              Most financial firms offer products. We build plans. Phoenix Financial Services was established on the belief that lasting wealth demands structure, discipline, and expertise — not generic advice. Since inception, we have partnered with families, business owners, and institutions to build financial legacies that endure beyond market cycles.
             </p>
           </div>
         </section>
