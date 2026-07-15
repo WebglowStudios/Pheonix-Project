@@ -169,7 +169,7 @@ export default function FaqPage() {
                                 className="w-full px-5 py-5 flex justify-between items-center bg-white text-left cursor-pointer"
                                 onClick={() => toggleItem(key)}
                               >
-                                <h4 className={`text-[1.1rem] font-medium pr-4 tracking-[0px] ${isOpen ? "text-[#E8740C]" : "text-[#333]"}`}
+                                <h4 className={`text-[1.1rem] font-bold pr-4 !tracking-[0px] ${isOpen ? "text-[#E8740C]" : "text-[#333]"}`}
                                   style={{ fontFamily: "var(--font-main, Outfit, sans-serif)" }}>
                                   {item.q}
                                 </h4>

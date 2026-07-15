@@ -45,7 +45,6 @@ export default function AboutPage() {
                 </div>
               </div>
               <div className="order-1 md:order-2">
-                <span className="inline-block bg-[#FFF3EB] text-[#E8740C] px-3 py-1 rounded-[20px] text-[0.85rem] font-bold uppercase tracking-[1px] mb-[15px]">About Us</span>
                 <h2 className="text-[2.5rem] font-extrabold text-[#333] leading-[1.3] mb-5 tracking-[1.5px]">
                   Building Wealth With <span className="text-[#E8740C]">Integrity &amp; Clarity</span>
                 </h2>

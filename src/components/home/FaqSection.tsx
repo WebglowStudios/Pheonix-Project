@@ -6,10 +6,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
 const faqs = [
-  { q: "Are your services fully regulated and compliant?", a: "Yes, absolutely. Phoenix Financial Services strictly adheres to all regulatory guidelines set by the Securities and Exchange Board of India (SEBI) and the Association of Mutual Funds in India (AMFI). All our products are fully compliant and regulated." },
-  { q: "What is the minimum investment required?", a: "The minimum investment varies by product. Mutual Funds can be started via SIP with as little as ₹500/month. However, specialized products like Portfolio Management Services (PMS) or Alternate Investment Funds (AIF) have regulatory minimums set by SEBI (typically ₹50 Lakhs and ₹1 Crore respectively)." },
-  { q: "How do you charge for your services?", a: "We maintain a highly transparent fee structure. Depending on the service (Advisory vs. Distribution), fees are either charged directly as an advisory fee or we receive commissions from the AMC. All fees and charges are fully disclosed before you make any investment." },
-  { q: "Can I get a loan against my current investments?", a: "Yes. We offer Loan Against Shares and Mutual Funds (LAS/LAMF). This allows you to unlock liquidity for short-term needs at highly competitive interest rates without having to liquidate your long-term portfolio." },
+  { q: "How do I get started?", a: "Simply reach out through our Contact page or WhatsApp. Our advisors will schedule a free consultation to understand your goals and recommend the right solutions." },
+  { q: "Is there a minimum investment amount?", a: "Minimums vary by product — SIPs can start as low as ₹500, while PMS requires a minimum of ₹50 lakhs as per SEBI guidelines. Our advisors will guide you to the right entry point." },
+  { q: "What products does Phoenix Financial Services offer?", a: "We offer a complete suite across Mutual Funds, Equity Advisory, PMS, AIF, SIF, Capital Shield, Bonds & NCDs, Corporate Fixed Deposits, Loan Against Shares & Mutual Funds, and a Self-Directed Investing platform." },
+  { q: "Is my money safe with Phoenix Financial Services?", a: "Your investments are held directly in your name with SEBI-registered custodians, AMCs, and depositories — Phoenix Financial Services acts as your advisor, not a custodian of your funds." },
 ];
 
 export default function FaqSection() {
@@ -25,7 +25,7 @@ export default function FaqSection() {
               Frequently Asked <span className="text-[#E8740C]">Questions</span>
             </h2>
             <p className="text-[1.1rem] text-[#444] mb-5">
-              Everything you need to know about investing with Phoenix Financial Services.
+              Clarity before commitment. Find answers to the questions that matter most about investing with Phoenix Financial Services.
             </p>
             <Link href="/faq" className="inline-block mt-5 px-6 py-3 rounded-[30px] font-semibold bg-transparent !text-[#333] border-2 border-[#333] transition-all hover:bg-[#333] hover:!text-white">
               View All FAQs
@@ -40,7 +40,7 @@ export default function FaqSection() {
                   className="w-full px-5 py-5 flex justify-between items-center bg-white text-left cursor-pointer"
                   onClick={() => setActive(active === i ? null : i)}
                 >
-                  <h4 className={`text-[1.1rem] font-medium pr-4 tracking-[0px] ${active === i ? "text-[#E8740C]" : "text-[#333]"}`} style={{ fontFamily: "var(--font-main, Outfit, sans-serif)" }}>
+                  <h4 className={`text-[1.1rem] font-bold pr-4 !tracking-[0px] ${active === i ? "text-[#E8740C]" : "text-[#333]"}`} style={{ fontFamily: "var(--font-main, Outfit, sans-serif)" }}>
                     {faq.q}
                   </h4>
                   <FontAwesomeIcon

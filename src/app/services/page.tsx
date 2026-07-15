@@ -153,7 +153,7 @@ export default function ServicesPage() {
         {/* Page Hero */}
         <section className="bg-[#F2F3F5] py-[80px] text-center border-b border-[#DDD]">
           <div className="max-w-[1200px] mx-auto px-5">
-            <h1 className="text-[3rem] font-extrabold text-[#333] mb-[15px] tracking-[1.5px]">Our Services &amp; Products</h1>
+            <h1 className="text-[3rem] font-extrabold text-[#333] mb-[15px] tracking-[1.5px]">Our Products &amp; Offerings</h1>
             <p className="text-[1.2rem] text-[#444] max-w-[700px] mx-auto">
               We provide a comprehensive range of financial instruments tailored to individual risk appetites, helping you build a diversified portfolio managed by experts.
             </p>
