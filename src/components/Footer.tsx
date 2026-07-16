@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBuildingColumns, faCertificate, faChartLine, faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { faBuildingColumns, faCertificate, faChartLine, faArrowRight, faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
 const quickLinks = [
@@ -15,9 +15,10 @@ const quickLinks = [
 const keyProducts = ["Advisory", "Asset Management", "Fixed Income"];
 
 const compliance = [
-  { icon: faBuildingColumns, label: "AMFI" },
-  { icon: faCertificate, label: "BSE" },
-  { icon: faChartLine, label: "NSE" },
+  { icon: faBuildingColumns, label: "AMFI", reg: null },
+  { icon: faCertificate, label: "BSE", reg: "AP0107480100941" },
+  { icon: faChartLine, label: "NSE", reg: "AP206911451" },
+  { icon: faScaleBalanced, label: "MCX", reg: "AP33944" },
 ];
 
 export default function Footer() {
@@ -91,15 +92,21 @@ export default function Footer() {
         </div>
 
         {/* Compliance */}
-        <div className="flex items-center justify-center gap-5 py-5 border-t border-white/10 flex-wrap mb-[10px]">
-          <span className="text-[0.8rem] font-bold text-[#e0e0e0] uppercase tracking-[1px]">
-            Registered &amp; Compliant With
-          </span>
-          <div className="flex items-center gap-[25px] flex-wrap">
-            {compliance.map((c) => (
-              <div key={c.label} className="flex items-center gap-[6px] text-[0.85rem] font-semibold text-[#e0e0e0] transition-all hover:text-white cursor-default">
-                <FontAwesomeIcon icon={c.icon} className="text-[1rem] text-[#E8740C]" />
-                <span>{c.label}</span>
+        <div className="py-6 border-t border-white/10 mb-[10px]">
+          <p className="text-center text-[0.7rem] font-bold text-[#888] uppercase tracking-[2px] mb-5">Registered &amp; Compliant With</p>
+          <div className="flex items-center justify-center flex-wrap gap-px">
+            {compliance.map((c, i) => (
+              <div key={c.label} className={`flex items-center gap-3 px-6 py-3 ${i !== compliance.length - 1 ? "border-r border-white/10" : ""}`}>
+                <div className="w-8 h-8 rounded-full bg-[#E8740C]/10 border border-[#E8740C]/20 flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={c.icon} className="text-[0.75rem] text-[#E8740C]" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[0.8rem] font-extrabold text-white uppercase tracking-[1px] leading-none mb-[5px]">{c.label}</span>
+                  {c.reg
+                    ? <span className="text-[0.68rem] font-mono text-[#E8740C] leading-none">{c.reg}</span>
+                    : <span className="text-[0.68rem] text-[#666] leading-none italic">Registered</span>
+                  }
+                </div>
               </div>
             ))}
           </div>
