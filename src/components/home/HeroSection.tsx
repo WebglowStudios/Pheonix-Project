@@ -10,7 +10,9 @@ interface HeroContent {
   subtitle: string;
   tagline: string;
   cta_primary: string;
+  cta_primary_url?: string;
   cta_secondary: string;
+  cta_secondary_url?: string;
   image_url: string;
 }
 
@@ -19,7 +21,9 @@ const DEFAULTS: HeroContent = {
   subtitle: "At Phoenix Financial Services, wealth creation is research-backed, client-first, and built around you. Our deep market expertise spans advisory, asset management, fixed income. From highly-customized guidance to easy, accessible investing — invest however suits you best.",
   tagline: "Your wealth deserves expert hands.",
   cta_primary: "Explore Our Services",
+  cta_primary_url: "/services",
   cta_secondary: "Speak to an Advisor",
+  cta_secondary_url: "#contactForm",
   image_url: "/hero.png",
 };
 
@@ -51,10 +55,10 @@ export default function HeroSection() {
             {content.subtitle}
           </p>
           <div className="flex gap-[15px] justify-center md:justify-start mb-[40px] flex-wrap">
-            <Link href="/services" className="inline-block px-6 py-3 rounded-[30px] font-semibold text-base bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433]">
+            <Link href={content.cta_primary_url || "/services"} className="inline-block px-6 py-3 rounded-[30px] font-semibold text-base bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433]">
               {content.cta_primary}
             </Link>
-            <a href="#contactForm" className="inline-block px-6 py-3 rounded-[30px] font-semibold text-base bg-transparent !text-[#333] border-2 border-[#333] transition-all hover:bg-[#333] hover:!text-white">
+            <a href={content.cta_secondary_url || "#contactForm"} className="inline-block px-6 py-3 rounded-[30px] font-semibold text-base bg-transparent !text-[#333] border-2 border-[#333] transition-all hover:bg-[#333] hover:!text-white">
               {content.cta_secondary}
             </a>
           </div>

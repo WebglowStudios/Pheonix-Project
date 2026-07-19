@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
+import IconSelectorModal from "@/components/admin/IconSelectorModal";
 
 interface ServiceCard {
   title: string;
@@ -67,6 +68,8 @@ export default function HomeServicesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [isIconOpen, setIsIconOpen] = useState(false);
+  const [activeCardIndex, setActiveCardIndex] = useState<number | null>(null);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -192,15 +195,24 @@ export default function HomeServicesPage() {
             </div>
             <div>
               <label className={labelClass}>Icon</label>
-              <div className="px-3 py-2 border border-[#EEE] rounded-[8px] bg-[#FAFAFA] text-sm text-[#666]">
-                <span className="font-mono text-[#E8740C]">{card.icon_name}</span>
-                {ICON_LABELS[card.icon_name] && (
-                  <span className="text-[#999] ml-2">— {ICON_LABELS[card.icon_name]}</span>
-                )}
+              <div className="flex gap-2">
+                <input
+                  value={card.icon_name}
+                  onChange={(e) => updateCard(i, "icon_name", e.target.value)}
+                  placeholder="faBriefcase"
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveCardIndex(i);
+                    setIsIconOpen(true);
+                  }}
+                  className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+                >
+                  Select Icon
+                </button>
               </div>
-              <p className="text-xs text-[#999] mt-1">
-                Icon is fixed to the service type and cannot be changed here
-              </p>
             </div>
           </div>
         </div>
@@ -216,6 +228,20 @@ export default function HomeServicesPage() {
           {saving ? "Saving..." : "Save All Changes"}
         </button>
       </div>
+      <IconSelectorModal
+        isOpen={isIconOpen}
+        onClose={() => {
+          setIsIconOpen(false);
+          setActiveCardIndex(null);
+        }}
+        onSelect={(icon) => {
+          if (activeCardIndex !== null) {
+            updateCard(activeCardIndex, "icon_name", icon);
+          }
+          setIsIconOpen(false);
+          setActiveCardIndex(null);
+        }}
+      />
     </div>
   );
 }

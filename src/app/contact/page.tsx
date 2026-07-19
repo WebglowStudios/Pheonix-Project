@@ -19,6 +19,7 @@ export default function ContactPage() {
   const [warning, setWarning] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [formServices, setFormServices] = useState<string[]>(["Advisory", "Asset Management", "Fixed Income"]);
   const formRef = useRef<HTMLFormElement>(null);
 
   interface ContactInfo {
@@ -58,6 +59,9 @@ export default function ContactPage() {
             pune_address: c.pune_address || "708, Global Business Hub, Kharadi, Pune 411014",
             mumbai_address: c.mumbai_address || "11, Brahamsiddhi, Century Bazar Lane, Worli, Mumbai 400025",
           });
+          if (c.services && Array.isArray(c.services)) {
+            setFormServices(c.services);
+          }
         }
       });
   }, []);
@@ -229,24 +233,21 @@ export default function ContactPage() {
                   <div className="mb-[20px]">
                     <label className="block text-[0.9rem] font-semibold text-[#333] mb-[8px]">Interested in Services</label>
                     <div className="flex flex-wrap gap-2.5 mt-1.5">
-                      <label className="cursor-pointer">
-                        <input type="checkbox" name="services" value="advisory" className="sr-only peer" checked={selectedServices.includes("advisory")} onChange={() => handleServiceChange("advisory")} />
-                        <span className="px-4 py-2 bg-white border border-[#DDD] rounded-[20px] transition-all block peer-checked:bg-[#FFF3EB] peer-checked:text-[#E8740C] peer-checked:border-[#E8740C] peer-checked:font-bold hover:border-[#E8740C]">
-                          Advisory
-                        </span>
-                      </label>
-                      <label className="cursor-pointer">
-                        <input type="checkbox" name="services" value="asset_management" className="sr-only peer" checked={selectedServices.includes("asset_management")} onChange={() => handleServiceChange("asset_management")} />
-                        <span className="px-4 py-2 bg-white border border-[#DDD] rounded-[20px] transition-all block peer-checked:bg-[#FFF3EB] peer-checked:text-[#E8740C] peer-checked:border-[#E8740C] peer-checked:font-bold hover:border-[#E8740C]">
-                          Asset Management
-                        </span>
-                      </label>
-                      <label className="cursor-pointer">
-                        <input type="checkbox" name="services" value="fixed_income" className="sr-only peer" checked={selectedServices.includes("fixed_income")} onChange={() => handleServiceChange("fixed_income")} />
-                        <span className="px-4 py-2 bg-white border border-[#DDD] rounded-[20px] transition-all block peer-checked:bg-[#FFF3EB] peer-checked:text-[#E8740C] peer-checked:border-[#E8740C] peer-checked:font-bold hover:border-[#E8740C]">
-                          Fixed Income
-                        </span>
-                      </label>
+                      {formServices.map((srv) => (
+                        <label key={srv} className="cursor-pointer">
+                          <input
+                            type="checkbox"
+                            name="services"
+                            value={srv}
+                            className="sr-only peer"
+                            checked={selectedServices.includes(srv)}
+                            onChange={() => handleServiceChange(srv)}
+                          />
+                          <span className="px-4 py-2 bg-white border border-[#DDD] rounded-[20px] transition-all block peer-checked:bg-[#FFF3EB] peer-checked:text-[#E8740C] peer-checked:border-[#E8740C] peer-checked:font-bold hover:border-[#E8740C]">
+                            {srv}
+                          </span>
+                        </label>
+                      ))}
                     </div>
                     {warning && (
                       <div className="text-[#dc3545] text-xs font-semibold mt-2">{warning}</div>

@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 import ImageSelectorModal from "@/components/admin/ImageSelectorModal";
+import IconSelectorModal from "@/components/admin/IconSelectorModal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -234,6 +235,8 @@ function AboutPageTab() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [isMediaOpen, setIsMediaOpen] = useState(false);
+  const [isIconOpen, setIsIconOpen] = useState(false);
+  const [activePillarIndex, setActivePillarIndex] = useState<number | null>(null);
 
   const showToast = (msg: string, type: "success" | "error") => {
     setToast({ message: msg, type });
@@ -398,17 +401,44 @@ function AboutPageTab() {
             <div key={i} className="border-b border-[#EEE] pb-4 last:border-0 last:pb-0">
               <span className="text-xs font-bold text-[#E8740C] uppercase block mb-2">Pillar {i + 1} ({pillar.title})</span>
               <div className="flex flex-col gap-3">
-                <div>
-                  <label className={labelClass}>Title</label>
-                  <input
-                    value={pillar.title}
-                    onChange={(e) => {
-                      const newPillars = [...(content.pillars || PAGE_DEFAULTS.pillars || [])];
-                      newPillars[i] = { ...newPillars[i], title: e.target.value };
-                      setContent((p) => ({ ...p, pillars: newPillars }));
-                    }}
-                    className={inputClass}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Title</label>
+                    <input
+                      value={pillar.title}
+                      onChange={(e) => {
+                        const newPillars = [...(content.pillars || PAGE_DEFAULTS.pillars || [])];
+                        newPillars[i] = { ...newPillars[i], title: e.target.value };
+                        setContent((p) => ({ ...p, pillars: newPillars }));
+                      }}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Icon</label>
+                    <div className="flex gap-2">
+                      <input
+                        value={pillar.icon_name}
+                        onChange={(e) => {
+                          const newPillars = [...(content.pillars || PAGE_DEFAULTS.pillars || [])];
+                          newPillars[i] = { ...newPillars[i], icon_name: e.target.value };
+                          setContent((p) => ({ ...p, pillars: newPillars }));
+                        }}
+                        className={inputClass}
+                        placeholder="faShieldHalved"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActivePillarIndex(i);
+                          setIsIconOpen(true);
+                        }}
+                        className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+                      >
+                        Select Icon
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className={labelClass}>Description</label>
@@ -434,6 +464,22 @@ function AboutPageTab() {
         onSelect={(url) => {
           setContent((p) => ({ ...p, image_url: url }));
           setIsMediaOpen(false);
+        }}
+      />
+      <IconSelectorModal
+        isOpen={isIconOpen}
+        onClose={() => {
+          setIsIconOpen(false);
+          setActivePillarIndex(null);
+        }}
+        onSelect={(icon) => {
+          if (activePillarIndex !== null) {
+            const newPillars = [...(content.pillars || PAGE_DEFAULTS.pillars || [])];
+            newPillars[activePillarIndex] = { ...newPillars[activePillarIndex], icon_name: icon };
+            setContent((p) => ({ ...p, pillars: newPillars }));
+          }
+          setIsIconOpen(false);
+          setActivePillarIndex(null);
         }}
       />
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faPencil, faTrash, faCheck, faXmark, faGripVertical } from "@fortawesome/free-solid-svg-icons";
+import IconSelectorModal from "@/components/admin/IconSelectorModal";
 
 interface Service {
   id: string;
@@ -57,6 +58,8 @@ export default function ServicesPage() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [newFeature, setNewFeature] = useState("");
   const [editNewFeature, setEditNewFeature] = useState("");
+  const [isIconOpen, setIsIconOpen] = useState(false);
+  const [activeFormType, setActiveFormType] = useState<"add" | "edit" | null>(null);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -263,7 +266,24 @@ export default function ServicesPage() {
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#555] mb-1">Icon Name</label>
-              <input value={newData.icon_name} onChange={e => setNewData(p => ({ ...p, icon_name: e.target.value }))} className={inputClass} />
+              <div className="flex gap-2">
+                <input
+                  value={newData.icon_name}
+                  onChange={(e) => setNewData((p) => ({ ...p, icon_name: e.target.value }))}
+                  className={inputClass}
+                  placeholder="faArrowTrendUp"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveFormType("add");
+                    setIsIconOpen(true);
+                  }}
+                  className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+                >
+                  Select Icon
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-xs font-semibold text-[#555] mb-1">Sort Order</label>
@@ -310,7 +330,24 @@ export default function ServicesPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#555] mb-1">Icon Name</label>
-                    <input value={editData.icon_name} onChange={e => setEditData(p => ({ ...p, icon_name: e.target.value }))} className={inputClass} />
+                    <div className="flex gap-2">
+                      <input
+                        value={editData.icon_name}
+                        onChange={(e) => setEditData((p) => ({ ...p, icon_name: e.target.value }))}
+                        className={inputClass}
+                        placeholder="faArrowTrendUp"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveFormType("edit");
+                          setIsIconOpen(true);
+                        }}
+                        className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+                      >
+                        Select Icon
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#555] mb-1">Sort Order</label>
@@ -362,6 +399,22 @@ export default function ServicesPage() {
           </div>
         ))}
       </div>
+      <IconSelectorModal
+        isOpen={isIconOpen}
+        onClose={() => {
+          setIsIconOpen(false);
+          setActiveFormType(null);
+        }}
+        onSelect={(icon) => {
+          if (activeFormType === "add") {
+            setNewData((p) => ({ ...p, icon_name: icon }));
+          } else if (activeFormType === "edit") {
+            setEditData((p) => ({ ...p, icon_name: icon }));
+          }
+          setIsIconOpen(false);
+          setActiveFormType(null);
+        }}
+      />
     </div>
   );
 }

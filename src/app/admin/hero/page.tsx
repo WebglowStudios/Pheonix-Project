@@ -12,7 +12,9 @@ interface HeroContent {
   subtitle: string;
   tagline: string;
   cta_primary: string;
+  cta_primary_url?: string;
   cta_secondary: string;
+  cta_secondary_url?: string;
   image_url: string;
 }
 
@@ -22,7 +24,9 @@ const DEFAULTS: HeroContent = {
     "At Phoenix Financial Services, wealth creation is research-backed, client-first, and built around you. Our deep market expertise spans advisory, asset management, fixed income. From highly-customized guidance to easy, accessible investing — invest however suits you best.",
   tagline: "Your wealth deserves expert hands.",
   cta_primary: "Explore Our Services",
+  cta_primary_url: "/services",
   cta_secondary: "Speak to an Advisor",
+  cta_secondary_url: "#contactForm",
   image_url: "/hero.png",
 };
 
@@ -151,6 +155,27 @@ export default function HeroPage() {
             <input
               value={content.cta_secondary}
               onChange={(e) => setContent((p) => ({ ...p, cta_secondary: e.target.value }))}
+              className={inputClass}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Primary CTA Redirect URL</label>
+            <input
+              value={content.cta_primary_url || ""}
+              onChange={(e) => setContent((p) => ({ ...p, cta_primary_url: e.target.value }))}
+              placeholder="/services"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Secondary CTA Redirect URL</label>
+            <input
+              value={content.cta_secondary_url || ""}
+              onChange={(e) => setContent((p) => ({ ...p, cta_secondary_url: e.target.value }))}
+              placeholder="#contactForm"
               className={inputClass}
             />
           </div>

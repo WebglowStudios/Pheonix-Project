@@ -51,11 +51,16 @@ export default function Footer() {
       });
   }, []);
 
+  const amfi = settings.amfi_reg_no || (settings as any).compliance?.amfi?.reg || null;
+  const bse = settings.bse_reg_no || (settings as any).compliance?.bse?.reg || "AP0107480100941";
+  const nse = settings.nse_reg_no || (settings as any).compliance?.nse?.reg || "AP206911451";
+  const mcx = settings.mcx_reg_no || (settings as any).compliance?.mcx?.reg || "AP33944";
+
   const compliance = [
-    { icon: faBuildingColumns, label: "AMFI", reg: settings.amfi_reg_no || null },
-    { icon: faCertificate, label: "BSE", reg: settings.bse_reg_no || "AP0107480100941" },
-    { icon: faChartLine, label: "NSE", reg: settings.nse_reg_no || "AP206911451" },
-    { icon: faScaleBalanced, label: "MCX", reg: settings.mcx_reg_no || "AP33944" },
+    { icon: faBuildingColumns, label: "AMFI", reg: amfi },
+    { icon: faCertificate, label: "BSE", reg: bse },
+    { icon: faChartLine, label: "NSE", reg: nse },
+    { icon: faScaleBalanced, label: "MCX", reg: mcx },
   ];
 
   return (

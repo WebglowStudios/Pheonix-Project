@@ -12,6 +12,7 @@ interface ContactContent {
   email: string;
   pune_address: string;
   mumbai_address: string;
+  services?: string[];
 }
 
 const DEFAULT: ContactContent = {
@@ -21,6 +22,7 @@ const DEFAULT: ContactContent = {
   email: "",
   pune_address: "",
   mumbai_address: "",
+  services: ["Advisory", "Asset Management", "Fixed Income"],
 };
 
 function Toast({ message, type }: { message: string; type: "success" | "error" }) {
@@ -137,6 +139,74 @@ export default function ContactInfoPage() {
               className={inputClass + " resize-none"}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Contact Form Services */}
+      <div className="bg-white rounded-[10px] shadow-sm p-6 mb-5">
+        <h2 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">Contact Form Options</h2>
+        <p className="text-xs text-[#999] mb-4">Add or reduce services that clients can choose from in the contact form</p>
+        
+        {/* Current List */}
+        <div className="flex flex-wrap gap-2.5 mb-4">
+          {(content.services || DEFAULT.services || []).map((srv) => (
+            <span key={srv} className="px-3.5 py-1.5 bg-[#FFF3EB] border border-[#E8740C]/25 text-[#E8740C] rounded-[20px] text-xs font-bold flex items-center gap-2">
+              {srv}
+              <button
+                type="button"
+                onClick={() => {
+                  const updated = (content.services || DEFAULT.services || []).filter((s) => s !== srv);
+                  setContent((p) => ({ ...p, services: updated }));
+                }}
+                className="hover:text-red-600 transition-colors font-bold text-sm leading-none"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+          {(content.services || DEFAULT.services || []).length === 0 && (
+            <p className="text-gray-400 text-xs italic">No service options configured.</p>
+          )}
+        </div>
+
+        {/* Input to Add */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            id="new-service-input"
+            placeholder="e.g. Wealth Management"
+            className={inputClass}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const val = (e.target as HTMLInputElement).value.trim();
+                if (val) {
+                  const current = content.services || DEFAULT.services || [];
+                  if (!current.includes(val)) {
+                    setContent((p) => ({ ...p, services: [...current, val] }));
+                  }
+                  (e.target as HTMLInputElement).value = "";
+                }
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const input = document.getElementById("new-service-input") as HTMLInputElement;
+              const val = input?.value.trim();
+              if (val) {
+                const current = content.services || DEFAULT.services || [];
+                if (!current.includes(val)) {
+                  setContent((p) => ({ ...p, services: [...current, val] }));
+                }
+                input.value = "";
+              }
+            }}
+            className="bg-[#E8740C] text-white px-5 rounded-[8px] text-xs font-bold hover:bg-[#FF9433] transition-all whitespace-nowrap"
+          >
+            Add Service
+          </button>
         </div>
       </div>
 

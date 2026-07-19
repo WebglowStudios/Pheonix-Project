@@ -49,7 +49,18 @@ export default function SettingsPage() {
 
   useEffect(() => {
     supabase.from("site_content").select("content").eq("id", "site_settings").single().then(({ data }) => {
-      if (data?.content) setContent({ ...DEFAULT, ...data.content });
+      if (data?.content) {
+        const c = data.content as any;
+        setContent({
+          footer_about: c.footer_about || "",
+          disclaimer: c.disclaimer || "",
+          whatsapp_channel: c.whatsapp_channel || "",
+          amfi_reg_no: c.amfi_reg_no || c.compliance?.amfi?.reg || "",
+          bse_reg_no: c.bse_reg_no || c.compliance?.bse?.reg || "",
+          nse_reg_no: c.nse_reg_no || c.compliance?.nse?.reg || "",
+          mcx_reg_no: c.mcx_reg_no || c.compliance?.mcx?.reg || "",
+        });
+      }
       setLoading(false);
     });
   }, []);
