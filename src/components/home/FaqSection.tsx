@@ -1,19 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { supabase } from "@/lib/supabase";
 
-const faqs = [
-  { q: "How do I get started?", a: "Simply reach out through our Contact page or WhatsApp. Our advisors will schedule a free consultation to understand your goals and recommend the right solutions." },
-  { q: "Is there a minimum investment amount?", a: "Minimums vary by product — SIPs can start as low as ₹500, while PMS requires a minimum of ₹50 lakhs as per SEBI guidelines. Our advisors will guide you to the right entry point." },
-  { q: "What products does Phoenix Financial Services offer?", a: "We offer a complete suite across Mutual Funds, Equity Advisory, PMS, AIF, SIF, Capital Shield, Bonds & NCDs, Corporate Fixed Deposits, Loan Against Shares & Mutual Funds, and a Self-Directed Investing platform." },
-  { q: "Is my money safe with Phoenix Financial Services?", a: "Your investments are held directly in your name with SEBI-registered custodians, AMCs, and depositories — Phoenix Financial Services acts as your advisor, not a custodian of your funds." },
+const HOME_FAQ_QUESTIONS = [
+  "How do I get started?",
+  "Is there a minimum investment amount?",
+  "What products does Phoenix Financial Services offer?",
+  "Is my money safe with Phoenix Financial Services?",
 ];
 
+interface FAQ {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+const DEFAULTS = {
+  section_heading: "Frequently Asked Questions",
+  section_subheading:
+    "Clarity before commitment. Find answers to the questions that matter most about investing with Phoenix Financial Services.",
+};
+
 export default function FaqSection() {
-  const [active, setActive] = useState<number | null>(0);
+  const [active, setActive] = useState<string | null>(null);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [heading, setHeading] = useState(DEFAULTS.section_heading);
+  const [subheading, setSubheading] = useState(DEFAULTS.section_subheading);
+
+  useEffect(() => {
+    // Fetch section heading/subheading
+    supabase
+      .from("site_content")
+      .select("content")
+      .eq("id", "home_faq")
+      .single()
+      .then(({ data }) => {
+        if (data?.content) {
+          const c = data.content as { section_heading?: string; section_subheading?: string };
+          if (c.section_heading) setHeading(c.section_heading);
+          if (c.section_subheading) setSubheading(c.section_subheading);
+        }
+      });
+
+    // Fetch specific FAQ questions
+    supabase
+      .from("faqs")
+      .select("id, question, answer")
+      .in("question", HOME_FAQ_QUESTIONS)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const sorted = HOME_FAQ_QUESTIONS.map((q) => data.find((d) => d.question === q))
+            .filter(Boolean) as FAQ[];
+          setFaqs(sorted);
+          setActive(sorted[0]?.id ?? null);
+        }
+      });
+  }, []);
+
+  // Parse heading for orange highlight on last word
+  const headingWords = heading.split(" ");
+  const lastWord = headingWords.pop();
+  const headingStart = headingWords.join(" ");
 
   return (
     <section className="py-[100px] bg-[#F2F3F5]">
@@ -22,35 +73,48 @@ export default function FaqSection() {
           {/* Header col */}
           <div>
             <h2 className="text-[2.5rem] font-extrabold text-[#333] leading-[1.2] mb-5 tracking-[1.5px]">
-              Frequently Asked <span className="text-[#E8740C]">Questions</span>
+              {headingStart} <span className="text-[#E8740C]">{lastWord}</span>
             </h2>
-            <p className="text-[1.1rem] text-[#444] mb-5">
-              Clarity before commitment. Find answers to the questions that matter most about investing with Phoenix Financial Services.
-            </p>
-            <Link href="/faq" className="inline-block mt-5 px-6 py-3 rounded-[30px] font-semibold bg-transparent !text-[#333] border-2 border-[#333] transition-all hover:bg-[#333] hover:!text-white">
+            <p className="text-[1.1rem] text-[#444] mb-5">{subheading}</p>
+            <Link
+              href="/faq"
+              className="inline-block mt-5 px-6 py-3 rounded-[30px] font-semibold bg-transparent !text-[#333] border-2 border-[#333] transition-all hover:bg-[#333] hover:!text-white"
+            >
               View All FAQs
             </Link>
           </div>
 
           {/* Accordion */}
           <div className="flex flex-col gap-[15px]">
-            {faqs.map((faq, i) => (
-              <div key={i} className={`bg-white border rounded-[8px] overflow-hidden ${active === i ? "border-[#E8740C]" : "border-[#DDD]"}`}>
+            {faqs.map((faq) => (
+              <div
+                key={faq.id}
+                className={`bg-white border rounded-[8px] overflow-hidden ${
+                  active === faq.id ? "border-[#E8740C]" : "border-[#DDD]"
+                }`}
+              >
                 <button
                   className="w-full px-5 py-5 flex justify-between items-center bg-white text-left cursor-pointer"
-                  onClick={() => setActive(active === i ? null : i)}
+                  onClick={() => setActive(active === faq.id ? null : faq.id)}
                 >
-                  <h4 className={`text-[1.1rem] font-bold pr-4 !tracking-[0px] ${active === i ? "text-[#E8740C]" : "text-[#333]"}`} style={{ fontFamily: "var(--font-main, Outfit, sans-serif)" }}>
-                    {faq.q}
+                  <h4
+                    className={`text-[1.1rem] font-bold pr-4 !tracking-[0px] ${
+                      active === faq.id ? "text-[#E8740C]" : "text-[#333]"
+                    }`}
+                    style={{ fontFamily: "var(--font-main, Outfit, sans-serif)" }}
+                  >
+                    {faq.question}
                   </h4>
                   <FontAwesomeIcon
                     icon={faChevronDown}
-                    className={`text-[#E8740C] flex-shrink-0 transition-transform duration-300 ${active === i ? "rotate-180" : ""}`}
+                    className={`text-[#E8740C] flex-shrink-0 transition-transform duration-300 ${
+                      active === faq.id ? "rotate-180" : ""
+                    }`}
                   />
                 </button>
-                {active === i && (
+                {active === faq.id && (
                   <div className="px-5 pb-5">
-                    <p className="text-[#444] text-[0.95rem]">{faq.a}</p>
+                    <p className="text-[#444] text-[0.95rem]">{faq.answer}</p>
                   </div>
                 )}
               </div>

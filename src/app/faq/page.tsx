@@ -1,51 +1,34 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faChevronDown, faChevronRight, faCircleQuestion } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faChevronDown, faChevronRight, faCircleQuestion, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { supabase } from "@/lib/supabase";
 
-const groups = [
-  {
-    category: "general",
-    title: "Getting Started",
-    items: [
-      { q: "Who can invest with Phoenix Financial Services?", a: "We work with individuals, families, business owners, and institutions across all investment stages — from first-time investors to seasoned HNIs looking for sophisticated wealth strategies." },
-      { q: "How do I get started?", a: "Simply reach out through our Contact page or WhatsApp. Our advisors will schedule a free consultation to understand your goals and recommend the right solutions." },
-      { q: "Is there a minimum investment amount?", a: "Minimums vary by product — SIPs can start as low as ₹500, while PMS requires a minimum of ₹50 lakhs as per SEBI guidelines. Our advisors will guide you to the right entry point." },
-    ],
-  },
-  {
-    category: "products",
-    title: "Products & Services",
-    items: [
-      { q: "What products does Phoenix Financial Services offer?", a: "We offer a complete suite across Mutual Funds, Equity Advisory, PMS, AIF, SIF, Capital Shield, Bonds & NCDs, Corporate Fixed Deposits, Loan Against Shares & Mutual Funds, and a Self-Directed Investing platform." },
-      { q: "What is a Structured Capital Protection Plan?", a: "It is a market-linked investment product that gives you participation in NIFTY's upside while protecting your principal — ideal for investors who want equity exposure without full market risk." },
-      { q: "What is the difference between PMS and Mutual Funds?", a: "Mutual Funds pool money from multiple investors into a diversified portfolio. PMS offers a directly owned, customised equity portfolio managed by a dedicated portfolio manager — suited for investors with higher capital and sophisticated requirements." },
-      { q: "Can I take a loan against my existing investments?", a: "Yes. Our Loan Against Shares & Mutual Funds (LAS/LAMF) facility lets you unlock liquidity from your existing portfolio at competitive rates — without having to sell your investments." },
-    ],
-  },
-  {
-    category: "fees",
-    title: "Advisory & Process",
-    items: [
-      { q: "How does Phoenix Financial Services select investments?", a: "Every recommendation is research-driven and aligned to your specific goals, risk appetite, and time horizon. We do not follow a one-size-fits-all approach." },
-      { q: "How often will my portfolio be reviewed?", a: "We conduct periodic portfolio reviews and proactive rebalancing as market conditions evolve — ensuring your investments stay aligned to your goals at every stage." },
-      { q: "Are your advisors SEBI registered?", a: "Yes. Phoenix Financial Services operates in full compliance with SEBI and AMFI guidelines across all distribution and broking activities as an authorised Sharekhan partner." },
-    ],
-  },
-  {
-    category: "loans",
-    title: "Trust & Safety",
-    items: [
-      { q: "Is my money safe with Phoenix Financial Services?", a: "Your investments are held directly in your name with SEBI-registered custodians, AMCs, and depositories — Phoenix Financial Services acts as your advisor, not a custodian of your funds." },
-      { q: "How is Phoenix Financial Services regulated?", a: "We are a SEBI and AMFI compliant firm and an authorised Sharekhan partner, operating under the full regulatory framework governing financial advisory and distribution in India." },
-    ],
-  },
-];
+interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  category: string;
+  sort_order: number;
+}
+
+interface FAQGroup {
+  category: string;
+  title: string;
+  items: FAQItem[];
+}
+
+const CATEGORY_TITLES: Record<string, string> = {
+  general: "Getting Started",
+  products: "Products & Services",
+  fees: "Advisory & Process",
+  loans: "Trust & Safety",
+};
 
 const filters = [
   { key: "all", label: "All Categories" },
@@ -59,10 +42,39 @@ export default function FaqPage() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
+  const [allFaqs, setAllFaqs] = useState<FAQItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from("faqs")
+      .select("*")
+      .order("category")
+      .order("sort_order")
+      .then(({ data }) => {
+        setAllFaqs(data ?? []);
+        setLoading(false);
+      });
+  }, []);
 
   const toggleItem = (key: string) => {
     setOpenItems((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const groups: FAQGroup[] = useMemo(() => {
+    // Group by category
+    const grouped: Record<string, FAQItem[]> = {};
+    allFaqs.forEach((faq) => {
+      if (!grouped[faq.category]) grouped[faq.category] = [];
+      grouped[faq.category].push(faq);
+    });
+
+    return Object.entries(grouped).map(([category, items]) => ({
+      category,
+      title: CATEGORY_TITLES[category] ?? category,
+      items,
+    }));
+  }, [allFaqs]);
 
   const filtered = useMemo(() => {
     return groups
@@ -72,12 +84,12 @@ export default function FaqPage() {
         items: g.items.filter(
           (item) =>
             search === "" ||
-            item.q.toLowerCase().includes(search.toLowerCase()) ||
-            item.a.toLowerCase().includes(search.toLowerCase())
+            item.question.toLowerCase().includes(search.toLowerCase()) ||
+            item.answer.toLowerCase().includes(search.toLowerCase())
         ),
       }))
       .filter((g) => g.items.length > 0);
-  }, [activeFilter, search]);
+  }, [groups, activeFilter, search]);
 
   const inputClass = "w-full pl-[45px] pr-4 py-3 border border-[#DDD] rounded-[8px] font-[inherit] text-[0.95rem] text-[#333] bg-white transition-all outline-none focus:border-[#E8740C] focus:shadow-[0_0_0_3px_#FFF3EB]";
 
@@ -102,40 +114,27 @@ export default function FaqPage() {
 
               {/* Sidebar */}
               <aside className="flex flex-col gap-[25px] lg:sticky lg:top-[120px] lg:self-start">
-                {/* Search */}
                 <div className="relative">
                   <FontAwesomeIcon icon={faMagnifyingGlass} className="absolute left-[18px] top-[14px] text-[#444]" />
-                  <input
-                    type="text"
-                    placeholder="Search questions..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className={inputClass}
-                  />
+                  <input type="text" placeholder="Search questions..." value={search}
+                    onChange={(e) => setSearch(e.target.value)} className={inputClass} />
                 </div>
 
-                {/* Category filters */}
                 <div className="flex flex-col gap-[10px]">
                   {filters.map((f) => (
-                    <button
-                      key={f.key}
-                      onClick={() => setActiveFilter(f.key)}
+                    <button key={f.key} onClick={() => setActiveFilter(f.key)}
                       className={`text-left px-5 py-[14px] border rounded-[8px] font-semibold cursor-pointer transition-all flex items-center justify-between text-[0.95rem] font-[inherit] ${
                         activeFilter === f.key
                           ? "bg-[#E8740C] text-white border-[#E8740C]"
                           : "bg-white text-[#333] border-[#DDD] hover:border-[#E8740C] hover:text-[#E8740C] hover:bg-[#FFF3EB]"
-                      }`}
-                    >
+                      }`}>
                       {f.label}
-                      <FontAwesomeIcon
-                        icon={faChevronRight}
-                        className={`transition-all text-sm ${activeFilter === f.key ? "text-white translate-x-[3px]" : "text-[#DDD]"}`}
-                      />
+                      <FontAwesomeIcon icon={faChevronRight}
+                        className={`transition-all text-sm ${activeFilter === f.key ? "text-white translate-x-[3px]" : "text-[#DDD]"}`} />
                     </button>
                   ))}
                 </div>
 
-                {/* Support card */}
                 <div className="bg-white border border-dashed border-[#FF9433] p-[25px] rounded-[8px]">
                   <h4 className="text-[1.1rem] font-bold text-[#333] mb-2 tracking-[1.5px]">Still have questions?</h4>
                   <p className="text-[0.85rem] text-[#444] mb-[15px]">Speak to our advisory team for personalized consultation.</p>
@@ -147,7 +146,11 @@ export default function FaqPage() {
 
               {/* Accordion content */}
               <div className="flex flex-col gap-[40px]">
-                {filtered.length === 0 ? (
+                {loading ? (
+                  <div className="flex justify-center py-20">
+                    <FontAwesomeIcon icon={faSpinner} className="text-[#E8740C] text-3xl animate-spin" />
+                  </div>
+                ) : filtered.length === 0 ? (
                   <div className="text-center py-[50px]">
                     <FontAwesomeIcon icon={faCircleQuestion} className="text-[3rem] text-[#DDD] mb-[15px] block" />
                     <h4 className="text-[1.2rem] text-[#333] mb-1 tracking-[1.5px]">No FAQs Found</h4>
@@ -160,27 +163,23 @@ export default function FaqPage() {
                         {group.title}
                       </h3>
                       <div className="flex flex-col gap-[15px]">
-                        {group.items.map((item, i) => {
-                          const key = `${group.category}-${i}`;
+                        {group.items.map((item) => {
+                          const key = item.id;
                           const isOpen = !!openItems[key];
                           return (
                             <div key={key} className={`bg-white border rounded-[8px] overflow-hidden ${isOpen ? "border-[#E8740C]" : "border-[#DDD]"}`}>
-                              <button
-                                className="w-full px-5 py-5 flex justify-between items-center bg-white text-left cursor-pointer"
-                                onClick={() => toggleItem(key)}
-                              >
+                              <button className="w-full px-5 py-5 flex justify-between items-center bg-white text-left cursor-pointer"
+                                onClick={() => toggleItem(key)}>
                                 <h4 className={`text-[1.1rem] font-bold pr-4 !tracking-[0px] ${isOpen ? "text-[#E8740C]" : "text-[#333]"}`}
                                   style={{ fontFamily: "var(--font-main, Outfit, sans-serif)" }}>
-                                  {item.q}
+                                  {item.question}
                                 </h4>
-                                <FontAwesomeIcon
-                                  icon={faChevronDown}
-                                  className={`text-[#E8740C] flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
-                                />
+                                <FontAwesomeIcon icon={faChevronDown}
+                                  className={`text-[#E8740C] flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
                               </button>
                               {isOpen && (
                                 <div className="px-5 pb-5">
-                                  <p className="text-[#444] text-[0.95rem]">{item.a}</p>
+                                  <p className="text-[#444] text-[0.95rem]">{item.answer}</p>
                                 </div>
                               )}
                             </div>

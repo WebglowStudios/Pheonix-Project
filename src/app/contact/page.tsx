@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPhone, faClock, faLocationDot, faArrowRight, faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+import { submitContactForm } from "@/lib/actions";
 
 const inputClass = "w-full px-[15px] py-[12px] border border-[#DDD] rounded-[8px] font-[inherit] text-[0.95rem] text-[#333] bg-white transition-all outline-none focus:border-[#E8740C] focus:shadow-[0_0_0_3px_#FFF3EB]";
 
@@ -23,6 +24,7 @@ export default function ContactPage() {
   const [warning, setWarning] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -57,7 +59,7 @@ export default function ContactPage() {
     );
   };
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (selectedServices.length === 0) {
       setWarning("Please select at least 1 service.");
@@ -65,13 +67,26 @@ export default function ContactPage() {
     }
     setWarning("");
     setLoading(true);
-    setTimeout(() => {
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    submitContactForm({
+      name: formData.get("name") as string,
+      phone: formData.get("phone") as string,
+      email: formData.get("email") as string,
+      services: selectedServices,
+      connect_time: formData.get("connect_time") as string,
+      message: formData.get("message") as string,
+      source: "contact_page",
+    }).then(() => {
       setLoading(false);
       setSubmitted(true);
       setSelectedServices([]);
+      formRef.current?.reset();
       setTimeout(() => setSubmitted(false), 3000);
-      (e.target as HTMLFormElement).reset();
-    }, 1500);
+    }).catch(() => {
+      setLoading(false);
+      setWarning("Something went wrong. Please try again.");
+    });
   }
 
   return (
@@ -162,18 +177,18 @@ export default function ContactPage() {
               <div className="bg-[#F2F3F5] border border-[#DDD] rounded-[8px] p-[40px] shadow-[0_2px_4px_rgba(0,0,0,0.05)] order-1 lg:order-2">
                 <h3 className="text-[1.8rem] font-bold text-[#333] mb-[10px] tracking-[1.5px]">Share your Aspirations</h3>
                 <p className="text-[#444] mb-[30px]">Complete the form below and an advisor will contact you at your convenience</p>
-                <form onSubmit={handleSubmit} id="contactForm">
+                <form onSubmit={handleSubmit} id="contactForm" ref={formRef}>
                   <div className="mb-[20px]">
                     <label className="block text-[0.9rem] font-semibold text-[#333] mb-[8px]">Full Name</label>
-                    <input type="text" placeholder="John Doe" required className={inputClass} />
+                    <input type="text" name="name" placeholder="John Doe" required className={inputClass} />
                   </div>
                   <div className="mb-[20px]">
                     <label className="block text-[0.9rem] font-semibold text-[#333] mb-[8px]">Phone Number</label>
-                    <input type="tel" placeholder="+91 00000 00000" required className={inputClass} />
+                    <input type="tel" name="phone" placeholder="+91 00000 00000" required className={inputClass} />
                   </div>
                   <div className="mb-[20px]">
                     <label className="block text-[0.9rem] font-semibold text-[#333] mb-[8px]">Email Address</label>
-                    <input type="email" placeholder="john@example.com" required className={inputClass} />
+                    <input type="email" name="email" placeholder="john@example.com" required className={inputClass} />
                   </div>
                   <div className="mb-[20px]">
                     <label className="block text-[0.9rem] font-semibold text-[#333] mb-[8px]">Interested in Services</label>
@@ -203,7 +218,7 @@ export default function ContactPage() {
                   </div>
                   <div className="mb-[20px]">
                     <label className="block text-[0.9rem] font-semibold text-[#333] mb-[8px]">Convenience Time to Connect</label>
-                    <select required className={inputClass + " cursor-pointer"} defaultValue="">
+                    <select name="connect_time" required className={inputClass + " cursor-pointer"} defaultValue="">
                       <option value="" disabled>Select a time window...</option>
                       <option value="morning">Morning (9:00 AM - 12:00 PM)</option>
                       <option value="afternoon">Afternoon (12:00 PM - 3:00 PM)</option>
@@ -214,7 +229,7 @@ export default function ContactPage() {
                   </div>
                   <div className="mb-[20px]">
                     <label className="block text-[0.9rem] font-semibold text-[#333] mb-[8px]">Message / Goals</label>
-                    <textarea rows={5} placeholder="Briefly describe your financial goals..." required className={inputClass + " resize-y"} />
+                    <textarea name="message" rows={5} placeholder="Briefly describe your financial goals..." required className={inputClass + " resize-y"} />
                   </div>
                   <button type="submit" disabled={loading || submitted}
                     className={`w-full px-6 py-3 rounded-[30px] font-semibold text-base text-white border-2 transition-all ${submitted ? "bg-[#28a745] border-[#28a745]" : "bg-[#E8740C] border-[#E8740C] hover:bg-[#FF9433] hover:border-[#FF9433]"}`}>

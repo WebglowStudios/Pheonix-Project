@@ -1,8 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuildingColumns, faCertificate, faChartLine, faArrowRight, faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+import { supabase } from "@/lib/supabase";
 
 const quickLinks = [
   { href: "/", label: "Home" },
@@ -14,14 +18,46 @@ const quickLinks = [
 
 const keyProducts = ["Advisory", "Asset Management", "Fixed Income"];
 
-const compliance = [
-  { icon: faBuildingColumns, label: "AMFI", reg: null },
+const DEFAULT_COMPLIANCE = [
+  { icon: faBuildingColumns, label: "AMFI", reg: null as string | null },
   { icon: faCertificate, label: "BSE", reg: "AP0107480100941" },
   { icon: faChartLine, label: "NSE", reg: "AP206911451" },
   { icon: faScaleBalanced, label: "MCX", reg: "AP33944" },
 ];
 
+interface SiteSettings {
+  footer_about: string;
+  disclaimer: string;
+  whatsapp_channel: string;
+  bse_reg_no?: string;
+  nse_reg_no?: string;
+  mcx_reg_no?: string;
+  amfi_reg_no?: string;
+}
+
+const DEFAULT_SETTINGS: SiteSettings = {
+  footer_about: "Dedicated to providing transparent, expert-driven wealth management and financial advisory services for a secure tomorrow.",
+  disclaimer: "Phoenix Financial Services is an AMFI-registered Mutual Fund Distributor and an authorised Sharekhan partner. Investments in securities markets are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future returns. This website is for informational purposes only and does not constitute investment advice.",
+  whatsapp_channel: "https://www.whatsapp.com/channel/0029VbCzSKm9RZAZ8MBQCS3I",
+};
+
 export default function Footer() {
+  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    supabase.from("site_content").select("content").eq("id", "site_settings").single()
+      .then(({ data }) => {
+        if (data?.content) setSettings({ ...DEFAULT_SETTINGS, ...data.content });
+      });
+  }, []);
+
+  const compliance = [
+    { icon: faBuildingColumns, label: "AMFI", reg: settings.amfi_reg_no || null },
+    { icon: faCertificate, label: "BSE", reg: settings.bse_reg_no || "AP0107480100941" },
+    { icon: faChartLine, label: "NSE", reg: settings.nse_reg_no || "AP206911451" },
+    { icon: faScaleBalanced, label: "MCX", reg: settings.mcx_reg_no || "AP33944" },
+  ];
+
   return (
     <footer className="bg-[#333] text-white pt-[80px] pb-5">
       <div className="max-w-[1200px] mx-auto px-5">
@@ -32,9 +68,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Image src="/logo.jpg" alt="Phoenix Financial Services" width={140} height={70} className="max-h-[70px] w-auto mb-[15px]" />
-            <p className="text-[#e0e0e0] text-[0.9rem] mb-5">
-              Dedicated to providing transparent, expert-driven wealth management and financial advisory services for a secure tomorrow.
-            </p>
+            <p className="text-[#e0e0e0] text-[0.9rem] mb-5">{settings.footer_about}</p>
           </div>
 
           {/* Quick Links */}
@@ -81,7 +115,7 @@ export default function Footer() {
               Join our active WhatsApp channel for quick portfolio updates, market briefings, and advisory support.
             </p>
             <a
-              href="https://www.whatsapp.com/channel/0029VbCzSKm9RZAZ8MBQCS3I"
+              href={settings.whatsapp_channel || "https://www.whatsapp.com/channel/0029VbCzSKm9RZAZ8MBQCS3I"}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-[#2e7d32] border-2 border-[#2e7d32] !text-white px-5 py-[10px] rounded-[30px] text-[0.9rem] font-semibold transition-all hover:bg-[#388e3c]"
@@ -122,7 +156,7 @@ export default function Footer() {
         </div>
 
         <p className="text-[0.75rem] text-[#b0b0b0] text-center">
-          <strong>Disclaimer:</strong> Phoenix Financial Services is an AMFI-registered Mutual Fund Distributor and an authorised Sharekhan partner. Investments in securities markets are subject to market risks. Please read all scheme-related documents carefully before investing. Past performance is not indicative of future returns. This website is for informational purposes only and does not constitute investment advice.
+          <strong>Disclaimer:</strong> {settings.disclaimer}
         </p>
       </div>
     </footer>
