@@ -86,16 +86,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const Sidebar = () => (
-    <aside className="w-[260px] min-h-screen bg-[#1e1e2e] flex flex-col flex-shrink-0">
+    <aside className="w-[260px] h-full bg-[#1a1b23] flex flex-col flex-shrink-0">
       {/* Logo area */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-[#2a2a4e]">
-        <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-white flex-shrink-0">
-          <Image src="/logo.jpg" alt="Logo" width={40} height={40} className="object-contain" />
+      <div className="flex flex-col items-center justify-center py-6 px-5 border-b border-white/10">
+        <div className="w-[52px] h-[52px] rounded-full overflow-hidden bg-white flex items-center justify-center mb-3 ring-2 ring-[#E8740C]/40">
+          <Image src="/logo.jpg" alt="Logo" width={52} height={52} className="object-contain" />
         </div>
-        <div>
-          <p className="text-white font-bold text-sm leading-tight">Phoenix Financial</p>
-          <p className="text-[#8892b0] text-xs">Admin Panel</p>
-        </div>
+        <p className="text-white font-bold text-sm leading-tight text-center">Phoenix Financial</p>
+        <p className="text-[#E8740C] text-xs font-semibold mt-0.5 uppercase tracking-[1px]">Admin Panel</p>
       </div>
 
       {/* Nav items */}
@@ -107,13 +105,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               key={item.href}
               href={item.href}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-4 py-[10px] rounded-[8px] mb-1 text-sm font-medium transition-all no-underline ${
+              className={`flex items-center gap-3 px-4 py-[10px] rounded-[8px] mb-1 text-sm font-semibold transition-all no-underline ${
                 isActive
-                  ? "bg-[#E8740C] text-white"
-                  : "text-[#8892b0] hover:bg-[#2a2a4e] hover:text-white"
+                  ? "bg-[#E8740C] !text-white"
+                  : "!text-[#e2e8f0] hover:bg-[#2d2d3f] hover:!text-white"
               }`}
             >
-              <FontAwesomeIcon icon={item.icon} className="w-[14px]" />
+              <FontAwesomeIcon icon={item.icon} className="w-[14px] flex-shrink-0" />
               {item.label}
             </Link>
           );
@@ -121,10 +119,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-[#2a2a4e]">
+      <div className="p-4 border-t border-white/10">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-[10px] rounded-[8px] text-sm font-medium text-[#8892b0] hover:bg-[#2a2a4e] hover:text-white transition-all"
+          className="flex items-center gap-3 w-full px-4 py-[10px] rounded-[8px] text-sm font-semibold !text-[#e2e8f0] hover:bg-[#2d2d3f] hover:!text-white transition-all"
         >
           <FontAwesomeIcon icon={faRightFromBracket} className="w-[14px]" />
           Logout
@@ -136,7 +134,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen bg-[#f4f5f7]">
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex">
+      <div className="hidden lg:flex sticky top-0 h-screen">
         <Sidebar />
       </div>
 
