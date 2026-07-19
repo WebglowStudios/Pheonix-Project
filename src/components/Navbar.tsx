@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faPhone, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+import { supabase } from "@/lib/supabase";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -19,10 +20,39 @@ export default function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  interface ContactInfo {
+    phone_landline: string;
+    phone_mobile: string;
+    whatsapp_number: string;
+    email: string;
+  }
+
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    phone_landline: "020 6689 3715",
+    phone_mobile: "+91 70212 10788",
+    whatsapp_number: "917021210788",
+    email: "phoenixcfe@gmail.com",
+  });
+
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
+
+  useEffect(() => {
+    supabase.from("site_content").select("content").eq("id", "contact_info").single()
+      .then(({ data }) => {
+        if (data?.content) {
+          const c = data.content as any;
+          setContactInfo({
+            phone_landline: c.phone_landline || "020 6689 3715",
+            phone_mobile: c.phone_mobile || "+91 70212 10788",
+            whatsapp_number: c.whatsapp_number || c.whatsapp || "917021210788",
+            email: c.email || "phoenixcfe@gmail.com",
+          });
+        }
+      });
+  }, []);
 
   return (
     <>
@@ -89,21 +119,21 @@ export default function Navbar() {
             <span className="w-[30px] h-[30px] bg-[#FFF3EB] text-[#E8740C] rounded-full flex items-center justify-center text-[0.8rem] flex-shrink-0">
               <FontAwesomeIcon icon={faPhone} />
             </span>
-            <span>020 6689 3715</span>
+            <span>{contactInfo.phone_landline}</span>
           </div>
           <div className="flex items-center gap-[10px] text-[0.85rem] text-[#444]">
             <span className="w-[30px] h-[30px] bg-[#FFF3EB] text-[#E8740C] rounded-full flex items-center justify-center text-[0.8rem] flex-shrink-0">
               <FontAwesomeIcon icon={faEnvelope} />
             </span>
-            <span>phoenixcfe@gmail.com</span>
+            <span>{contactInfo.email}</span>
           </div>
           <div className="flex gap-[10px] mt-1">
-            <a href="https://wa.me/917021210788" target="_blank" rel="noopener noreferrer"
+            <a href={`https://wa.me/${contactInfo.whatsapp_number.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-[10px] text-[0.85rem] text-[#444] transition-all hover:text-[#25D366]">
               <span className="w-[30px] h-[30px] bg-[#25D366] rounded-full flex items-center justify-center text-white text-[0.9rem] flex-shrink-0">
                 <FontAwesomeIcon icon={faWhatsapp} />
               </span>
-              +91 70212 10788
+              {contactInfo.phone_mobile}
             </a>
           </div>
         </div>

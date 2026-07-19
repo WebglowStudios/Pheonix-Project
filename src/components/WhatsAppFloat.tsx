@@ -1,11 +1,29 @@
 "use client";
+
+import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
+import { supabase } from "@/lib/supabase";
 
 export default function WhatsAppFloat() {
+  const [whatsappNumber, setWhatsappNumber] = useState("917021210788");
+
+  useEffect(() => {
+    supabase.from("site_content").select("content").eq("id", "contact_info").single()
+      .then(({ data }) => {
+        if (data?.content) {
+          const c = data.content as any;
+          const num = c.whatsapp_number || c.whatsapp;
+          if (num) {
+            setWhatsappNumber(num.replace(/\D/g, ""));
+          }
+        }
+      });
+  }, []);
+
   return (
     <a
-      href="https://wa.me/917021210788?text=Hello%20Phoenix%20Financial%20Services,%20I%20am%20interested%20in%20your%20wealth%20management%20solutions."
+      href={`https://wa.me/${whatsappNumber}?text=Hello%20Phoenix%20Financial%20Services,%20I%20am%20interested%20in%20your%20wealth%20management%20solutions.`}
       target="_blank"
       rel="noopener noreferrer"
       title="Chat on WhatsApp"

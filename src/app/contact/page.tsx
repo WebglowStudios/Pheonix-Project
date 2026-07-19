@@ -8,14 +8,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPhone, faClock, faLocationDot, faArrowRight, faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { submitContactForm } from "@/lib/actions";
+import { supabase } from "@/lib/supabase";
 
 const inputClass = "w-full px-[15px] py-[12px] border border-[#DDD] rounded-[8px] font-[inherit] text-[0.95rem] text-[#333] bg-white transition-all outline-none focus:border-[#E8740C] focus:shadow-[0_0_0_3px_#FFF3EB]";
-
-const officeInfoBlocks = [
-  { icon: faClock, label: "Office Hours", lines: ["Mon–Fri: 9 AM – 6 PM", "Sat: 10 AM – 2 PM"] },
-  { icon: faPhone, label: "Phone", lines: ["020 6689 3715", "+91 70212 10788"] },
-  { icon: faClock, label: "Email", lines: ["phoenixcfe@gmail.com"] }, // Note: using faClock matching array structure, but we will draw icon dynamically if preferred. Let's keep it simple.
-];
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false);
@@ -25,6 +20,47 @@ export default function ContactPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  interface ContactInfo {
+    phone_landline: string;
+    phone_mobile: string;
+    whatsapp_number: string;
+    email: string;
+    pune_address: string;
+    mumbai_address: string;
+  }
+
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    phone_landline: "020 6689 3715",
+    phone_mobile: "+91 70212 10788",
+    whatsapp_number: "917021210788",
+    email: "phoenixcfe@gmail.com",
+    pune_address: "708, Global Business Hub, Kharadi, Pune 411014",
+    mumbai_address: "11, Brahamsiddhi, Century Bazar Lane, Worli, Mumbai 400025",
+  });
+
+  const officeInfoBlocks = [
+    { icon: faClock, label: "Office Hours", lines: ["Mon–Fri: 9 AM – 6 PM", "Sat: 10 AM – 2 PM"] },
+    { icon: faPhone, label: "Phone", lines: [contactInfo.phone_landline, contactInfo.phone_mobile] },
+    { icon: faClock, label: "Email", lines: [contactInfo.email] },
+  ];
+
+  useEffect(() => {
+    supabase.from("site_content").select("content").eq("id", "contact_info").single()
+      .then(({ data }) => {
+        if (data?.content) {
+          const c = data.content as any;
+          setContactInfo({
+            phone_landline: c.phone_landline || "020 6689 3715",
+            phone_mobile: c.phone_mobile || "+91 70212 10788",
+            whatsapp_number: c.whatsapp_number || c.whatsapp || "917021210788",
+            email: c.email || "phoenixcfe@gmail.com",
+            pune_address: c.pune_address || "708, Global Business Hub, Kharadi, Pune 411014",
+            mumbai_address: c.mumbai_address || "11, Brahamsiddhi, Century Bazar Lane, Worli, Mumbai 400025",
+          });
+        }
+      });
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -124,12 +160,12 @@ export default function ContactPage() {
                   </div>
                   <p className="text-[0.95rem] text-[#444] mb-[15px]">Reach our advisory team directly for prompt, personalized assistance.</p>
                   <div className="flex flex-col gap-2">
-                    <a href="tel:02066893715" className="flex justify-between items-center font-semibold !text-[#E8740C] text-[0.95rem] transition-all hover:!text-[#FF9433]">
-                      <span>020 6689 3715 (Landline)</span>
+                    <a href={`tel:${contactInfo.phone_landline.replace(/\s+/g, "")}`} className="flex justify-between items-center font-semibold !text-[#E8740C] text-[0.95rem] transition-all hover:!text-[#FF9433]">
+                      <span>{contactInfo.phone_landline} (Landline)</span>
                       <FontAwesomeIcon icon={faArrowRight} />
                     </a>
-                    <a href="tel:7021210788" className="flex justify-between items-center font-semibold !text-[#E8740C] text-[0.95rem] transition-all hover:!text-[#FF9433]">
-                      <span>+91 70212 10788 (Mobile)</span>
+                    <a href={`tel:${contactInfo.phone_mobile.replace(/\s+/g, "")}`} className="flex justify-between items-center font-semibold !text-[#E8740C] text-[0.95rem] transition-all hover:!text-[#FF9433]">
+                      <span>{contactInfo.phone_mobile} (Mobile)</span>
                       <FontAwesomeIcon icon={faArrowRight} />
                     </a>
                   </div>
@@ -147,7 +183,7 @@ export default function ContactPage() {
                     </div>
                   </div>
                   <p className="text-[0.95rem] text-[#444] mb-[15px]">Reach our advisory team directly for investment queries and personalised portfolio guidance.</p>
-                  <a href="https://wa.me/918485819118?text=Hello%20Phoenix%20Financial%20Services" target="_blank" rel="noopener noreferrer"
+                  <a href={`https://wa.me/${contactInfo.whatsapp_number.replace(/\D/g, "")}?text=Hello%20Phoenix%20Financial%20Services`} target="_blank" rel="noopener noreferrer"
                     className="flex justify-between items-center font-semibold !text-[#2E7D32] text-[0.95rem] transition-all hover:!text-[#4CAF50]">
                     <span>Start WhatsApp Chat</span>
                     <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
@@ -266,8 +302,8 @@ export default function ContactPage() {
                   <div>
                     <p className="text-[0.8rem] font-bold text-[#E8740C] uppercase tracking-[1px] mb-1.5">● Pune — Headquarters</p>
                     <h4 className="text-[1.2rem] font-extrabold text-[#333] mb-2 tracking-[1.5px]">Global Business Hub</h4>
-                    <p className="text-sm text-[#444] leading-relaxed mb-4">708, Global Business Hub,<br />Kharadi, Pune 411014</p>
-                    <a href="https://maps.google.com/?q=708+Global+Business+Hub+Kharadi+Pune+411014" target="_blank" rel="noopener noreferrer"
+                    <p className="text-sm text-[#444] leading-relaxed mb-4 whitespace-pre-line">{contactInfo.pune_address}</p>
+                    <a href={`https://maps.google.com/?q=${encodeURIComponent(contactInfo.pune_address)}`} target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 border-2 border-[#333] !text-[#333] px-4 py-2 rounded-[30px] text-sm font-semibold transition-all hover:bg-[#E8740C] hover:!text-white hover:border-[#E8740C]">
                       <FontAwesomeIcon icon={faLocationDot} /> Get Directions
                     </a>
@@ -300,8 +336,8 @@ export default function ContactPage() {
                   <div>
                     <p className="text-[0.8rem] font-bold text-[#E8740C] uppercase tracking-[1px] mb-1.5">● Mumbai</p>
                     <h4 className="text-[1.2rem] font-extrabold text-[#333] mb-2 tracking-[1.5px]">Brahamsiddhi, Worli</h4>
-                    <p className="text-sm text-[#444] leading-relaxed mb-4">11, Brahamsiddhi,<br />Century Bazar Lane, Worli,<br />Mumbai 400025</p>
-                    <a href="https://maps.google.com/?q=Century+Bazar+Lane+Worli+Mumbai+400025" target="_blank" rel="noopener noreferrer"
+                    <p className="text-sm text-[#444] leading-relaxed mb-4 whitespace-pre-line">{contactInfo.mumbai_address}</p>
+                    <a href={`https://maps.google.com/?q=${encodeURIComponent(contactInfo.mumbai_address)}`} target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 border-2 border-[#333] !text-[#333] px-4 py-2 rounded-[30px] text-sm font-semibold transition-all hover:bg-[#E8740C] hover:!text-white hover:border-[#E8740C]">
                       <FontAwesomeIcon icon={faLocationDot} /> Get Directions
                     </a>

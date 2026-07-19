@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
+import ImageSelectorModal from "@/components/admin/ImageSelectorModal";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -16,7 +17,14 @@ interface AboutHomeContent {
   badge_label: string;
 }
 
+interface AboutPillar {
+  title: string;
+  desc: string;
+  icon_name: string;
+}
+
 interface AboutPageContent {
+  hero_title: string;
   hero_subtitle: string;
   section_heading: string;
   lead: string;
@@ -25,6 +33,7 @@ interface AboutPageContent {
   why_invest_heading: string;
   why_invest_body: string;
   image_url: string;
+  pillars?: AboutPillar[];
 }
 
 const HOME_DEFAULTS: AboutHomeContent = {
@@ -37,6 +46,7 @@ const HOME_DEFAULTS: AboutHomeContent = {
 };
 
 const PAGE_DEFAULTS: AboutPageContent = {
+  hero_title: "About Phoenix Financial Services",
   hero_subtitle:
     "Most financial firms offer products. We build plans. Phoenix Financial Services was established on the belief that lasting wealth demands structure, discipline, and expertise — not generic advice.",
   section_heading: "Building Wealth With Integrity & Clarity",
@@ -49,6 +59,12 @@ const PAGE_DEFAULTS: AboutPageContent = {
   why_invest_body:
     "Together, we can help define your priorities for today and help you build a better tomorrow for you and your family.",
   image_url: "/meeting.png",
+  pillars: [
+    { title: "Integrity First", desc: "All transaction records, commission sheets, and advisory frameworks disclosed upfront.", icon_name: "faShieldHalved" },
+    { title: "Research-Driven", desc: "Every recommendation is backed by data, not market hype or generic playbooks.", icon_name: "faChartLine" },
+    { title: "Genuine Guidance", desc: "One-on-one advisory built around your goals, timelines, and risk appetite.", icon_name: "faUserCheck" },
+    { title: "Fully Compliant", desc: "All products and strategies are in line with the latest SEBI, AMFI, and exchange guidelines.", icon_name: "faScaleUnbalancedFlip" },
+  ]
 };
 
 // ── Shared UI ─────────────────────────────────────────────────────────────────
@@ -76,6 +92,7 @@ function HomeSnippetTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [isMediaOpen, setIsMediaOpen] = useState(false);
 
   const showToast = (msg: string, type: "success" | "error") => {
     setToast({ message: msg, type });
@@ -180,14 +197,31 @@ function HomeSnippetTab() {
 
         <div>
           <label className={labelClass}>Image Path</label>
-          <input
-            value={content.image_url}
-            onChange={(e) => setContent((p) => ({ ...p, image_url: e.target.value }))}
-            placeholder="/meeting.png"
-            className={inputClass}
-          />
+          <div className="flex gap-2">
+            <input
+              value={content.image_url}
+              onChange={(e) => setContent((p) => ({ ...p, image_url: e.target.value }))}
+              placeholder="/meeting.png"
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={() => setIsMediaOpen(true)}
+              className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+            >
+              Browse Media
+            </button>
+          </div>
         </div>
       </div>
+      <ImageSelectorModal
+        isOpen={isMediaOpen}
+        onClose={() => setIsMediaOpen(false)}
+        onSelect={(url) => {
+          setContent((p) => ({ ...p, image_url: url }));
+          setIsMediaOpen(false);
+        }}
+      />
     </div>
   );
 }
@@ -199,6 +233,7 @@ function AboutPageTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [isMediaOpen, setIsMediaOpen] = useState(false);
 
   const showToast = (msg: string, type: "success" | "error") => {
     setToast({ message: msg, type });
@@ -250,8 +285,16 @@ function AboutPageTab() {
       </div>
 
       {/* Page Hero */}
-      <div className="bg-white rounded-[10px] shadow-sm p-6 mb-5">
-        <h3 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">Page Hero</h3>
+      <div className="bg-white rounded-[10px] shadow-sm p-6 mb-5 flex flex-col gap-4">
+        <h3 className="font-bold text-[#333] mb-2 pb-2 border-b border-[#EEE]">Page Hero</h3>
+        <div>
+          <label className={labelClass}>Hero Title</label>
+          <input
+            value={content.hero_title}
+            onChange={(e) => setContent((p) => ({ ...p, hero_title: e.target.value }))}
+            className={inputClass}
+          />
+        </div>
         <div>
           <label className={labelClass}>Hero Subtitle</label>
           <textarea
@@ -304,12 +347,21 @@ function AboutPageTab() {
           </div>
           <div>
             <label className={labelClass}>Image Path</label>
-            <input
-              value={content.image_url}
-              onChange={(e) => setContent((p) => ({ ...p, image_url: e.target.value }))}
-              placeholder="/meeting.png"
-              className={inputClass}
-            />
+            <div className="flex gap-2">
+              <input
+                value={content.image_url}
+                onChange={(e) => setContent((p) => ({ ...p, image_url: e.target.value }))}
+                placeholder="/meeting.png"
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={() => setIsMediaOpen(true)}
+                className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+              >
+                Browse Media
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -337,6 +389,53 @@ function AboutPageTab() {
           </div>
         </div>
       </div>
+
+      {/* Pillars */}
+      <div className="bg-white rounded-[10px] shadow-sm p-6 mb-5">
+        <h3 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">Pillars (Why Invest Details)</h3>
+        <div className="flex flex-col gap-5">
+          {(content.pillars || PAGE_DEFAULTS.pillars || []).map((pillar, i) => (
+            <div key={i} className="border-b border-[#EEE] pb-4 last:border-0 last:pb-0">
+              <span className="text-xs font-bold text-[#E8740C] uppercase block mb-2">Pillar {i + 1} ({pillar.title})</span>
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label className={labelClass}>Title</label>
+                  <input
+                    value={pillar.title}
+                    onChange={(e) => {
+                      const newPillars = [...(content.pillars || PAGE_DEFAULTS.pillars || [])];
+                      newPillars[i] = { ...newPillars[i], title: e.target.value };
+                      setContent((p) => ({ ...p, pillars: newPillars }));
+                    }}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Description</label>
+                  <textarea
+                    rows={2}
+                    value={pillar.desc}
+                    onChange={(e) => {
+                      const newPillars = [...(content.pillars || PAGE_DEFAULTS.pillars || [])];
+                      newPillars[i] = { ...newPillars[i], desc: e.target.value };
+                      setContent((p) => ({ ...p, pillars: newPillars }));
+                    }}
+                    className={inputClass + " resize-none"}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <ImageSelectorModal
+        isOpen={isMediaOpen}
+        onClose={() => setIsMediaOpen(false)}
+        onSelect={(url) => {
+          setContent((p) => ({ ...p, image_url: url }));
+          setIsMediaOpen(false);
+        }}
+      />
     </div>
   );
 }

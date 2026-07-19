@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
+import ImageSelectorModal from "@/components/admin/ImageSelectorModal";
 
 interface GoalCard {
   title: string;
@@ -64,6 +65,8 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [isMediaOpen, setIsMediaOpen] = useState(false);
+  const [activeGoalIndex, setActiveGoalIndex] = useState<number | null>(null);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -187,12 +190,24 @@ export default function GoalsPage() {
             </div>
             <div>
               <label className={labelClass}>Image Path</label>
-              <input
-                value={goal.image}
-                onChange={(e) => updateGoal(i, "image", e.target.value)}
-                placeholder="/goal_retirement.png"
-                className={inputClass}
-              />
+              <div className="flex gap-2">
+                <input
+                  value={goal.image}
+                  onChange={(e) => updateGoal(i, "image", e.target.value)}
+                  placeholder="/goal_retirement.png"
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveGoalIndex(i);
+                    setIsMediaOpen(true);
+                  }}
+                  className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+                >
+                  Browse Media
+                </button>
+              </div>
               <p className="text-xs text-[#999] mt-1">Path relative to /public</p>
             </div>
           </div>
@@ -209,6 +224,20 @@ export default function GoalsPage() {
           {saving ? "Saving..." : "Save All Changes"}
         </button>
       </div>
+      <ImageSelectorModal
+        isOpen={isMediaOpen}
+        onClose={() => {
+          setIsMediaOpen(false);
+          setActiveGoalIndex(null);
+        }}
+        onSelect={(url) => {
+          if (activeGoalIndex !== null) {
+            updateGoal(activeGoalIndex, "image", url);
+          }
+          setIsMediaOpen(false);
+          setActiveGoalIndex(null);
+        }}
+      />
     </div>
   );
 }

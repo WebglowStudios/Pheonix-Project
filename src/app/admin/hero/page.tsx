@@ -5,6 +5,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
+import ImageSelectorModal from "@/components/admin/ImageSelectorModal";
 
 interface HeroContent {
   title: string;
@@ -46,6 +47,7 @@ export default function HeroPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [isMediaOpen, setIsMediaOpen] = useState(false);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
@@ -156,12 +158,21 @@ export default function HeroPage() {
 
         <div>
           <label className={labelClass}>Hero Image Path</label>
-          <input
-            value={content.image_url}
-            onChange={(e) => setContent((p) => ({ ...p, image_url: e.target.value }))}
-            placeholder="/hero.png"
-            className={inputClass}
-          />
+          <div className="flex gap-2">
+            <input
+              value={content.image_url}
+              onChange={(e) => setContent((p) => ({ ...p, image_url: e.target.value }))}
+              placeholder="/hero.png"
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={() => setIsMediaOpen(true)}
+              className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+            >
+              Browse Media
+            </button>
+          </div>
           <p className="text-xs text-[#999] mt-1">Path relative to /public (e.g. /hero.png)</p>
         </div>
       </div>
@@ -214,6 +225,14 @@ export default function HeroPage() {
           )}
         </div>
       </div>
+      <ImageSelectorModal
+        isOpen={isMediaOpen}
+        onClose={() => setIsMediaOpen(false)}
+        onSelect={(url) => {
+          setContent((p) => ({ ...p, image_url: url }));
+          setIsMediaOpen(false);
+        }}
+      />
     </div>
   );
 }

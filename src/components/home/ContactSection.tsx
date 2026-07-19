@@ -16,6 +16,24 @@ export default function ContactSection() {
   const [subheading, setSubheading] = useState("Speak with our expert advisors today — and take the first step toward structured, long-term wealth management");
   const formRef = useRef<HTMLFormElement>(null);
 
+  interface ContactInfo {
+    phone_landline: string;
+    phone_mobile: string;
+    whatsapp_number: string;
+    email: string;
+    pune_address: string;
+    mumbai_address: string;
+  }
+
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    phone_landline: "020 6689 3715",
+    phone_mobile: "+91 70212 10788",
+    whatsapp_number: "917021210788",
+    email: "phoenixcfe@gmail.com",
+    pune_address: "708, Global Business Hub, Kharadi, Pune 411014",
+    mumbai_address: "11, Brahamsiddhi, Century Bazar Lane, Worli, Mumbai 400025",
+  });
+
   useEffect(() => {
     supabase.from("site_content").select("content").eq("id", "home_contact").single()
       .then(({ data }) => {
@@ -23,6 +41,21 @@ export default function ContactSection() {
           const c = data.content as { section_heading?: string; section_subheading?: string };
           if (c.section_heading) setHeading(c.section_heading);
           if (c.section_subheading) setSubheading(c.section_subheading);
+        }
+      });
+
+    supabase.from("site_content").select("content").eq("id", "contact_info").single()
+      .then(({ data }) => {
+        if (data?.content) {
+          const c = data.content as any;
+          setContactInfo({
+            phone_landline: c.phone_landline || "020 6689 3715",
+            phone_mobile: c.phone_mobile || "+91 70212 10788",
+            whatsapp_number: c.whatsapp_number || c.whatsapp || "917021210788",
+            email: c.email || "phoenixcfe@gmail.com",
+            pune_address: c.pune_address || "708, Global Business Hub, Kharadi, Pune 411014",
+            mumbai_address: c.mumbai_address || "11, Brahamsiddhi, Century Bazar Lane, Worli, Mumbai 400025",
+          });
         }
       });
   }, []);
@@ -99,8 +132,8 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <h5 className="text-base text-[#333] font-semibold mb-1">Pune Office</h5>
-                  <p className="text-[0.95rem] text-[#444]">708, Global Business Hub,<br />Kharadi, Pune 411014</p>
-                  <a href="https://maps.google.com/?q=708+Global+Business+Hub+Kharadi+Pune+411014" target="_blank" rel="noopener noreferrer" className="text-[0.82rem] font-semibold text-[#E8740C] inline-flex items-center gap-1 mt-1 hover:text-[#FF9433]">
+                  <p className="text-[0.95rem] text-[#444] whitespace-pre-line">{contactInfo.pune_address}</p>
+                  <a href={`https://maps.google.com/?q=${encodeURIComponent(contactInfo.pune_address)}`} target="_blank" rel="noopener noreferrer" className="text-[0.82rem] font-semibold text-[#E8740C] inline-flex items-center gap-1 mt-1 hover:text-[#FF9433]">
                     Get Directions <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-xs" />
                   </a>
                 </div>
@@ -112,8 +145,8 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <h5 className="text-base text-[#333] font-semibold mb-1">Mumbai Office</h5>
-                  <p className="text-[0.95rem] text-[#444]">11, Brahamsiddhi, Century Bazar Lane,<br />Worli, Mumbai 400025</p>
-                  <a href="https://maps.google.com/?q=Century+Bazar+Lane+Worli+Mumbai+400025" target="_blank" rel="noopener noreferrer" className="text-[0.82rem] font-semibold text-[#E8740C] inline-flex items-center gap-1 mt-1 hover:text-[#FF9433]">
+                  <p className="text-[0.95rem] text-[#444] whitespace-pre-line">{contactInfo.mumbai_address}</p>
+                  <a href={`https://maps.google.com/?q=${encodeURIComponent(contactInfo.mumbai_address)}`} target="_blank" rel="noopener noreferrer" className="text-[0.82rem] font-semibold text-[#E8740C] inline-flex items-center gap-1 mt-1 hover:text-[#FF9433]">
                     Get Directions <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-xs" />
                   </a>
                 </div>
@@ -125,7 +158,7 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <h5 className="text-base text-[#333] font-semibold mb-1">Mobile</h5>
-                  <p className="text-[0.95rem] text-[#444]">+91 70212 10788</p>
+                  <p className="text-[0.95rem] text-[#444]">{contactInfo.phone_mobile}</p>
                 </div>
               </div>
               {/* Phone */}
@@ -135,7 +168,7 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <h5 className="text-base text-[#333] font-semibold mb-1">Phone</h5>
-                  <p className="text-[0.95rem] text-[#444]">020 6689 3715</p>
+                  <p className="text-[0.95rem] text-[#444]">{contactInfo.phone_landline}</p>
                 </div>
               </div>
               {/* Email */}
@@ -145,7 +178,7 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <h5 className="text-base text-[#333] font-semibold mb-1">Email Us</h5>
-                  <p className="text-[0.95rem] text-[#444]">phoenixcfe@gmail.com<br /><span className="text-[0.8rem] text-[#444]">We reply within 24 hours</span></p>
+                  <p className="text-[0.95rem] text-[#444]">{contactInfo.email}<br /><span className="text-[0.8rem] text-[#444]">We reply within 24 hours</span></p>
                 </div>
               </div>
             </div>

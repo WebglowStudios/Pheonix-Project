@@ -6,13 +6,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase";
 
-const HOME_FAQ_QUESTIONS = [
-  "How do I get started?",
-  "Is there a minimum investment amount?",
-  "What products does Phoenix Financial Services offer?",
-  "Is my money safe with Phoenix Financial Services?",
-];
-
 interface FAQ {
   id: string;
   question: string;
@@ -50,13 +43,12 @@ export default function FaqSection() {
     supabase
       .from("faqs")
       .select("id, question, answer")
-      .in("question", HOME_FAQ_QUESTIONS)
+      .order("sort_order", { ascending: true })
+      .limit(4)
       .then(({ data }) => {
         if (data && data.length > 0) {
-          const sorted = HOME_FAQ_QUESTIONS.map((q) => data.find((d) => d.question === q))
-            .filter(Boolean) as FAQ[];
-          setFaqs(sorted);
-          setActive(sorted[0]?.id ?? null);
+          setFaqs(data);
+          setActive(data[0]?.id ?? null);
         }
       });
   }, []);

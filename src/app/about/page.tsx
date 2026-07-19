@@ -8,14 +8,21 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShieldHalved, faChartLine, faUserCheck, faScaleUnbalancedFlip } from "@fortawesome/free-solid-svg-icons";
+import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { supabase } from "@/lib/supabase";
 
-const pillars = [
-  { icon: faShieldHalved, title: "Integrity First", desc: "All transaction records, commission sheets, and advisory frameworks disclosed upfront." },
-  { icon: faChartLine, title: "Research-Driven", desc: "Every recommendation is backed by data, not market hype or generic playbooks." },
-  { icon: faUserCheck, title: "Genuine Guidance", desc: "One-on-one advisory built around your goals, timelines, and risk appetite." },
-  { icon: faScaleUnbalancedFlip, title: "Fully Compliant", desc: "All products and strategies are in line with the latest SEBI, AMFI, and exchange guidelines." },
-];
+const PILLAR_ICONS: Record<string, IconDefinition> = {
+  faShieldHalved,
+  faChartLine,
+  faUserCheck,
+  faScaleUnbalancedFlip,
+};
+
+interface AboutPillar {
+  title: string;
+  desc: string;
+  icon_name: string;
+}
 
 interface AboutContent {
   hero_title: string;
@@ -27,6 +34,7 @@ interface AboutContent {
   why_invest_heading: string;
   why_invest_body: string;
   image_url: string;
+  pillars?: AboutPillar[];
 }
 
 const DEFAULTS: AboutContent = {
@@ -39,6 +47,12 @@ const DEFAULTS: AboutContent = {
   why_invest_heading: "Why Invest With Us?",
   why_invest_body: "Together, we can help define your priorities for today and help you build a better tomorrow for you and your family. Our team combines research-driven insight with genuine, one-on-one guidance — so every recommendation is built around your goals, not a generic playbook.",
   image_url: "/meeting.png",
+  pillars: [
+    { title: "Integrity First", desc: "All transaction records, commission sheets, and advisory frameworks disclosed upfront.", icon_name: "faShieldHalved" },
+    { title: "Research-Driven", desc: "Every recommendation is backed by data, not market hype or generic playbooks.", icon_name: "faChartLine" },
+    { title: "Genuine Guidance", desc: "One-on-one advisory built around your goals, timelines, and risk appetite.", icon_name: "faUserCheck" },
+    { title: "Fully Compliant", desc: "All products and strategies are in line with the latest SEBI, AMFI, and exchange guidelines.", icon_name: "faScaleUnbalancedFlip" },
+  ]
 };
 
 export default function AboutPage() {
@@ -101,17 +115,20 @@ export default function AboutPage() {
                 <p className="text-[#444]">{content.why_invest_body}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-[25px]">
-                {pillars.map((p) => (
-                  <div key={p.title} className="flex gap-[15px] items-start">
-                    <div className="w-[60px] h-[60px] rounded-full bg-[#FFF3EB] text-[#E8740C] flex items-center justify-center text-[1.5rem] flex-shrink-0">
-                      <FontAwesomeIcon icon={p.icon} />
+                {(content.pillars || DEFAULTS.pillars || []).map((p) => {
+                  const icon = PILLAR_ICONS[p.icon_name] || faShieldHalved;
+                  return (
+                    <div key={p.title} className="flex gap-[15px] items-start">
+                      <div className="w-[60px] h-[60px] rounded-full bg-[#FFF3EB] text-[#E8740C] flex items-center justify-center text-[1.5rem] flex-shrink-0">
+                        <FontAwesomeIcon icon={icon} />
+                      </div>
+                      <div>
+                        <h4 className="text-base font-bold text-[#333] mb-1.5 tracking-[1.5px]">{p.title}</h4>
+                        <p className="text-[0.88rem] text-[#444] leading-relaxed">{p.desc}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-base font-bold text-[#333] mb-1.5 tracking-[1.5px]">{p.title}</h4>
-                      <p className="text-[0.88rem] text-[#444] leading-relaxed">{p.desc}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
