@@ -9,6 +9,7 @@ import {
   faChevronUp,
   faCheck,
   faEye,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface Lead {
@@ -114,6 +115,22 @@ export default function LeadsPage() {
       showToast("Failed to save notes", "error");
     } else {
       showToast("Notes saved", "success");
+    }
+    setSaving(null);
+  }
+
+  async function deleteLead(id: string) {
+    if (!confirm("Are you sure you want to delete this lead? This action cannot be undone.")) return;
+    setSaving(id + "_delete");
+    const { error } = await supabase
+      .from("contact_submissions")
+      .delete()
+      .eq("id", id);
+    if (error) {
+      showToast("Failed to delete lead: " + error.message, "error");
+    } else {
+      setLeads(prev => prev.filter(l => l.id !== id));
+      showToast("Lead entry deleted", "success");
     }
     setSaving(null);
   }
@@ -263,6 +280,13 @@ export default function LeadsPage() {
                                   className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFF3EB] text-[#E8740C] border border-[#E8740C] rounded-[6px] text-xs font-semibold hover:bg-[#FFE4CC] disabled:opacity-50 transition-all"
                                 >
                                   Reset to New
+                                </button>
+                                <button
+                                  onClick={() => deleteLead(lead.id)}
+                                  disabled={saving === lead.id + "_delete"}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#FFEBEE] text-[#C62828] border border-[#FFCDD2] rounded-[6px] text-xs font-semibold hover:bg-[#FFCDD2] disabled:opacity-50 transition-all ml-auto"
+                                >
+                                  <FontAwesomeIcon icon={faTrash} className="text-[10px]" /> Delete Lead
                                 </button>
                               </div>
                             </div>

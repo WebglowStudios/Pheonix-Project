@@ -5,7 +5,14 @@ import { supabase } from "@/lib/supabase";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 
-interface ContactContent {
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface HomeContactContent {
+  section_heading: string;
+  section_subheading: string;
+}
+
+interface ContactDetailsContent {
   phone_landline: string;
   phone_mobile: string;
   whatsapp_number: string;
@@ -15,7 +22,12 @@ interface ContactContent {
   services?: string[];
 }
 
-const DEFAULT: ContactContent = {
+const HOME_DEFAULTS: HomeContactContent = {
+  section_heading: "Get in Touch",
+  section_subheading: "Speak with our expert advisors today — and take the first step toward structured, long-term wealth management",
+};
+
+const DETAILS_DEFAULTS: ContactDetailsContent = {
   phone_landline: "",
   phone_mobile: "",
   whatsapp_number: "",
@@ -24,6 +36,8 @@ const DEFAULT: ContactContent = {
   mumbai_address: "",
   services: ["Advisory", "Asset Management", "Fixed Income"],
 };
+
+// ── Components ────────────────────────────────────────────────────────────────
 
 function Toast({ message, type }: { message: string; type: "success" | "error" }) {
   return (
@@ -36,8 +50,84 @@ function Toast({ message, type }: { message: string; type: "success" | "error" }
 const inputClass = "border border-[#DDD] rounded-[8px] px-3 py-2 w-full focus:border-[#E8740C] outline-none text-sm text-[#333] bg-white";
 const labelClass = "block text-sm font-semibold text-[#555] mb-1";
 
-export default function ContactInfoPage() {
-  const [content, setContent] = useState<ContactContent>(DEFAULT);
+// ── Home Snippet Tab ──────────────────────────────────────────────────────────
+
+function HomeContactTab() {
+  const [content, setContent] = useState<HomeContactContent>(HOME_DEFAULTS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (msg: string, type: "success" | "error") => {
+    setToast({ message: msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  useEffect(() => {
+    supabase.from("site_content").select("content").eq("id", "home_contact").single()
+      .then(({ data }) => {
+        if (data?.content) setContent({ ...HOME_DEFAULTS, ...data.content });
+        setLoading(false);
+      });
+  }, []);
+
+  async function save() {
+    setSaving(true);
+    const { error } = await supabase
+      .from("site_content")
+      .upsert({ id: "home_contact", content }, { onConflict: "id" });
+    if (error) showToast("Failed to save: " + error.message, "error");
+    else showToast("Contact section saved!", "success");
+    setSaving(false);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-[#E8740C] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-[700px]">
+      {toast && <Toast message={toast.message} type={toast.type} />}
+
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-[1.8rem] font-bold text-[#333]">Home Contact Section</h1>
+          <p className="text-[#666] text-sm mt-1">Edit the heading and subheading of the contact section on the homepage</p>
+        </div>
+        <button onClick={save} disabled={saving}
+          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all">
+          <FontAwesomeIcon icon={faFloppyDisk} />
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
+
+      <div className="bg-white rounded-[10px] shadow-sm p-6 flex flex-col gap-5">
+        <div>
+          <label className={labelClass}>Section Heading</label>
+          <input value={content.section_heading}
+            onChange={(e) => setContent((p) => ({ ...p, section_heading: e.target.value }))}
+            className={inputClass} />
+          <p className="text-xs text-[#999] mt-1">"Touch" will be highlighted in orange automatically</p>
+        </div>
+        <div>
+          <label className={labelClass}>Section Subheading</label>
+          <textarea rows={3} value={content.section_subheading}
+            onChange={(e) => setContent((p) => ({ ...p, section_subheading: e.target.value }))}
+            className={inputClass + " resize-none"} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Contact Details Tab ───────────────────────────────────────────────────────
+
+function ContactDetailsTab() {
+  const [content, setContent] = useState<ContactDetailsContent>(DETAILS_DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -49,7 +139,7 @@ export default function ContactInfoPage() {
 
   useEffect(() => {
     supabase.from("site_content").select("content").eq("id", "contact_info").single().then(({ data }) => {
-      if (data?.content) setContent({ ...DEFAULT, ...data.content });
+      if (data?.content) setContent({ ...DETAILS_DEFAULTS, ...data.content });
       setLoading(false);
     });
   }, []);
@@ -60,7 +150,7 @@ export default function ContactInfoPage() {
       .from("site_content")
       .upsert({ id: "contact_info", content }, { onConflict: "id" });
     if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Contact info saved!", "success");
+    else showToast("Contact details saved!", "success");
     setSaving(false);
   }
 
@@ -149,13 +239,13 @@ export default function ContactInfoPage() {
         
         {/* Current List */}
         <div className="flex flex-wrap gap-2.5 mb-4">
-          {(content.services || DEFAULT.services || []).map((srv) => (
+          {(content.services || DETAILS_DEFAULTS.services || []).map((srv) => (
             <span key={srv} className="px-3.5 py-1.5 bg-[#FFF3EB] border border-[#E8740C]/25 text-[#E8740C] rounded-[20px] text-xs font-bold flex items-center gap-2">
               {srv}
               <button
                 type="button"
                 onClick={() => {
-                  const updated = (content.services || DEFAULT.services || []).filter((s) => s !== srv);
+                  const updated = (content.services || DETAILS_DEFAULTS.services || []).filter((s) => s !== srv);
                   setContent((p) => ({ ...p, services: updated }));
                 }}
                 className="hover:text-red-600 transition-colors font-bold text-sm leading-none"
@@ -164,7 +254,7 @@ export default function ContactInfoPage() {
               </button>
             </span>
           ))}
-          {(content.services || DEFAULT.services || []).length === 0 && (
+          {(content.services || DETAILS_DEFAULTS.services || []).length === 0 && (
             <p className="text-gray-400 text-xs italic">No service options configured.</p>
           )}
         </div>
@@ -181,7 +271,7 @@ export default function ContactInfoPage() {
                 e.preventDefault();
                 const val = (e.target as HTMLInputElement).value.trim();
                 if (val) {
-                  const current = content.services || DEFAULT.services || [];
+                  const current = content.services || DETAILS_DEFAULTS.services || [];
                   if (!current.includes(val)) {
                     setContent((p) => ({ ...p, services: [...current, val] }));
                   }
@@ -196,7 +286,7 @@ export default function ContactInfoPage() {
               const input = document.getElementById("new-service-input") as HTMLInputElement;
               const val = input?.value.trim();
               if (val) {
-                const current = content.services || DEFAULT.services || [];
+                const current = content.services || DETAILS_DEFAULTS.services || [];
                 if (!current.includes(val)) {
                   setContent((p) => ({ ...p, services: [...current, val] }));
                 }
@@ -209,17 +299,43 @@ export default function ContactInfoPage() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="flex justify-end">
+// ── Main Layout ────────────────────────────────────────────────────────────────
+
+export default function ContactAdminPage() {
+  const [tab, setTab] = useState<"home" | "details">("home");
+
+  return (
+    <div className="max-w-[700px]">
+      {/* Tabs list */}
+      <div className="flex border-b border-[#EEE] mb-6">
         <button
-          onClick={save}
-          disabled={saving}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-6 py-3 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
+          onClick={() => setTab("home")}
+          className={`px-5 py-2.5 font-semibold text-sm transition-all border-b-2 ${
+            tab === "home"
+              ? "border-[#E8740C] text-[#E8740C]"
+              : "border-transparent text-[#666] hover:text-[#333]"
+          }`}
         >
-          <FontAwesomeIcon icon={faFloppyDisk} />
-          {saving ? "Saving..." : "Save All Changes"}
+          Home Snippet
+        </button>
+        <button
+          onClick={() => setTab("details")}
+          className={`px-5 py-2.5 font-semibold text-sm transition-all border-b-2 ${
+            tab === "details"
+              ? "border-[#E8740C] text-[#E8740C]"
+              : "border-transparent text-[#666] hover:text-[#333]"
+          }`}
+        >
+          Contact Details
         </button>
       </div>
+
+      {/* Tab content rendering */}
+      {tab === "home" ? <HomeContactTab /> : <ContactDetailsTab />}
     </div>
   );
 }

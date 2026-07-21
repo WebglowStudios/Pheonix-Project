@@ -25,15 +25,16 @@ import {
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: faHouse },
   { href: "/admin/leads", label: "Leads", icon: faInbox },
+  { isHeader: true, label: "Homepage Sections" },
   { href: "/admin/hero", label: "Hero Section", icon: faImage },
   { href: "/admin/home-services", label: "Home Services", icon: faHouse },
-  { href: "/admin/home-contact", label: "Home Contact", icon: faAddressBook },
-  { href: "/admin/about", label: "About Page", icon: faInfo },
-  { href: "/admin/services", label: "Services", icon: faBriefcase },
   { href: "/admin/process", label: "Process Steps", icon: faListOl },
   { href: "/admin/goals", label: "Goals", icon: faBullseye },
   { href: "/admin/faqs", label: "FAQs", icon: faCircleQuestion },
-  { href: "/admin/contact", label: "Contact Info", icon: faAddressBook },
+  { isHeader: true, label: "Pages & Settings" },
+  { href: "/admin/about", label: "About Page", icon: faInfo },
+  { href: "/admin/services", label: "Services", icon: faBriefcase },
+  { href: "/admin/contact", label: "Contact Page", icon: faAddressBook },
   { href: "/admin/settings", label: "Site Settings", icon: faGear },
 ];
 
@@ -98,12 +99,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Nav items */}
       <nav className="flex-1 py-4 px-3 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
+        {NAV_ITEMS.map((item, idx) => {
+          if (item.isHeader) {
+            return (
+              <div key={`hdr-${idx}`} className="text-white/40 uppercase tracking-[1.5px] text-[10px] font-bold px-4 pt-4 pb-2">
+                {item.label}
+              </div>
+            );
+          }
+          const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href!));
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href!}
               onClick={() => setSidebarOpen(false)}
               className={`flex items-center gap-3 px-4 py-[10px] rounded-[8px] mb-1 text-sm font-semibold transition-all no-underline ${
                 isActive
@@ -111,7 +119,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   : "!text-[#e2e8f0] hover:bg-[#2d2d3f] hover:!text-white"
               }`}
             >
-              <FontAwesomeIcon icon={item.icon} className="w-[14px] flex-shrink-0" />
+              <FontAwesomeIcon icon={item.icon!} className="w-[14px] flex-shrink-0" />
               {item.label}
             </Link>
           );
