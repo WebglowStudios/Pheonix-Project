@@ -133,18 +133,22 @@ export default function Footer() {
         {/* Compliance */}
         <div className="py-6 border-t border-white/10 mb-[10px]">
           <p className="text-center text-[0.7rem] font-bold text-[#888] uppercase tracking-[2px] mb-5">Registered &amp; Compliant With</p>
-          <div className="flex items-center justify-center flex-wrap gap-px">
-            {compliance.map((c, i) => (
-              <div key={c.label} className={`flex items-center gap-3 px-6 py-3 ${i !== compliance.length - 1 ? "border-r border-white/10" : ""}`}>
-                <div className="w-8 h-8 rounded-full bg-[#E8740C]/10 border border-[#E8740C]/20 flex items-center justify-center flex-shrink-0">
-                  <FontAwesomeIcon icon={c.icon} className="text-[0.75rem] text-[#E8740C]" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-[900px] mx-auto px-2">
+            {compliance.map((c) => (
+              <div
+                key={c.label}
+                className="flex items-center gap-3 p-3 rounded-[12px] bg-white/[0.04] border border-white/10 transition-all hover:bg-white/[0.08] hover:border-[#E8740C]/30"
+              >
+                <div className="w-8 h-8 rounded-full bg-[#E8740C]/15 border border-[#E8740C]/30 flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon icon={c.icon} className="text-[0.8rem] text-[#E8740C]" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[0.8rem] font-extrabold text-white uppercase tracking-[1px] leading-none mb-[5px]">{c.label}</span>
-                  {c.reg
-                    ? <span className="text-[0.68rem] font-mono text-[#E8740C] leading-none">{c.reg}</span>
-                    : <span className="text-[0.68rem] text-[#666] leading-none italic">Registered</span>
-                  }
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[0.8rem] font-extrabold text-white uppercase tracking-[1px] leading-tight mb-0.5">{c.label}</span>
+                  {c.reg ? (
+                    <span className="text-[0.68rem] font-mono text-[#E8740C] leading-none truncate">{c.reg}</span>
+                  ) : (
+                    <span className="text-[0.68rem] text-[#888] leading-none italic">Registered</span>
+                  )}
                 </div>
               </div>
             ))}
