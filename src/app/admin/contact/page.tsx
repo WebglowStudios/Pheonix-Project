@@ -200,7 +200,7 @@ function ContactDetailsTab() {
           </div>
           <div>
             <label className={labelClass}>Email Address</label>
-            <input type="email" value={content.email} onChange={e => setContent(p => ({ ...p, email: e.target.value }))} placeholder="phoenixcfe@gmail.com" className={inputClass} />
+            <input type="email" value={content.email} onChange={e => setContent(p => ({ ...p, email: e.target.value }))} placeholder="connect@phoenixfiserv.co.in" className={inputClass} />
           </div>
         </div>
       </div>

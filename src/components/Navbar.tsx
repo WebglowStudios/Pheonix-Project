@@ -31,7 +31,7 @@ export default function Navbar() {
     phone_landline: "020 6689 3715",
     phone_mobile: "+91 70212 10788",
     whatsapp_number: "917021210788",
-    email: "phoenixcfe@gmail.com",
+    email: "connect@phoenixfiserv.co.in",
   });
 
   useEffect(() => {
@@ -48,7 +48,7 @@ export default function Navbar() {
             phone_landline: c.phone_landline || "020 6689 3715",
             phone_mobile: c.phone_mobile || "+91 70212 10788",
             whatsapp_number: c.whatsapp_number || c.whatsapp || "917021210788",
-            email: c.email || "phoenixcfe@gmail.com",
+            email: c.email || "connect@phoenixfiserv.co.in",
           });
         }
       });

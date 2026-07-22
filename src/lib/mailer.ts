@@ -38,8 +38,8 @@ export function formatConnectTime(rawTime?: string): string {
 }
 
 export async function sendLeadNotification(data: LeadEmailData) {
-  const adminEmail = process.env.ADMIN_EMAIL ?? "chirag@phoenixfiserv.co.in";
-  const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "chirag@phoenixfiserv.co.in";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "connect@phoenixfiserv.co.in";
+  const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "connect@phoenixfiserv.co.in";
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://phoenixfiserv.co.in").replace(/\/$/, "");
 
   const sourceLabel = data.source === "home_page" ? "Homepage Form" : "Contact Page Form";
@@ -157,7 +157,7 @@ export async function sendUserThankYouEmail(data: LeadEmailData) {
   const ENABLE_USER_THANK_YOU_EMAIL = false;
   if (!ENABLE_USER_THANK_YOU_EMAIL) return;
 
-  const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "chirag@phoenixfiserv.co.in";
+  const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "connect@phoenixfiserv.co.in";
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://phoenixfiserv.co.in").replace(/\/$/, "");
   const connectTimeLabel = formatConnectTime(data.connect_time);
 
