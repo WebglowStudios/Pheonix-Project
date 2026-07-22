@@ -16,6 +16,7 @@ import {
   faBullseye,
   faAddressBook,
   faGear,
+  faBullhorn,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface Lead {
@@ -87,6 +88,7 @@ export default function AdminDashboard() {
     { href: "/admin/process", label: "Process Steps", icon: faListOl },
     { href: "/admin/goals", label: "Goals", icon: faBullseye },
     { href: "/admin/faqs", label: "Manage FAQs", icon: faCircleQuestion },
+    { href: "/admin/promo", label: "Promo Popup", icon: faBullhorn },
     { href: "/admin/contact", label: "Contact Info", icon: faAddressBook },
     { href: "/admin/settings", label: "Site Settings", icon: faGear },
   ];

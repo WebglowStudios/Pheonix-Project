@@ -17,6 +17,7 @@ import {
   faCircleQuestion,
   faAddressBook,
   faGear,
+  faBullhorn,
   faRightFromBracket,
   faBars,
   faXmark,
@@ -25,6 +26,7 @@ import {
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: faHouse },
   { href: "/admin/leads", label: "Leads", icon: faInbox },
+  { href: "/admin/promo", label: "Promo Popup", icon: faBullhorn },
   { isHeader: true, label: "Homepage Sections" },
   { href: "/admin/hero", label: "Hero Section", icon: faImage },
   { href: "/admin/home-services", label: "Home Services", icon: faHouse },
@@ -89,20 +91,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const Sidebar = () => (
     <aside className="w-[260px] h-full bg-[#1a1b23] flex flex-col flex-shrink-0">
       {/* Logo area */}
-      <div className="flex flex-col items-center justify-center py-6 px-5 border-b border-white/10">
-        <div className="w-[52px] h-[52px] rounded-full overflow-hidden bg-white flex items-center justify-center mb-3 ring-2 ring-[#E8740C]/40">
-          <Image src="/logo.jpg" alt="Logo" width={52} height={52} className="object-contain" />
+      <div className="flex flex-col items-center justify-center py-4 px-4 border-b border-white/10">
+        <div className="w-[44px] h-[44px] rounded-full overflow-hidden bg-white flex items-center justify-center mb-2 ring-2 ring-[#E8740C]/40">
+          <Image src="/logo.jpg" alt="Logo" width={44} height={44} className="object-contain" />
         </div>
         <p className="text-white font-bold text-sm leading-tight text-center">Phoenix Financial</p>
-        <p className="text-[#E8740C] text-xs font-semibold mt-0.5 uppercase tracking-[1px]">Admin Panel</p>
+        <p className="text-[#E8740C] text-[11px] font-semibold mt-0.5 uppercase tracking-[1px]">Admin Panel</p>
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 py-4 px-3 overflow-y-auto">
+      <nav className="flex-1 py-2 px-3 overflow-y-auto">
         {NAV_ITEMS.map((item, idx) => {
           if (item.isHeader) {
             return (
-              <div key={`hdr-${idx}`} className="text-white/40 uppercase tracking-[1.5px] text-[10px] font-bold px-4 pt-4 pb-2">
+              <div key={`hdr-${idx}`} className="text-white/40 uppercase tracking-[1.5px] text-[10px] font-bold px-3 pt-3 pb-1.5">
                 {item.label}
               </div>
             );
@@ -113,7 +115,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               key={item.href}
               href={item.href!}
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-4 py-[10px] rounded-[8px] mb-1 text-sm font-semibold transition-all no-underline ${
+              className={`flex items-center gap-3 px-3.5 py-[7px] rounded-[8px] mb-1 text-sm font-semibold transition-all no-underline ${
                 isActive
                   ? "bg-[#E8740C] !text-white"
                   : "!text-[#e2e8f0] hover:bg-[#2d2d3f] hover:!text-white"
@@ -127,10 +129,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-white/10">
+      <div className="p-3 border-t border-white/10">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-[10px] rounded-[8px] text-sm font-semibold !text-[#e2e8f0] hover:bg-[#2d2d3f] hover:!text-white transition-all"
+          className="flex items-center gap-3 w-full px-3.5 py-[7px] rounded-[8px] text-sm font-semibold !text-[#e2e8f0] hover:bg-[#2d2d3f] hover:!text-white transition-all"
         >
           <FontAwesomeIcon icon={faRightFromBracket} className="w-[14px]" />
           Logout

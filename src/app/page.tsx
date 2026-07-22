@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
+import PromoModal from "@/components/PromoModal";
 import HeroSection from "@/components/home/HeroSection";
 import AboutSnippet from "@/components/home/AboutSnippet";
 import ServicesSection from "@/components/home/ServicesSection";
@@ -24,6 +25,7 @@ export default function HomePage() {
       </main>
       <Footer />
       <WhatsAppFloat />
+      <PromoModal />
     </>
   );
 }
