@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@supabase/supabase-js";
-import { sendLeadNotification } from "@/lib/mailer";
+import { sendLeadNotification, sendUserThankYouEmail } from "@/lib/mailer";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,12 +21,15 @@ export async function submitContactForm(data: {
   const { error } = await supabaseAdmin.from("contact_submissions").insert([data]);
   if (error) throw new Error(error.message);
 
-  // 2. Send email notification (non-blocking — don't fail the form if email fails)
+  // 2. Send email notifications (Admin notification + User Thank-You confirmation email)
   try {
-    await sendLeadNotification(data);
+    await Promise.allSettled([
+      sendLeadNotification(data),
+      sendUserThankYouEmail(data),
+    ]);
   } catch (emailError) {
-    console.error("Email notification failed:", emailError);
-    // Form submission still succeeds even if email fails
+    console.error("Email notifications failed:", emailError);
+    // Form submission still succeeds even if an email dispatch fails
   }
 
   return { success: true };

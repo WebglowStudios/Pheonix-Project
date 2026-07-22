@@ -18,6 +18,12 @@ interface GoalsContent {
   goals: GoalCard[];
 }
 
+interface OpenAccountStrip {
+  heading: string;
+  button_text: string;
+  button_url: string;
+}
+
 const DEFAULTS: GoalsContent = {
   section_heading: "What Are Your Goals?",
   section_subheading:
@@ -44,6 +50,12 @@ const DEFAULTS: GoalsContent = {
   ],
 };
 
+const DEFAULT_STRIP: OpenAccountStrip = {
+  heading: "It's simple to get started.",
+  button_text: "Open an account",
+  button_url: "https://diy.sharekhan.com/app/Account/Register?grpcd=2578&type=fr&grpid=2717",
+};
+
 function Toast({ message, type }: { message: string; type: "success" | "error" }) {
   return (
     <div
@@ -62,6 +74,7 @@ const labelClass = "block text-sm font-semibold text-[#555] mb-1";
 
 export default function GoalsPage() {
   const [content, setContent] = useState<GoalsContent>(DEFAULTS);
+  const [stripContent, setStripContent] = useState<OpenAccountStrip>(DEFAULT_STRIP);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -74,31 +87,39 @@ export default function GoalsPage() {
   };
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "goals")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const loaded = data.content as Partial<GoalsContent>;
-          setContent({
-            section_heading: loaded.section_heading || DEFAULTS.section_heading,
-            section_subheading: loaded.section_subheading || DEFAULTS.section_subheading,
-            goals: loaded.goals?.length ? loaded.goals : DEFAULTS.goals,
-          });
-        }
-        setLoading(false);
-      });
+    Promise.all([
+      supabase.from("site_content").select("content").eq("id", "goals").single(),
+      supabase.from("site_content").select("content").eq("id", "open_account_strip").single(),
+    ]).then(([goalsRes, stripRes]) => {
+      if (goalsRes.data?.content) {
+        const loaded = goalsRes.data.content as Partial<GoalsContent>;
+        setContent({
+          section_heading: loaded.section_heading || DEFAULTS.section_heading,
+          section_subheading: loaded.section_subheading || DEFAULTS.section_subheading,
+          goals: loaded.goals?.length ? loaded.goals : DEFAULTS.goals,
+        });
+      }
+      if (stripRes.data?.content) {
+        setStripContent({ ...DEFAULT_STRIP, ...stripRes.data.content });
+      }
+      setLoading(false);
+    });
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "goals", content }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Goals saved!", "success");
+    const [res1, res2] = await Promise.all([
+      supabase.from("site_content").upsert({ id: "goals", content }, { onConflict: "id" }),
+      supabase
+        .from("site_content")
+        .upsert({ id: "open_account_strip", content: stripContent }, { onConflict: "id" }),
+    ]);
+
+    if (res1.error || res2.error) {
+      showToast("Failed to save: " + (res1.error?.message || res2.error?.message), "error");
+    } else {
+      showToast("Goals section and Open Account strip saved!", "success");
+    }
     setSaving(false);
   }
 
@@ -124,52 +145,53 @@ export default function GoalsPage() {
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-[1.8rem] font-bold text-[#333]">Goals</h1>
-          <p className="text-[#666] text-sm mt-1">Edit the goal cards displayed on the homepage</p>
+          <h1 className="text-[1.8rem] font-bold text-[#333]">Goals &amp; Open Account Strip</h1>
+          <p className="text-[#666] text-sm mt-1">
+            Edit the goal cards and the &quot;Open an Account&quot; callout banner on the homepage
+          </p>
         </div>
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
+          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-6 py-2.5 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
         >
           <FontAwesomeIcon icon={faFloppyDisk} />
-          {saving ? "Saving..." : "Save Changes"}
+          {saving ? "Saving..." : "Save All Changes"}
         </button>
       </div>
 
-      {/* Section header */}
+      {/* Goals Heading */}
       <div className="bg-white rounded-[10px] shadow-sm p-6 mb-5">
-        <h2 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">Section Header</h2>
+        <h2 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">Goals Section Header</h2>
         <div className="flex flex-col gap-4">
           <div>
             <label className={labelClass}>Section Heading</label>
             <input
               value={content.section_heading}
               onChange={(e) => setContent((p) => ({ ...p, section_heading: e.target.value }))}
+              placeholder="What Are Your Goals?"
               className={inputClass}
             />
           </div>
           <div>
-            <label className={labelClass}>Section Subheading</label>
+            <label className={labelClass}>Subheading Paragraph</label>
             <textarea
               rows={3}
               value={content.section_subheading}
               onChange={(e) => setContent((p) => ({ ...p, section_subheading: e.target.value }))}
+              placeholder="Section subheading..."
               className={inputClass + " resize-none"}
             />
           </div>
         </div>
       </div>
 
-      {/* Goal cards */}
+      {/* Goal Cards */}
       {content.goals.map((goal, i) => (
-        <div key={i} className="bg-white rounded-[10px] shadow-sm p-6 mb-4">
-          <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#EEE]">
-            <div className="w-7 h-7 bg-[#FFF3EB] text-[#E8740C] rounded-full flex items-center justify-center text-xs font-bold">
-              {i + 1}
-            </div>
-            <h2 className="font-bold text-[#333]">Goal Card {i + 1}</h2>
-          </div>
+        <div key={i} className="bg-white rounded-[10px] shadow-sm p-6 mb-5">
+          <h2 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">
+            Goal Card #{i + 1}: {goal.title}
+          </h2>
           <div className="flex flex-col gap-4">
             <div>
               <label className={labelClass}>Title</label>
@@ -208,13 +230,48 @@ export default function GoalsPage() {
                   Browse Media
                 </button>
               </div>
-              <p className="text-xs text-[#999] mt-1">Path relative to /public</p>
             </div>
           </div>
         </div>
       ))}
 
-      <div className="flex justify-end">
+      {/* Open Account Strip Editor */}
+      <div className="bg-white rounded-[10px] shadow-sm p-6 mb-6">
+        <h2 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">
+          &quot;Open An Account&quot; Banner Strip
+        </h2>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className={labelClass}>Banner Heading Text</label>
+            <input
+              value={stripContent.heading}
+              onChange={(e) => setStripContent((p) => ({ ...p, heading: e.target.value }))}
+              placeholder="It's simple to get started."
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Button Label</label>
+            <input
+              value={stripContent.button_text}
+              onChange={(e) => setStripContent((p) => ({ ...p, button_text: e.target.value }))}
+              placeholder="Open an account"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Button Target URL (Sharekhan Registration)</label>
+            <input
+              value={stripContent.button_url}
+              onChange={(e) => setStripContent((p) => ({ ...p, button_url: e.target.value }))}
+              placeholder="https://diy.sharekhan.com/app/Account/Register?..."
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end mb-6">
         <button
           onClick={save}
           disabled={saving}
@@ -224,6 +281,7 @@ export default function GoalsPage() {
           {saving ? "Saving..." : "Save All Changes"}
         </button>
       </div>
+
       <ImageSelectorModal
         isOpen={isMediaOpen}
         onClose={() => {

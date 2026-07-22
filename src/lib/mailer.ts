@@ -20,15 +20,34 @@ export interface LeadEmailData {
   source: string;
 }
 
+const CONNECT_TIME_MAP: Record<string, string> = {
+  morning: "Morning (9:00 AM - 12:00 PM)",
+  afternoon: "Afternoon (12:00 PM - 3:00 PM)",
+  late_afternoon: "Late Afternoon (3:00 PM - 6:00 PM)",
+  evening: "Evening (6:00 PM - 8:00 PM)",
+  anytime: "Anytime during office hours (9:30 AM - 6:30 PM IST)",
+};
+
+export function formatConnectTime(rawTime?: string): string {
+  if (!rawTime) return "Not specified";
+  const key = rawTime.toLowerCase().trim();
+  if (CONNECT_TIME_MAP[key]) {
+    return CONNECT_TIME_MAP[key];
+  }
+  return rawTime.replace(/_/g, " ");
+}
+
 export async function sendLeadNotification(data: LeadEmailData) {
-  const adminEmail = process.env.ADMIN_EMAIL ?? "phoenixcfe@gmail.com";
-  const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "noreply@phoenixfinancial.com";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "chirag@phoenixfiserv.co.in";
+  const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "chirag@phoenixfiserv.co.in";
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://phoenixfiserv.co.in").replace(/\/$/, "");
 
   const sourceLabel = data.source === "home_page" ? "Homepage Form" : "Contact Page Form";
-  const servicesLabel = data.services.length > 0
-    ? data.services.map(s => s.replace(/_/g, " ")).join(", ")
-    : "Not specified";
-  const connectTimeLabel = data.connect_time?.replace(/_/g, " ") || "Not specified";
+  const servicesLabel =
+    data.services.length > 0
+      ? data.services.map((s) => s.replace(/_/g, " ")).join(", ")
+      : "Not specified";
+  const connectTimeLabel = formatConnectTime(data.connect_time);
 
   const html = `
 <!DOCTYPE html>
@@ -94,7 +113,7 @@ export async function sendLeadNotification(data: LeadEmailData) {
         <div class="message-box">${data.message || "No message provided."}</div>
       </div>
       <div style="text-align:center">
-        <a href="${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/admin/leads" class="cta">
+        <a href="${siteUrl}/admin/leads" class="cta">
           View in Admin Dashboard →
         </a>
       </div>
@@ -121,7 +140,7 @@ Source: ${sourceLabel}
 Message:
 ${data.message || "No message provided."}
 
-View leads: ${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/admin/leads
+View leads: ${siteUrl}/admin/leads
   `.trim();
 
   await transporter.sendMail({
@@ -131,4 +150,88 @@ View leads: ${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/admin
     text,
     html,
   });
+}
+
+export async function sendUserThankYouEmail(data: LeadEmailData) {
+  // Set to true when ready to enable auto-responder emails to visitors
+  const ENABLE_USER_THANK_YOU_EMAIL = false;
+  if (!ENABLE_USER_THANK_YOU_EMAIL) return;
+
+  const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "chirag@phoenixfiserv.co.in";
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://phoenixfiserv.co.in").replace(/\/$/, "");
+  const connectTimeLabel = formatConnectTime(data.connect_time);
+
+  if (!data.email || !data.email.includes("@")) return;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f5f7; margin: 0; padding: 0; }
+    .wrapper { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .header { background: #333333; padding: 28px 32px; text-align: center; }
+    .header h1 { color: #ffffff; margin: 0; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.5px; }
+    .header p { color: #E8740C; margin: 4px 0 0; font-size: 0.85rem; font-weight: 600; }
+    .body { padding: 32px; }
+    .greeting { font-size: 1.1rem; font-weight: 700; color: #333; margin-bottom: 14px; }
+    .text { font-size: 0.95rem; color: #444; line-height: 1.65; margin-bottom: 20px; }
+    .box { background: #FFF3EB; border-left: 4px solid #E8740C; border-radius: 0 8px 8px 0; padding: 16px 20px; margin: 24px 0; }
+    .box-title { font-size: 0.8rem; font-weight: 700; color: #E8740C; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .box-desc { font-size: 0.9rem; color: #333; margin: 0; line-height: 1.5; }
+    .footer { background: #f4f5f7; padding: 20px 32px; text-align: center; font-size: 0.8rem; color: #777; border-top: 1px solid #eee; }
+    .footer a { color: #E8740C; text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Phoenix Financial Services</h1>
+      <p>Investing for the Future</p>
+    </div>
+    <div class="body">
+      <div class="greeting">Dear ${data.name},</div>
+      <div class="text">
+        Thank you for getting in touch with <strong>Phoenix Financial Services</strong>. We have successfully received your message and your request has been logged.
+      </div>
+      <div class="box">
+        <div class="box-title">What Happens Next?</div>
+        <p class="box-desc">
+          Our expert financial advisory team is reviewing your details and will connect with you during your preferred time window: <strong>${connectTimeLabel}</strong>.
+        </p>
+      </div>
+      <div class="text">
+        Should you need immediate assistance in the meantime, please feel free to call us or chat with us on WhatsApp.
+      </div>
+    </div>
+    <div class="footer">
+      <strong>Phoenix Financial Services</strong><br>
+      Website: <a href="${siteUrl}">${siteUrl.replace(/^https?:\/\//, "")}</a> | Phone: +91 70212 10788
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const text = `
+Dear ${data.name},
+
+Thank you for reaching out to Phoenix Financial Services. We have received your message and an expert advisor will get in touch with you during your preferred time window: ${connectTimeLabel}.
+
+Website: ${siteUrl}
+Phone: +91 70212 10788
+  `.trim();
+
+  try {
+    await transporter.sendMail({
+      from: `"Phoenix Financial Services" <${fromEmail}>`,
+      to: data.email,
+      subject: `Thank you for contacting Phoenix Financial Services`,
+      text,
+      html,
+    });
+  } catch (error) {
+    console.error("Failed to send thank-you email to user:", error);
+  }
 }
