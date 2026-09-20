@@ -23,16 +23,14 @@ export function getStoredUser(): User | null {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem("phoenix_user");
   if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(raw); } catch { return null; }
 }
 
 export function setStoredUser(user: User): void {
   localStorage.setItem("phoenix_user", JSON.stringify(user));
 }
+
+// ─── Types ─────────────────────────────────────────────────────────────────
 
 export interface User {
   id: string;
@@ -43,85 +41,118 @@ export interface User {
   createdAt?: string;
 }
 
+export type InvestmentType =
+  | "stock" | "mutual_fund" | "sip" | "ppf" | "epf"
+  | "fd" | "nps" | "bond" | "gold" | "crypto";
+
+export interface Investment {
+  _id: string;
+  userId: string;
+  type: InvestmentType;
+  name: string;
+  symbol?: string;
+  exchange?: string;
+  units?: number;
+  buyPrice?: number;
+  buyDate?: string;
+  sipAmount?: number;
+  sipStartDate?: string;
+  instalments?: number;
+  avgNav?: number;
+  principal?: number;
+  interestRate?: number;
+  maturityDate?: string;
+  tenureMonths?: number;
+  institution?: string;
+  investedAmount: number;
+  currentPrice?: number;
+  lastPriceUpdate?: string;
+  notes?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PortfolioSummary {
+  totalInvested: number;
+  currentValue: number;
+  totalGain: number;
+  totalGainPercent: number;
+  holdings: number;
+  byType: Record<string, { count: number; invested: number }>;
+  recentInvestments: Partial<Investment>[];
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   message?: string;
   token?: string;
   user?: User;
   data?: T;
+  count?: number;
   errors?: Array<{ msg: string; path: string }>;
 }
+
+// ─── Core fetch ────────────────────────────────────────────────────────────
 
 async function request<T = unknown>(
   path: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const token = getToken();
-
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-  });
-
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
   const data = await response.json();
 
-  // Auto-handle 401 — clear session and redirect to login
   if (response.status === 401 && typeof window !== "undefined") {
     clearToken();
     window.location.href = "/login";
   }
-
   return data;
 }
 
 // ─── Auth API ──────────────────────────────────────────────────────────────
 
 export const authApi = {
-  register: (payload: {
-    name: string;
-    email: string;
-    password: string;
-    phone?: string;
-    riskProfile?: string;
-  }) =>
-    request<never>("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+  register: (payload: { name: string; email: string; password: string; phone?: string; riskProfile?: string }) =>
+    request<never>("/api/auth/register", { method: "POST", body: JSON.stringify(payload) }),
 
   login: (payload: { email: string; password: string }) =>
-    request<never>("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+    request<never>("/api/auth/login", { method: "POST", body: JSON.stringify(payload) }),
 
   me: () => request<never>("/api/auth/me"),
 
-  updateProfile: (payload: {
-    name?: string;
-    phone?: string;
-    riskProfile?: string;
-  }) =>
-    request<never>("/api/auth/profile", {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }),
+  updateProfile: (payload: { name?: string; phone?: string; riskProfile?: string }) =>
+    request<never>("/api/auth/profile", { method: "PUT", body: JSON.stringify(payload) }),
 
-  changePassword: (payload: {
-    currentPassword: string;
-    newPassword: string;
-  }) =>
-    request<never>("/api/auth/change-password", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
+  changePassword: (payload: { currentPassword: string; newPassword: string }) =>
+    request<never>("/api/auth/change-password", { method: "POST", body: JSON.stringify(payload) }),
+};
+
+// ─── Portfolio API ─────────────────────────────────────────────────────────
+
+export const portfolioApi = {
+  getSummary: () =>
+    request<PortfolioSummary>("/api/portfolio/summary"),
+
+  getAll: (params?: { type?: string; sort?: string; order?: string; search?: string }) => {
+    const query = params
+      ? "?" + new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([, v]) => v))).toString()
+      : "";
+    return request<Investment[]>(`/api/portfolio${query}`);
+  },
+
+  add: (data: Partial<Investment>) =>
+    request<Investment>("/api/portfolio", { method: "POST", body: JSON.stringify(data) }),
+
+  update: (id: string, data: Partial<Investment>) =>
+    request<Investment>(`/api/portfolio/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+
+  remove: (id: string) =>
+    request<never>(`/api/portfolio/${id}`, { method: "DELETE" }),
 };
