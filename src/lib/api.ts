@@ -71,6 +71,10 @@ export interface Investment {
   tags?: string[];
   createdAt: string;
   updatedAt: string;
+  // Computed by backend on GET /api/portfolio
+  currentValue?: number;
+  gain?: number;
+  gainPercent?: number;
 }
 
 export interface PortfolioSummary {
@@ -79,8 +83,20 @@ export interface PortfolioSummary {
   totalGain: number;
   totalGainPercent: number;
   holdings: number;
-  byType: Record<string, { count: number; invested: number }>;
+  byType: Record<string, { count: number; invested: number; currentValue: number }>;
   recentInvestments: Partial<Investment>[];
+  pricesLastUpdated: string | null;
+}
+
+// Auth-specific response shapes (token/user are top-level in backend response)
+export interface AuthResponse {
+  success: boolean;
+  message?: string;
+  token?: string;
+  user?: User;
+  errors?: Array<{ msg: string; path: string }>;
+  data?: unknown;
+  count?: number;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -125,8 +141,10 @@ export const authApi = {
   login: (payload: { email: string; password: string }) =>
     request<never>("/api/auth/login", { method: "POST", body: JSON.stringify(payload) }),
 
+  // /me returns { success, user } — user is top-level on ApiResponse
   me: () => request<never>("/api/auth/me"),
 
+  // /profile returns { success, user } — user is top-level on ApiResponse
   updateProfile: (payload: { name?: string; phone?: string; riskProfile?: string }) =>
     request<never>("/api/auth/profile", { method: "PUT", body: JSON.stringify(payload) }),
 
@@ -134,7 +152,26 @@ export const authApi = {
     request<never>("/api/auth/change-password", { method: "POST", body: JSON.stringify(payload) }),
 };
 
-// ─── Portfolio API ─────────────────────────────────────────────────────────
+// ─── Prices API ────────────────────────────────────────────────────────────
+
+export const pricesApi = {
+  refresh: () =>
+    request<{ updated: number; failed: number; message: string }>("/api/prices/refresh", { method: "POST" }),
+
+  lookupStock: (symbol: string, exchange?: string) =>
+    request<{ price: number; symbol: string }>(
+      `/api/prices/stock/${symbol}${exchange ? `?exchange=${exchange}` : ""}`
+    ),
+
+  lookupMFNav: (amfiCode: string) =>
+    request<{ nav: number; amfiCode: string }>(`/api/prices/mf/${amfiCode}`),
+
+  lookupGold: () =>
+    request<{ pricePerGram: number }>("/api/prices/gold"),
+
+  lookupCrypto: (symbol: string) =>
+    request<{ price: number; symbol: string }>(`/api/prices/crypto/${symbol}`),
+};
 
 export const portfolioApi = {
   getSummary: () =>

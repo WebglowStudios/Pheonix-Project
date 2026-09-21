@@ -1,9 +1,15 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  "https://jonzdfunqpenwmvygexk.supabase.co",
-  "sb_secret_btVL9N_JEDEmHuSfP5DvAQ_yk2IjDUJ"
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error("Error: NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables must be set.");
+  console.error("Please run the script using: node --env-file=.env.local scripts/seed.mjs");
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // ─── SERVICES ────────────────────────────────────────────────────────────────
 const services = [

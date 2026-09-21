@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { portfolioApi, type Investment } from "@/lib/api";
+import { portfolioApi, pricesApi, type Investment } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus, faSearch, faPencil, faTrash, faXmark, faCheck,
-  faArrowUp, faArrowDown, faChartLine, faChartPie, faCoins,
+  faArrowUp, faArrowDown, faRotate, faChartLine, faChartPie, faCoins,
   faLandmark, faLeaf, faHandHoldingDollar, faSackDollar,
-  faFileContract, faRing, faBitcoinSign,
+  faFileContract, faRing, faBitcoinSign, faClock,
 } from "@fortawesome/free-solid-svg-icons";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ const FILTER_TABS = [
   { value: "mutual_fund", label: "Mutual Funds" },
   { value: "sip", label: "SIP" },
   { value: "fd", label: "FD" },
-  { value: "ppf", label: "PPF/EPF" },
+  { value: "ppf_epf", label: "PPF/EPF" },
   { value: "gold", label: "Gold" },
   { value: "nps", label: "NPS" },
   { value: "bond", label: "Bonds" },
@@ -48,10 +48,10 @@ const FILTER_TABS = [
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function fmt(n: number) {
-  if (n >= 10000000) return `₹${(n / 10000000).toFixed(2)}Cr`;
-  if (n >= 100000)   return `₹${(n / 100000).toFixed(2)}L`;
-  if (n >= 1000)     return `₹${(n / 1000).toFixed(1)}K`;
-  return `₹${n.toLocaleString("en-IN")}`;
+  if (Math.abs(n) >= 10000000) return `₹${(n / 10000000).toFixed(2)}Cr`;
+  if (Math.abs(n) >= 100000)   return `₹${(n / 100000).toFixed(2)}L`;
+  if (Math.abs(n) >= 1000)     return `₹${(Math.abs(n) / 1000).toFixed(1)}K`;
+  return `₹${Math.abs(n).toLocaleString("en-IN")}`;
 }
 
 function formatDate(d?: string) {
@@ -59,11 +59,39 @@ function formatDate(d?: string) {
   return new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function timeAgo(d?: string) {
+  if (!d) return null;
+  const mins = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+// ─── Gain/Loss Badge ─────────────────────────────────────────────────────────
+
+function GainBadge({ gain, pct }: { gain: number; pct: number }) {
+  if (!gain && gain !== 0) return <span className="text-[#999] text-xs">—</span>;
+  const isPos = gain >= 0;
+  const isZero = gain === 0;
+  if (isZero) return <span className="text-[#aaa] text-xs">±0</span>;
+  return (
+    <div className={`inline-flex flex-col items-end`}>
+      <span className={`text-sm font-bold ${isPos ? "text-[#2E7D32]" : "text-[#C62828]"}`}>
+        {isPos ? "+" : "−"}{fmt(Math.abs(gain))}
+      </span>
+      <span className={`text-[10px] font-bold flex items-center gap-0.5 ${isPos ? "text-[#2E7D32]" : "text-[#C62828]"}`}>
+        <FontAwesomeIcon icon={isPos ? faArrowUp : faArrowDown} className="text-[8px]" />
+        {Math.abs(pct).toFixed(2)}%
+      </span>
+    </div>
+  );
+}
+
 // ─── Edit Modal ──────────────────────────────────────────────────────────────
 
-function EditModal({
-  inv, onClose, onSaved,
-}: { inv: Investment; onClose: () => void; onSaved: () => void }) {
+function EditModal({ inv, onClose, onSaved }: { inv: Investment; onClose: () => void; onSaved: () => void }) {
   const [form, setForm] = useState({ ...inv });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -82,37 +110,38 @@ function EditModal({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-[16px] shadow-2xl w-full max-w-[520px] max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#EEE]">
-          <h3 className="font-bold text-[#333] text-lg">Edit Investment</h3>
+          <h3 className="font-bold text-[#333] text-lg">Edit — {inv.name}</h3>
           <button onClick={onClose} className="text-[#999] hover:text-[#333]"><FontAwesomeIcon icon={faXmark} /></button>
         </div>
         <div className="p-6 flex flex-col gap-4">
           {error && <p className="text-[#C62828] text-sm bg-[#FFEBEE] px-3 py-2 rounded-[8px]">{error}</p>}
-          <div><label className="label">Name</label><input value={form.name} onChange={e => upd("name", e.target.value)} className={ic} /></div>
+          <div><label className="label text-xs font-bold text-[#555]">Name</label><input value={form.name} onChange={e => upd("name", e.target.value)} className={ic} /></div>
           {(["stock","mutual_fund","gold","crypto"] as const).includes(form.type as never) && (<>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="label">Units</label><input type="number" value={form.units ?? ""} onChange={e => upd("units", +e.target.value)} className={ic} /></div>
-              <div><label className="label">Buy Price (₹)</label><input type="number" value={form.buyPrice ?? ""} onChange={e => upd("buyPrice", +e.target.value)} className={ic} /></div>
+              <div><label className="text-xs font-bold text-[#555]">Units</label><input type="number" value={form.units ?? ""} onChange={e => upd("units", +e.target.value)} className={ic} /></div>
+              <div><label className="text-xs font-bold text-[#555]">Buy Price (₹)</label><input type="number" value={form.buyPrice ?? ""} onChange={e => upd("buyPrice", +e.target.value)} className={ic} /></div>
             </div>
-            <div><label className="label">Buy Date</label><input type="date" value={form.buyDate?.slice(0,10) ?? ""} onChange={e => upd("buyDate", e.target.value)} className={ic} /></div>
+            <div><label className="text-xs font-bold text-[#555]">Buy Date</label><input type="date" value={form.buyDate?.slice(0,10) ?? ""} onChange={e => upd("buyDate", e.target.value)} className={ic} /></div>
           </>)}
           {form.type === "sip" && (<>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="label">Monthly SIP (₹)</label><input type="number" value={form.sipAmount ?? ""} onChange={e => upd("sipAmount", +e.target.value)} className={ic} /></div>
-              <div><label className="label">Instalments</label><input type="number" value={form.instalments ?? ""} onChange={e => upd("instalments", +e.target.value)} className={ic} /></div>
+              <div><label className="text-xs font-bold text-[#555]">Monthly SIP (₹)</label><input type="number" value={form.sipAmount ?? ""} onChange={e => upd("sipAmount", +e.target.value)} className={ic} /></div>
+              <div><label className="text-xs font-bold text-[#555]">Instalments</label><input type="number" value={form.instalments ?? ""} onChange={e => upd("instalments", +e.target.value)} className={ic} /></div>
             </div>
+            <div><label className="text-xs font-bold text-[#555]">Avg NAV (₹)</label><input type="number" step="any" value={form.avgNav ?? ""} onChange={e => upd("avgNav", +e.target.value)} className={ic} /></div>
           </>)}
           {(["fd","ppf","epf","nps","bond"] as const).includes(form.type as never) && (<>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="label">Principal (₹)</label><input type="number" value={form.principal ?? ""} onChange={e => upd("principal", +e.target.value)} className={ic} /></div>
-              <div><label className="label">Interest Rate (%)</label><input type="number" value={form.interestRate ?? ""} onChange={e => upd("interestRate", +e.target.value)} className={ic} /></div>
+              <div><label className="text-xs font-bold text-[#555]">Principal (₹)</label><input type="number" value={form.principal ?? ""} onChange={e => upd("principal", +e.target.value)} className={ic} /></div>
+              <div><label className="text-xs font-bold text-[#555]">Interest Rate (%)</label><input type="number" step="0.01" value={form.interestRate ?? ""} onChange={e => upd("interestRate", +e.target.value)} className={ic} /></div>
             </div>
           </>)}
-          <div><label className="label">Notes</label><textarea value={form.notes ?? ""} onChange={e => upd("notes", e.target.value)} rows={2} className={ic + " resize-none"} /></div>
+          <div><label className="text-xs font-bold text-[#555]">Notes</label><textarea value={form.notes ?? ""} onChange={e => upd("notes", e.target.value)} rows={2} className={ic + " resize-none"} /></div>
         </div>
         <div className="px-6 py-4 border-t border-[#EEE] flex gap-3">
-          <button onClick={onClose} className="flex-1 border border-[#DDD] bg-white rounded-[8px] py-2 text-sm font-semibold text-[#444] hover:bg-[#f5f5f5]">Cancel</button>
-          <button onClick={save} disabled={saving} className="flex-1 bg-[#E8740C] text-white rounded-[8px] py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60">
-            {saving ? "Saving..." : <><FontAwesomeIcon icon={faCheck} className="mr-1.5" />Save Changes</>}
+          <button onClick={onClose} className="flex-1 border border-[#DDD] bg-white rounded-[8px] py-2.5 text-sm font-semibold text-[#444]">Cancel</button>
+          <button onClick={save} disabled={saving} className="flex-1 bg-[#E8740C] text-white rounded-[8px] py-2.5 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60">
+            {saving ? "Saving..." : <><FontAwesomeIcon icon={faCheck} className="mr-1.5" />Save</>}
           </button>
         </div>
       </div>
@@ -125,6 +154,7 @@ function EditModal({
 export default function PortfolioPage() {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeType, setActiveType] = useState("all");
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("createdAt");
@@ -133,18 +163,18 @@ export default function PortfolioPage() {
   const [editInv, setEditInv] = useState<Investment | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [error, setError] = useState("");
+  const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), 3500);
   };
 
   const load = useCallback(async () => {
     setLoading(true);
     const res = await portfolioApi.getAll({
       type: activeType !== "all" ? activeType : undefined,
-      sort: sortField,
-      order: sortOrder,
+      sort: sortField, order: sortOrder,
       search: search || undefined,
     });
     if (res.success) setInvestments(res.data ?? []);
@@ -153,6 +183,20 @@ export default function PortfolioPage() {
   }, [activeType, sortField, sortOrder, search]);
 
   useEffect(() => { load(); }, [load]);
+
+  async function handleRefreshPrices() {
+    setRefreshing(true);
+    showToast("Fetching live prices... this may take a moment.", true);
+    const res = await pricesApi.refresh();
+    if (res.success && res.data) {
+      showToast(`✓ Updated ${res.data.updated} investment${res.data.updated !== 1 ? "s" : ""}. ${res.data.failed > 0 ? `${res.data.failed} failed.` : ""}`, res.data.updated > 0);
+      setLastRefreshed(new Date().toISOString());
+      load();
+    } else {
+      showToast(res.message || "Price refresh failed.", false);
+    }
+    setRefreshing(false);
+  }
 
   async function handleDelete(id: string) {
     const res = await portfolioApi.remove(id);
@@ -167,48 +211,89 @@ export default function PortfolioPage() {
   }
 
   const SortIcon = ({ field }: { field: string }) => sortField === field
-    ? <FontAwesomeIcon icon={sortOrder === "asc" ? faArrowUp : faArrowDown} className="ml-1 text-[#E8740C]" />
+    ? <FontAwesomeIcon icon={sortOrder === "asc" ? faArrowUp : faArrowDown} className="ml-1 text-[#E8740C] text-[10px]" />
     : null;
 
   const totalInvested = investments.reduce((s, i) => s + i.investedAmount, 0);
+  const totalCurrent = investments.reduce((s, i) => s + (i.currentValue ?? i.investedAmount), 0);
+  const totalGain = totalCurrent - totalInvested;
 
   return (
     <div>
+      {/* Toast */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-[10px] text-white text-sm font-bold shadow-lg ${toast.ok ? "bg-[#2E7D32]" : "bg-[#C62828]"}`}>
+        <div className={`fixed top-5 right-5 z-50 px-5 py-3 rounded-[10px] text-white text-sm font-bold shadow-lg transition-all max-w-[320px] ${toast.ok ? "bg-[#2E7D32]" : "bg-[#C62828]"}`}>
           {toast.msg}
         </div>
       )}
 
-      {editInv && (
-        <EditModal inv={editInv} onClose={() => setEditInv(null)} onSaved={() => { showToast("Saved!"); load(); }} />
-      )}
+      {/* Modals */}
+      {editInv && <EditModal inv={editInv} onClose={() => setEditInv(null)} onSaved={() => { showToast("Saved!"); load(); }} />}
 
       {deleteId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[16px] p-6 max-w-sm w-full shadow-xl">
             <h3 className="font-bold text-[#333] text-lg mb-2">Delete Investment?</h3>
-            <p className="text-[#666] text-sm mb-5">This cannot be undone.</p>
+            <p className="text-[#666] text-sm mb-5">This action cannot be undone.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 border border-[#DDD] bg-white rounded-[8px] py-2 text-sm font-semibold text-[#444]">Cancel</button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 bg-[#C62828] text-white rounded-[8px] py-2 text-sm font-semibold hover:bg-[#E53935]">Delete</button>
+              <button onClick={() => setDeleteId(null)} className="flex-1 border border-[#DDD] bg-white rounded-[8px] py-2.5 text-sm font-semibold text-[#444]">Cancel</button>
+              <button onClick={() => handleDelete(deleteId)} className="flex-1 bg-[#C62828] text-white rounded-[8px] py-2.5 text-sm font-semibold hover:bg-[#E53935]">Delete</button>
             </div>
           </div>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
         <div>
           <h1 className="text-[1.8rem] font-extrabold text-[#1a1b23]">My Portfolio</h1>
           <p className="text-[#666] text-sm mt-0.5">
-            {investments.length} investment{investments.length !== 1 ? "s" : ""} · Total invested: {fmt(totalInvested)}
+            {investments.length} investment{investments.length !== 1 ? "s" : ""}
+            {lastRefreshed && (
+              <span className="ml-2 text-[#E8740C]">
+                <FontAwesomeIcon icon={faClock} className="mr-1 text-[10px]" />
+                Updated {timeAgo(lastRefreshed)}
+              </span>
+            )}
           </p>
         </div>
-        <Link href="/dashboard/add" className="flex items-center gap-2 px-5 py-2.5 bg-[#E8740C] text-white font-bold rounded-[30px] border-2 border-[#E8740C] hover:bg-[#FF9433] transition-all no-underline text-sm shadow-[0_4px_16px_rgba(232,116,12,0.2)]">
-          <FontAwesomeIcon icon={faPlus} /> Add Investment
-        </Link>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleRefreshPrices}
+            disabled={refreshing}
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#1a1b23] text-white font-bold rounded-[30px] border-2 border-[#1a1b23] hover:bg-[#2d2d3f] transition-all text-sm disabled:opacity-60"
+          >
+            <FontAwesomeIcon icon={faRotate} className={refreshing ? "animate-spin" : ""} />
+            {refreshing ? "Refreshing..." : "Refresh Prices"}
+          </button>
+          <Link href="/dashboard/add" className="flex items-center gap-2 px-5 py-2.5 bg-[#E8740C] text-white font-bold rounded-[30px] border-2 border-[#E8740C] hover:bg-[#FF9433] transition-all no-underline text-sm shadow-[0_4px_16px_rgba(232,116,12,0.2)]">
+            <FontAwesomeIcon icon={faPlus} /> Add
+          </Link>
+        </div>
       </div>
+
+      {/* Portfolio totals bar */}
+      {investments.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          {[
+            { label: "Invested", value: `₹${totalInvested.toLocaleString("en-IN")}` },
+            { label: "Current Value", value: `₹${totalCurrent.toLocaleString("en-IN")}` },
+            {
+              label: "Total Gain/Loss",
+              value: totalGain === 0 ? "—" : `${totalGain > 0 ? "+" : "−"}${fmt(Math.abs(totalGain))}`,
+              gain: totalGain,
+            },
+          ].map(card => (
+            <div key={card.label} className="bg-white rounded-[12px] border border-[#F0F0F0] shadow-sm px-4 py-3 text-center">
+              <p className="text-[10px] font-bold text-[#999] uppercase tracking-wide mb-1">{card.label}</p>
+              <p className={`font-extrabold text-lg leading-tight ${
+                card.gain === undefined ? "text-[#1a1b23]" :
+                card.gain > 0 ? "text-[#2E7D32]" : card.gain < 0 ? "text-[#C62828]" : "text-[#1a1b23]"
+              }`}>{card.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Filter tabs */}
       <div className="flex gap-2 flex-wrap mb-4">
@@ -249,7 +334,6 @@ export default function PortfolioPage() {
           </Link>
         </div>
       ) : (
-        /* Table */
         <div className="bg-white rounded-[12px] shadow-sm border border-[#F0F0F0] overflow-hidden">
           {/* Desktop table */}
           <div className="hidden md:block overflow-x-auto">
@@ -261,9 +345,14 @@ export default function PortfolioPage() {
                   <th className="text-right px-4 py-3 text-[#666] font-bold text-xs uppercase cursor-pointer hover:text-[#E8740C]" onClick={() => toggleSort("investedAmount")}>
                     Invested <SortIcon field="investedAmount" />
                   </th>
-                  <th className="text-right px-4 py-3 text-[#666] font-bold text-xs uppercase hidden lg:table-cell">Details</th>
-                  <th className="text-right px-4 py-3 text-[#666] font-bold text-xs uppercase cursor-pointer hover:text-[#E8740C] hidden lg:table-cell" onClick={() => toggleSort("buyDate")}>
-                    Date <SortIcon field="buyDate" />
+                  <th className="text-right px-4 py-3 text-[#666] font-bold text-xs uppercase hidden lg:table-cell">
+                    Current Value
+                  </th>
+                  <th className="text-right px-4 py-3 text-[#666] font-bold text-xs uppercase hidden xl:table-cell">
+                    Gain / Loss
+                  </th>
+                  <th className="text-right px-4 py-3 text-[#666] font-bold text-xs uppercase hidden lg:table-cell cursor-pointer hover:text-[#E8740C]" onClick={() => toggleSort("lastPriceUpdate")}>
+                    Updated <SortIcon field="lastPriceUpdate" />
                   </th>
                   <th className="text-center px-4 py-3 text-[#666] font-bold text-xs uppercase">Actions</th>
                 </tr>
@@ -271,11 +360,9 @@ export default function PortfolioPage() {
               <tbody>
                 {investments.map(inv => {
                   const meta = TYPE_META[inv.type];
-                  const detail = inv.type === "sip"
-                    ? `₹${inv.sipAmount?.toLocaleString()}/mo · ${inv.instalments} SIPs`
-                    : inv.units ? `${inv.units} units @ ₹${inv.buyPrice?.toLocaleString()}`
-                    : inv.interestRate ? `${inv.interestRate}% p.a.`
-                    : "";
+                  const cv = inv.currentValue ?? inv.investedAmount;
+                  const gain = inv.gain ?? 0;
+                  const gainPct = inv.gainPercent ?? 0;
                   return (
                     <tr key={inv._id} className="border-b border-[#F5F5F5] hover:bg-[#FAFAFA] transition-colors">
                       <td className="px-5 py-3.5">
@@ -294,9 +381,21 @@ export default function PortfolioPage() {
                           {meta?.label ?? inv.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3.5 text-right font-bold text-[#333]">{fmt(inv.investedAmount)}</td>
-                      <td className="px-4 py-3.5 text-right text-[#666] text-xs hidden lg:table-cell">{detail || "—"}</td>
-                      <td className="px-4 py-3.5 text-right text-[#888] text-xs hidden lg:table-cell">{formatDate(inv.buyDate || inv.sipStartDate)}</td>
+                      <td className="px-4 py-3.5 text-right font-semibold text-[#333]">
+                        ₹{inv.investedAmount.toLocaleString("en-IN")}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-bold text-[#1a1b23] hidden lg:table-cell">
+                        ₹{cv.toLocaleString("en-IN")}
+                        {inv.lastPriceUpdate && (
+                          <p className="text-[10px] text-[#E8740C] font-medium">LIVE</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5 text-right hidden xl:table-cell">
+                        <GainBadge gain={gain} pct={gainPct} />
+                      </td>
+                      <td className="px-4 py-3.5 text-right text-[#aaa] text-xs hidden lg:table-cell">
+                        {timeAgo(inv.lastPriceUpdate) ?? formatDate(inv.buyDate)}
+                      </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center justify-center gap-2">
                           <button onClick={() => setEditInv(inv)} className="w-8 h-8 rounded-[6px] border border-[#DDD] flex items-center justify-center text-[#555] hover:bg-[#FFF3EB] hover:text-[#E8740C] hover:border-[#E8740C] transition-all">
@@ -318,6 +417,8 @@ export default function PortfolioPage() {
           <div className="md:hidden divide-y divide-[#F5F5F5]">
             {investments.map(inv => {
               const meta = TYPE_META[inv.type];
+              const cv = inv.currentValue ?? inv.investedAmount;
+              const gain = inv.gain ?? 0;
               return (
                 <div key={inv._id} className="p-4 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: meta?.bg ?? "#f0f0f0" }}>
@@ -325,10 +426,18 @@ export default function PortfolioPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-[#333] text-sm truncate">{inv.name}</p>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: meta?.bg, color: meta?.color }}>{meta?.label}</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: meta?.bg, color: meta?.color }}>{meta?.label}</span>
+                      {gain !== 0 && (
+                        <span className={`text-[10px] font-bold ${gain > 0 ? "text-[#2E7D32]" : "text-[#C62828]"}`}>
+                          {gain > 0 ? "+" : "−"}{fmt(Math.abs(gain))}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-extrabold text-[#333] text-sm">{fmt(inv.investedAmount)}</p>
+                    <p className="font-extrabold text-[#333] text-sm">₹{cv.toLocaleString("en-IN")}</p>
+                    <p className="text-[#999] text-xs">invested: ₹{inv.investedAmount.toLocaleString("en-IN")}</p>
                     <div className="flex gap-1.5 mt-1 justify-end">
                       <button onClick={() => setEditInv(inv)} className="text-[#666] hover:text-[#E8740C]"><FontAwesomeIcon icon={faPencil} className="text-xs" /></button>
                       <button onClick={() => setDeleteId(inv._id)} className="text-[#C62828]"><FontAwesomeIcon icon={faTrash} className="text-xs" /></button>

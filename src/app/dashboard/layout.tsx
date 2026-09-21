@@ -32,48 +32,16 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
-  const [checking, setChecking] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    const stored = getStoredUser();
-    if (!stored) {
-      router.replace("/login");
-      return;
-    }
-    setUser(stored);
-    setChecking(false);
-
-    // Refresh user data from server in background
-    authApi.me().then((res) => {
-      if (res.success && res.user) {
-        setUser(res.user);
-        setStoredUser(res.user);
-      }
-    });
-  }, [router]);
-
-  function handleLogout() {
-    clearToken();
-    router.replace("/login");
-  }
-
-  if (checking) {
-    return (
-      <div className="min-h-screen bg-[#F2F3F5] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-[#E8740C] border-t-transparent rounded-full animate-spin" />
-          <p className="text-[#666] text-sm">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const Sidebar = () => (
+// ── Sidebar — extracted outside layout to prevent remount on every render ──
+function Sidebar({
+  user, pathname, onClose, onLogout,
+}: {
+  user: User | null;
+  pathname: string;
+  onClose: () => void;
+  onLogout: () => void;
+}) {
+  return (
     <aside className="w-[260px] h-full bg-[#1a1b23] flex flex-col flex-shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
@@ -109,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setSidebarOpen(false)}
+              onClick={onClose}
               className={`flex items-center gap-3 px-3.5 py-[9px] rounded-[8px] mb-1 text-sm font-semibold transition-all no-underline ${
                 isActive
                   ? "bg-[#E8740C] !text-white shadow-[0_4px_12px_rgba(232,116,12,0.3)]"
@@ -129,7 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Logout */}
       <div className="p-3 border-t border-white/10">
         <button
-          onClick={handleLogout}
+          onClick={onLogout}
           className="flex items-center gap-3 w-full px-3.5 py-[9px] rounded-[8px] text-sm font-semibold !text-[#e2e8f0] hover:bg-[#C62828]/20 hover:!text-[#f87171] transition-all"
         >
           <FontAwesomeIcon icon={faRightFromBracket} className="w-[14px]" />
@@ -138,20 +106,67 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
     </aside>
   );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [user, setUser] = useState<User | null>(null);
+  const [checking, setChecking] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const stored = getStoredUser();
+    if (!stored) {
+      setChecking(false);        // ← Fix B2: clear spinner before redirect
+      router.replace("/login");
+      return;
+    }
+    setUser(stored);
+    setChecking(false);
+
+    // Refresh user data from server in background
+    authApi.me().then((res) => {
+      if (res.success && res.user) {
+        setUser(res.user);
+        setStoredUser(res.user);
+      }
+    });
+  }, [router]);
+
+  function handleLogout() {
+    clearToken();
+    router.replace("/login");
+  }
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-[#F2F3F5] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#E8740C] border-t-transparent rounded-full animate-spin" />
+          <p className="text-[#666] text-sm">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex min-h-screen bg-[#F2F3F5]">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex sticky top-0 h-screen">
-        <Sidebar />
+        <Sidebar user={user} pathname={pathname} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
       </div>
 
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={() => setSidebarOpen(false)} />
-          <div className="absolute left-0 top-0 h-full animate-[slideIn_0.2s_ease-out]">
-            <Sidebar />
+          <div
+            className="absolute left-0 top-0 h-full"
+            style={{ animation: "slideIn 0.2s ease-out" }}
+          >
+            <Sidebar user={user} pathname={pathname} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
           </div>
         </div>
       )}
@@ -184,6 +199,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+
+      {/* slideIn keyframe for mobile sidebar */}
+      <style>{`@keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
     </div>
   );
 }

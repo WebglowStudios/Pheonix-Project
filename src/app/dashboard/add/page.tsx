@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { portfolioApi, type InvestmentType } from "@/lib/api";
+import { portfolioApi, pricesApi, type InvestmentType } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChartLine, faChartPie, faCoins, faLeaf, faHandHoldingDollar,
   faLandmark, faSackDollar, faFileContract, faRing, faBitcoinSign,
-  faArrowLeft, faCheck,
+  faArrowLeft, faCheck, faMagnifyingGlassChart,
 } from "@fortawesome/free-solid-svg-icons";
 
 // ─── Investment type catalogue ───────────────────────────────────────────────
@@ -51,19 +51,119 @@ function TypeForm({ type, form, upd }: {
   form: Record<string, string | number>;
   upd: (k: string, v: string | number) => void;
 }) {
+  const [priceLookup, setPriceLookup] = useState<{ loading: boolean; msg: string; ok: boolean } | null>(null);
+
+  async function fetchStockPrice() {
+    const sym = form.symbol as string;
+    const exch = form.exchange as string || "NSE";
+    if (!sym) { setPriceLookup({ loading: false, msg: "Enter a symbol first.", ok: false }); return; }
+    setPriceLookup({ loading: true, msg: "Fetching...", ok: true });
+    const res = await pricesApi.lookupStock(sym, exch);
+    if (res.success && res.data?.price) {
+      upd("buyPrice", res.data.price);
+      setPriceLookup({ loading: false, msg: `✓ ₹${res.data.price.toLocaleString("en-IN")} (${exch})`, ok: true });
+    } else {
+      setPriceLookup({ loading: false, msg: "Not found. Check symbol.", ok: false });
+    }
+    setTimeout(() => setPriceLookup(null), 5000);
+  }
+
+  async function fetchMFNavLive() {
+    const code = form.symbol as string;
+    if (!code) { setPriceLookup({ loading: false, msg: "Enter AMFI code first.", ok: false }); return; }
+    setPriceLookup({ loading: true, msg: "Fetching NAV...", ok: true });
+    const res = await pricesApi.lookupMFNav(code);
+    if (res.success && res.data?.nav) {
+      upd("buyPrice", res.data.nav);
+      if (type === "sip") upd("avgNav", res.data.nav);
+      setPriceLookup({ loading: false, msg: `✓ NAV ₹${res.data.nav.toFixed(4)}`, ok: true });
+    } else {
+      setPriceLookup({ loading: false, msg: "NAV not found. Check AMFI code.", ok: false });
+    }
+    setTimeout(() => setPriceLookup(null), 5000);
+  }
+
+  async function fetchGoldPrice() {
+    setPriceLookup({ loading: true, msg: "Fetching gold price...", ok: true });
+    const res = await pricesApi.lookupGold();
+    if (res.success && res.data?.pricePerGram) {
+      upd("buyPrice", res.data.pricePerGram);
+      setPriceLookup({ loading: false, msg: `✓ ₹${res.data.pricePerGram.toFixed(0)}/gram`, ok: true });
+    } else {
+      setPriceLookup({ loading: false, msg: "Gold price unavailable.", ok: false });
+    }
+    setTimeout(() => setPriceLookup(null), 5000);
+  }
+
+  async function fetchCrypto() {
+    const sym = form.symbol as string;
+    if (!sym) { setPriceLookup({ loading: false, msg: "Enter symbol first (e.g. BTC).", ok: false }); return; }
+    setPriceLookup({ loading: true, msg: "Fetching price...", ok: true });
+    const res = await pricesApi.lookupCrypto(sym);
+    if (res.success && res.data?.price) {
+      upd("buyPrice", res.data.price);
+      setPriceLookup({ loading: false, msg: `✓ ₹${res.data.price.toLocaleString("en-IN")}`, ok: true });
+    } else {
+      setPriceLookup({ loading: false, msg: "Price not found.", ok: false });
+    }
+    setTimeout(() => setPriceLookup(null), 5000);
+  }
+
+  const FetchButton = ({ onClick, label }: { onClick: () => void; label: string }) => (
+    <button type="button" onClick={onClick} disabled={priceLookup?.loading}
+      className="w-full flex items-center justify-center gap-2 py-2 border border-[#E8740C] text-[#E8740C] rounded-[8px] text-xs font-bold hover:bg-[#FFF3EB] transition-all disabled:opacity-50">
+      <FontAwesomeIcon icon={faMagnifyingGlassChart} className={priceLookup?.loading ? "animate-pulse" : ""} />
+      {priceLookup?.loading ? "Fetching..." : label}
+    </button>
+  );
+
+  const PriceMsg = () => priceLookup && !priceLookup.loading ? (
+    <p className={`text-xs font-semibold mt-1 ${priceLookup.ok ? "text-[#2E7D32]" : "text-[#C62828]"}`}>
+      {priceLookup.msg}
+    </p>
+  ) : null;
   switch (type) {
     case "stock":
-    case "gold":
-    case "crypto":
       return (<>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Ticker / Symbol"><input placeholder={type === "gold" ? "GC=F" : "RELIANCE"} value={form.symbol as string} onChange={e => upd("symbol", e.target.value)} className={ic} /></Field>
-          {type === "stock" && <Field label="Exchange"><select value={form.exchange as string} onChange={e => upd("exchange", e.target.value)} className={ic}><option value="NSE">NSE</option><option value="BSE">BSE</option></select></Field>}
-          {type !== "stock" && <Field label="Unit / Type"><input placeholder="grams, units" value={form.exchange as string} onChange={e => upd("exchange", e.target.value)} className={ic} /></Field>}
+          <Field label="Ticker / Symbol"><input placeholder="RELIANCE" value={form.symbol as string} onChange={e => upd("symbol", e.target.value)} className={ic} /></Field>
+          <Field label="Exchange"><select value={form.exchange as string} onChange={e => upd("exchange", e.target.value)} className={ic}><option value="NSE">NSE</option><option value="BSE">BSE</option></select></Field>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Quantity / Units" required><input type="number" min="0" step="any" placeholder="100" value={form.units as string} onChange={e => upd("units", e.target.value)} className={ic} /></Field>
-          <Field label={type === "gold" ? "Buy Price / gram (₹)" : "Buy Price / unit (₹)"} required><input type="number" min="0" step="any" placeholder="2500" value={form.buyPrice as string} onChange={e => upd("buyPrice", e.target.value)} className={ic} /></Field>
+          <div>
+            <Field label="Buy Price / unit (₹)" required><input type="number" min="0" step="any" placeholder="2500" value={form.buyPrice as string} onChange={e => upd("buyPrice", e.target.value)} className={ic} /></Field>
+            <div className="mt-1.5"><FetchButton onClick={fetchStockPrice} label="Fetch Live Price" /></div>
+            <PriceMsg />
+          </div>
+        </div>
+        <Field label="Purchase Date"><input type="date" value={form.buyDate as string} onChange={e => upd("buyDate", e.target.value)} className={ic} /></Field>
+      </>);
+
+    case "gold":
+      return (<>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Symbol / Type"><input placeholder="GOLD / GC=F / GOLDBEES.NS" value={form.symbol as string} onChange={e => upd("symbol", e.target.value)} className={ic} /></Field>
+          <Field label="Quantity (grams)" required><input type="number" min="0" step="any" placeholder="10" value={form.units as string} onChange={e => upd("units", e.target.value)} className={ic} /></Field>
+        </div>
+        <div>
+          <Field label="Buy Price / gram (₹)" required><input type="number" min="0" step="any" placeholder="6500" value={form.buyPrice as string} onChange={e => upd("buyPrice", e.target.value)} className={ic} /></Field>
+          <div className="mt-1.5"><FetchButton onClick={fetchGoldPrice} label="Fetch Live Gold Price (₹/gram)" /></div>
+          <PriceMsg />
+        </div>
+        <Field label="Purchase Date"><input type="date" value={form.buyDate as string} onChange={e => upd("buyDate", e.target.value)} className={ic} /></Field>
+      </>);
+
+    case "crypto":
+      return (<>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Symbol (e.g. BTC, ETH)"><input placeholder="BTC" value={form.symbol as string} onChange={e => upd("symbol", e.target.value.toUpperCase())} className={ic} /></Field>
+          <Field label="Quantity / Units" required><input type="number" min="0" step="any" placeholder="0.5" value={form.units as string} onChange={e => upd("units", e.target.value)} className={ic} /></Field>
+        </div>
+        <div>
+          <Field label="Buy Price / unit (₹)" required><input type="number" min="0" step="any" placeholder="3200000" value={form.buyPrice as string} onChange={e => upd("buyPrice", e.target.value)} className={ic} /></Field>
+          <div className="mt-1.5"><FetchButton onClick={fetchCrypto} label="Fetch Live Crypto Price (₹)" /></div>
+          <PriceMsg />
         </div>
         <Field label="Purchase Date"><input type="date" value={form.buyDate as string} onChange={e => upd("buyDate", e.target.value)} className={ic} /></Field>
       </>);
@@ -75,7 +175,11 @@ function TypeForm({ type, form, upd }: {
           <Field label="Units Allotted" required><input type="number" min="0" step="any" placeholder="500.123" value={form.units as string} onChange={e => upd("units", e.target.value)} className={ic} /></Field>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <Field label="NAV at Purchase (₹)" required><input type="number" min="0" step="any" placeholder="85.50" value={form.buyPrice as string} onChange={e => upd("buyPrice", e.target.value)} className={ic} /></Field>
+          <div>
+            <Field label="NAV at Purchase (₹)" required><input type="number" min="0" step="any" placeholder="85.50" value={form.buyPrice as string} onChange={e => upd("buyPrice", e.target.value)} className={ic} /></Field>
+            <div className="mt-1.5"><FetchButton onClick={fetchMFNavLive} label="Fetch Latest NAV" /></div>
+            <PriceMsg />
+          </div>
           <Field label="Purchase Date"><input type="date" value={form.buyDate as string} onChange={e => upd("buyDate", e.target.value)} className={ic} /></Field>
         </div>
       </>);
@@ -90,7 +194,11 @@ function TypeForm({ type, form, upd }: {
           <Field label="SIP Start Date"><input type="date" value={form.sipStartDate as string} onChange={e => upd("sipStartDate", e.target.value)} className={ic} /></Field>
           <Field label="Instalments Completed" required><input type="number" min="0" placeholder="12" value={form.instalments as string} onChange={e => upd("instalments", e.target.value)} className={ic} /></Field>
         </div>
-        <Field label="Average NAV (₹)"><input type="number" min="0" step="any" placeholder="92.30" value={form.avgNav as string} onChange={e => upd("avgNav", e.target.value)} className={ic} /></Field>
+        <div>
+          <Field label="Average NAV (₹)"><input type="number" min="0" step="any" placeholder="92.30" value={form.avgNav as string} onChange={e => upd("avgNav", e.target.value)} className={ic} /></Field>
+          <div className="mt-1.5"><FetchButton onClick={fetchMFNavLive} label="Fetch Current NAV" /></div>
+          <PriceMsg />
+        </div>
       </>);
 
     case "fd":
