@@ -110,9 +110,12 @@
 
 ## 🔲 Remaining / Later Tasks
 
-### 🔴 Blocker (Required to run)
-- [ ] **Resume MongoDB Atlas cluster** — free-tier auto-pauses; go to Atlas → Clusters → Resume
-- [ ] **Whitelist IP in Atlas** — Network Access → Add `0.0.0.0/0` for local dev (or specific IP for production)
+### 🔴 Blockers
+*None currently.* Infrastructure prerequisites are active and verified.
+
+### 🟢 Database & Connectivity (Resolved ✅ 2026-09-21)
+- [x] **Resume MongoDB Atlas cluster** — Cluster resumed & connected
+- [x] **Whitelist IP in Atlas** — Network Access configured & active
 
 ---
 
@@ -140,8 +143,9 @@ The admin panel (`/admin`) currently uses **Supabase** for:
 
 ---
 
-### 🔵 Future Features (Not planned yet)
-- [ ] Export portfolio to PDF / CSV
+### 🔵 Portfolio Reports & Features
+- [x] **Export Master Portfolio to PDF / Printable Statement** ✅ (2026-09-21) — Institutional-grade Master Portfolio Statement matching Advisorkhoj/wealth management format, including investor & Phoenix distributor headers, KPI summary bar, multi-asset allocation SVG donut chart & exposure table, and grouped holdings tables (Mutual Funds, Equities, Fixed Income).
+- [ ] Export portfolio to CSV
 - [ ] Email alerts when gain/loss crosses a threshold
 - [ ] Historical price charts (line chart per investment)
 - [ ] Multi-currency support (USD, EUR holdings)

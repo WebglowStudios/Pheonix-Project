@@ -31,7 +31,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
 
   const inputClass =
-    "w-full px-4 py-3 border border-[#DDD] rounded-[10px] text-[0.95rem] text-[#333] bg-white transition-all outline-none focus:border-[#E8740C] focus:shadow-[0_0_0_3px_rgba(232,116,12,0.12)] placeholder:text-[#aaa]";
+    "w-full px-3.5 py-2.5 border border-[#E2E5EB] rounded-lg text-sm text-[#1a1b23] bg-white transition-all outline-none focus:border-[#E8740C] focus:ring-2 focus:ring-[#E8740C]/10 placeholder:text-[#C0C4CC]";
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -129,39 +129,49 @@ export default function RegisterPage() {
             <Image src="/logo.jpg" alt="Phoenix Financial" width={120} height={48} className="max-h-12 w-auto object-contain rounded-[6px]" />
           </div>
 
-          <div className="bg-white rounded-[16px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] p-8">
-            <div className="mb-7">
-              <h2 className="text-[1.75rem] font-extrabold text-[#1a1b23]">
-                Create your account
-              </h2>
-              <p className="text-[#666] text-sm mt-1">
-                It&apos;s free to get started
-              </p>
+          <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] p-6">
+            <div className="mb-5">
+              <h2 className="text-xl font-extrabold text-[#1a1b23]">Create your account</h2>
+              <p className="text-[#8a92a6] text-sm mt-0.5">It&apos;s free to get started</p>
             </div>
 
             {error && (
-              <div className="mb-5 px-4 py-3 bg-[#FFEBEE] border border-[#FFCDD2] rounded-[10px] text-[#C62828] text-sm font-medium">
+              <div className="mb-4 px-3.5 py-2.5 bg-[#fff8f8] border border-[#FFCDD2] rounded-lg text-[#C62828] text-sm font-medium">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-semibold text-[#333] mb-1.5">Full Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => update("name", e.target.value)}
-                  placeholder="Ravi Sharma"
-                  required
-                  className={inputClass}
-                />
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              {/* Name + Phone side by side */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">Full Name</label>
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={(e) => update("name", e.target.value)}
+                    placeholder="Ravi Sharma"
+                    required
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">
+                    Phone <span className="text-[#C0C4CC] font-normal normal-case tracking-normal">optional</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => update("phone", e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className={inputClass}
+                  />
+                </div>
               </div>
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-semibold text-[#333] mb-1.5">Email Address</label>
+                <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">Email Address</label>
                 <input
                   type="email"
                   value={form.email}
@@ -172,33 +182,19 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-semibold text-[#333] mb-1.5">
-                  Phone Number <span className="text-[#999] font-normal">(optional)</span>
-                </label>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
-                  placeholder="+91 98765 43210"
-                  className={inputClass}
-                />
-              </div>
-
               {/* Risk profile */}
               <div>
-                <label className="block text-sm font-semibold text-[#333] mb-2">Risk Profile</label>
+                <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-2">Risk Profile</label>
                 <div className="grid grid-cols-3 gap-2">
                   {RISK_OPTIONS.map((r) => (
                     <button
                       type="button"
                       key={r.value}
                       onClick={() => update("riskProfile", r.value)}
-                      className={`py-2.5 px-3 rounded-[10px] border-2 text-sm font-semibold transition-all text-center ${
+                      className={`py-2 px-3 rounded-lg border-2 text-xs font-semibold transition-all text-center ${
                         form.riskProfile === r.value
                           ? "border-[#E8740C] bg-[#FFF3EB] text-[#E8740C]"
-                          : "border-[#DDD] bg-white text-[#555] hover:border-[#E8740C]/40"
+                          : "border-[#E2E5EB] bg-white text-[#555] hover:border-[#E8740C]/40"
                       }`}
                     >
                       {r.label}
@@ -207,58 +203,58 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Password */}
-              <div>
-                <label className="block text-sm font-semibold text-[#333] mb-1.5">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={(e) => update("password", e.target.value)}
-                    placeholder="Min 6 characters"
-                    required
-                    className={inputClass + " pr-12"}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#E8740C] transition-colors"
-                  >
-                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                  </button>
+              {/* Password + Confirm side by side */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={form.password}
+                      onChange={(e) => update("password", e.target.value)}
+                      placeholder="Min 6 chars"
+                      required
+                      className={inputClass + " pr-10"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#C0C4CC] hover:text-[#E8740C] transition-colors"
+                    >
+                      <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="text-sm" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-sm font-semibold text-[#333] mb-1.5">Confirm Password</label>
-                <div className="relative">
-                  <input
-                    type={showConfirm ? "text" : "password"}
-                    value={form.confirmPassword}
-                    onChange={(e) => update("confirmPassword", e.target.value)}
-                    placeholder="Re-enter your password"
-                    required
-                    className={inputClass + " pr-12"}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm(!showConfirm)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#999] hover:text-[#E8740C] transition-colors"
-                  >
-                    <FontAwesomeIcon icon={showConfirm ? faEyeSlash : faEye} />
-                  </button>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      type={showConfirm ? "text" : "password"}
+                      value={form.confirmPassword}
+                      onChange={(e) => update("confirmPassword", e.target.value)}
+                      placeholder="Re-enter"
+                      required
+                      className={inputClass + " pr-10"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm(!showConfirm)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#C0C4CC] hover:text-[#E8740C] transition-colors"
+                    >
+                      <FontAwesomeIcon icon={showConfirm ? faEyeSlash : faEye} className="text-sm" />
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-[30px] bg-[#E8740C] text-white font-bold text-[1rem] border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.25)] disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+                className="w-full py-2.5 rounded-lg bg-[#E8740C] text-white font-semibold text-sm transition-all hover:bg-[#d4660b] shadow-sm disabled:opacity-60 disabled:cursor-not-allowed mt-1"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                    <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin inline-block" />
                     Creating account...
                   </span>
                 ) : (
@@ -267,9 +263,9 @@ export default function RegisterPage() {
               </button>
             </form>
 
-            <p className="text-center text-sm text-[#666] mt-6">
+            <p className="text-center text-sm text-[#8a92a6] mt-4">
               Already have an account?{" "}
-              <Link href="/login" className="text-[#E8740C] font-semibold hover:text-[#FF9433]">
+              <Link href="/login" className="text-[#E8740C] font-semibold hover:text-[#d4660b]">
                 Sign in
               </Link>
             </p>
