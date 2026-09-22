@@ -43,6 +43,41 @@ const ASSET_COLORS: Record<string, string> = {
   crypto: "#4527A0",
 };
 
+function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
+  const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
+  return {
+    x: centerX + radius * Math.cos(angleInRadians),
+    y: centerY + radius * Math.sin(angleInRadians),
+  };
+}
+
+function describeDonutArc(
+  x: number,
+  y: number,
+  innerRadius: number,
+  outerRadius: number,
+  startAngle: number,
+  endAngle: number
+) {
+  const span = Math.min(Math.max(endAngle - startAngle, 0.1), 359.99);
+  const effectiveEnd = startAngle + span;
+
+  const startOuter = polarToCartesian(x, y, outerRadius, startAngle);
+  const endOuter = polarToCartesian(x, y, outerRadius, effectiveEnd);
+  const startInner = polarToCartesian(x, y, innerRadius, startAngle);
+  const endInner = polarToCartesian(x, y, innerRadius, effectiveEnd);
+
+  const largeArcFlag = span > 180 ? 1 : 0;
+
+  return [
+    "M", startOuter.x, startOuter.y,
+    "A", outerRadius, outerRadius, 0, largeArcFlag, 1, endOuter.x, endOuter.y,
+    "L", endInner.x, endInner.y,
+    "A", innerRadius, innerRadius, 0, largeArcFlag, 0, startInner.x, startInner.y,
+    "Z",
+  ].join(" ");
+}
+
 export default function MasterPortfolioReport({
   user,
   summary,
@@ -119,9 +154,9 @@ export default function MasterPortfolioReport({
     : "#ccc 0% 100%";
 
   return (
-    <div className="report-container font-sans text-[#111] bg-white max-w-[1020px] mx-auto p-4 sm:p-8 print:p-0 print:max-w-none shadow-sm print:shadow-none border border-gray-200 print:border-none">
+    <div id="master-portfolio-report" className="report-container font-sans text-[#111] bg-white max-w-[1020px] mx-auto p-4 sm:p-8 print:p-0 print:max-w-none shadow-sm print:shadow-none border border-gray-200 print:border-none">
       {/* ── Page 1 ── */}
-      <section className="print:break-after-page">
+      <section id="report-page-1" className="print:break-after-page html2pdf__page-break bg-white p-2">
         {/* Top Header Banner */}
         <div className="bg-[#bbf7d0] print:bg-[#bbf7d0] text-[#14532d] py-1.5 px-4 text-center font-bold text-sm tracking-wide rounded-t-sm border border-[#86efac]">
           Master Portfolio
@@ -147,12 +182,12 @@ export default function MasterPortfolioReport({
 
           {/* Center Logo */}
           <div className="flex items-center justify-center px-4 self-center">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/logo.jpg"
               alt="Phoenix Financial Services"
-              width={180}
-              height={80}
               className="h-16 sm:h-20 w-auto object-contain"
+              crossOrigin="anonymous"
             />
           </div>
 
@@ -216,17 +251,30 @@ export default function MasterPortfolioReport({
             <div className="md:col-span-5 p-3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-300 bg-white">
               <span className="text-[11px] font-bold text-gray-700 mb-2">Portfolio Asset Allocation</span>
               {totalCurrentValue > 0 ? (
-                <div className="relative w-40 h-40 flex items-center justify-center my-1 flex-shrink-0">
-                  <div
-                    className="w-40 h-40 rounded-full"
-                    style={{ background: `conic-gradient(${donutGradient})` }}
-                  />
-                  <div className="absolute inset-[24px] rounded-full bg-white flex flex-col items-center justify-center shadow-xs border border-gray-100">
-                    <span className="text-[8px] text-gray-500 font-bold uppercase tracking-wider">Total</span>
-                    <span className="text-[11px] font-extrabold text-gray-900 leading-tight">
+                <div className="relative w-44 h-44 flex items-center justify-center my-1 flex-shrink-0">
+                  <svg viewBox="0 0 200 200" className="w-full h-full">
+                    {donutSegments.map((segment) => {
+                      const startAngle = (segment.startPct / 100) * 360;
+                      const endAngle = (segment.endPct / 100) * 360;
+                      if (endAngle - startAngle <= 0.05) return null;
+                      return (
+                        <path
+                          key={segment.type}
+                          d={describeDonutArc(100, 100, 52, 85, startAngle, endAngle)}
+                          fill={segment.color}
+                          stroke="#ffffff"
+                          strokeWidth="1.5"
+                        />
+                      );
+                    })}
+                    {/* Center text */}
+                    <text x="100" y="93" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#666666">
+                      TOTAL
+                    </text>
+                    <text x="100" y="112" textAnchor="middle" fontSize="13" fontWeight="900" fill="#111111">
                       {fmtIndianCurrency(totalCurrentValue, true)}
-                    </span>
-                  </div>
+                    </text>
+                  </svg>
                 </div>
               ) : (
                 <div className="text-gray-400 text-xs py-8">No holdings recorded</div>
@@ -362,7 +410,7 @@ export default function MasterPortfolioReport({
 
       {/* ── Page 2: Direct Equities & Other Assets ── */}
       {(equityHoldings.length > 0 || otherHoldings.length > 0) && (
-        <section className="print:break-before-page mt-6 print:mt-0">
+        <section id="report-page-2" className="print:break-before-page mt-6 print:mt-0 bg-white p-2">
           {/* Direct Equity Holdings */}
           {equityHoldings.length > 0 && (
             <div className="mb-4 border border-gray-300">
@@ -491,24 +539,24 @@ export default function MasterPortfolioReport({
               </div>
             </div>
           )}
+
+          {/* Regulatory Disclaimer & Sign-off Footer */}
+          <footer className="mt-5 pt-3 border-t border-gray-300 text-[9.5px] text-gray-500 leading-normal">
+            <p className="font-semibold text-gray-700 mb-1">
+              Disclaimer & Regulatory Disclosures:
+            </p>
+            <p>
+              Mutual fund investments are subject to market risks. Please read all scheme related documents carefully before investing.
+              Returns calculated above are indicative and based on NAVs/market prices provided by respective asset management companies and market feeds.
+              Past performance is not indicative of future results.
+            </p>
+            <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200 text-[10px] text-gray-600">
+              <span>Generated by <strong>Phoenix Financial Services</strong> Portal</span>
+              <span>Confidential — For Client Reference Only</span>
+            </div>
+          </footer>
         </section>
       )}
-
-      {/* Regulatory Disclaimer & Sign-off Footer */}
-      <footer className="mt-6 pt-3 border-t border-gray-300 text-[9.5px] text-gray-500 leading-normal">
-        <p className="font-semibold text-gray-700 mb-1">
-          Disclaimer & Regulatory Disclosures:
-        </p>
-        <p>
-          Mutual fund investments are subject to market risks. Please read all scheme related documents carefully before investing.
-          Returns calculated above are indicative and based on NAVs/market prices provided by respective asset management companies and market feeds.
-          Past performance is not indicative of future results.
-        </p>
-        <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200 text-[10px] text-gray-600">
-          <span>Generated by <strong>Phoenix Financial Services</strong> Portal</span>
-          <span>Confidential — For Client Reference Only</span>
-        </div>
-      </footer>
     </div>
   );
 }

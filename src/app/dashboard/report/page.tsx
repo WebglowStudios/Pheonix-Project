@@ -11,6 +11,8 @@ import {
   faRotateRight,
   faCircleCheck,
   faFilePdf,
+  faDownload,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function ReportPage() {
@@ -18,6 +20,7 @@ export default function ReportPage() {
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
 
   async function loadData() {
     setLoading(true);
@@ -46,6 +49,66 @@ export default function ReportPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  async function handleDownloadPdf() {
+    if (generating) return;
+    setGenerating(true);
+    try {
+      const page1 = document.getElementById("report-page-1");
+      const page2 = document.getElementById("report-page-2");
+
+      if (!page1) throw new Error("Report page 1 not found");
+
+      // Dynamic import to keep client bundle lean
+      const { toPng } = await import("html-to-image");
+      const { jsPDF } = await import("jspdf");
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+        compress: true,
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
+      const margin = 6; // 6mm margin
+      const contentWidth = pdfWidth - margin * 2;
+
+      // Render Page 1 to high-res PNG (2x pixel ratio for 300-DPI quality)
+      const imgData1 = await toPng(page1, {
+        quality: 0.98,
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+      });
+
+      const imgProps1 = pdf.getImageProperties(imgData1);
+      const h1 = (imgProps1.height * contentWidth) / imgProps1.width;
+      pdf.addImage(imgData1, "PNG", margin, margin, contentWidth, Math.min(h1, pdfHeight - margin * 2));
+
+      // Render Page 2 if present
+      if (page2) {
+        const imgData2 = await toPng(page2, {
+          quality: 0.98,
+          pixelRatio: 2,
+          backgroundColor: "#ffffff",
+        });
+        const imgProps2 = pdf.getImageProperties(imgData2);
+        const h2 = (imgProps2.height * contentWidth) / imgProps2.width;
+
+        pdf.addPage();
+        pdf.addImage(imgData2, "PNG", margin, margin, contentWidth, Math.min(h2, pdfHeight - margin * 2));
+      }
+
+      const userName = user?.name ? user.name.trim().replace(/[^a-zA-Z0-9]/g, "_") : "Client";
+      pdf.save(`Phoenix_Master_Portfolio_${userName}.pdf`);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      window.print();
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   function handlePrint() {
     window.print();
@@ -81,10 +144,11 @@ export default function ReportPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
           <button
             onClick={loadData}
-            className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors cursor-pointer"
+            disabled={generating}
+            className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
             title="Refresh latest data"
           >
             <FontAwesomeIcon icon={faRotateRight} className="text-xs text-gray-500" />
@@ -92,10 +156,23 @@ export default function ReportPage() {
           </button>
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-[#E8740C] hover:bg-[#d46606] shadow-sm rounded-lg transition-all cursor-pointer hover:shadow-md"
+            disabled={generating}
+            className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+            title="Print to printer"
           >
-            <FontAwesomeIcon icon={faPrint} className="text-xs" />
-            Download PDF / Print
+            <FontAwesomeIcon icon={faPrint} className="text-xs text-gray-600" />
+            Print
+          </button>
+          <button
+            onClick={handleDownloadPdf}
+            disabled={generating}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-[#E8740C] hover:bg-[#d46606] shadow-sm rounded-lg transition-all cursor-pointer hover:shadow-md disabled:opacity-75"
+          >
+            <FontAwesomeIcon
+              icon={generating ? faSpinner : faDownload}
+              className={`text-xs ${generating ? "animate-spin" : ""}`}
+            />
+            {generating ? "Generating PDF..." : "Download PDF"}
           </button>
         </div>
       </div>
