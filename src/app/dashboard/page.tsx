@@ -8,7 +8,7 @@ import {
   faPlus, faArrowRight, faChartPie, faArrowTrendUp, faArrowTrendDown,
   faChartLine, faSackDollar, faCoins, faLandmark, faLeaf, faRing,
   faBitcoinSign, faFileContract, faHandHoldingDollar, faWallet,
-  faScaleBalanced, faLayerGroup, faTriangleExclamation, faFilePdf,
+  faScaleBalanced, faLayerGroup, faTriangleExclamation, faFilePdf, faBuildingColumns,
 } from "@fortawesome/free-solid-svg-icons";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -33,6 +33,7 @@ const TYPE_META: Record<string, { label: string; color: string }> = {
   stock:       { label: "Stocks",        color: "#1565C0" },
   mutual_fund: { label: "Mutual Funds",  color: "#2E7D32" },
   sip:         { label: "SIP",           color: "#E8740C" },
+  aif:         { label: "AIF",           color: "#4E342E" },
   fd:          { label: "Fixed Deposit", color: "#6A1B9A" },
   ppf:         { label: "PPF",           color: "#E65100" },
   epf:         { label: "EPF",           color: "#00838F" },
@@ -130,6 +131,7 @@ function StatCard({ label, value, sub, isGain, icon }: {
 
 const TYPE_ICONS: Record<string, ReturnType<typeof Object.values>[0]> = {
   stock: faChartLine, mutual_fund: faChartPie, sip: faCoins,
+  aif: faBuildingColumns,
   fd: faLandmark, ppf: faLeaf, epf: faHandHoldingDollar,
   nps: faSackDollar, bond: faFileContract, gold: faRing, crypto: faBitcoinSign,
 };

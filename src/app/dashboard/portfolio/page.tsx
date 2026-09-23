@@ -9,7 +9,7 @@ import {
   faArrowUp, faArrowDown, faArrowsRotate, faChartLine, faChartPie, faCoins,
   faLandmark, faLeaf, faHandHoldingDollar, faSackDollar,
   faFileContract, faRing, faBitcoinSign, faClock, faTriangleExclamation,
-  faCircleCheck, faCircleXmark, faFilePdf,
+  faCircleCheck, faCircleXmark, faFilePdf, faBuildingColumns,
 } from "@fortawesome/free-solid-svg-icons";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -18,6 +18,7 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string }> = 
   stock:       { label: "Stock",         color: "#1565C0", bg: "#EBF3FD" },
   mutual_fund: { label: "Mutual Fund",   color: "#2E7D32", bg: "#EAF5EB" },
   sip:         { label: "SIP",           color: "#E8740C", bg: "#FFF3EB" },
+  aif:         { label: "AIF",           color: "#4E342E", bg: "#EFEBE9" },
   fd:          { label: "Fixed Deposit", color: "#6A1B9A", bg: "#F4E8FB" },
   ppf:         { label: "PPF",           color: "#E65100", bg: "#FBE9E7" },
   epf:         { label: "EPF",           color: "#00838F", bg: "#E0F7FA" },
@@ -29,21 +30,23 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string }> = 
 
 const TYPE_ICONS: Record<string, ReturnType<typeof Object.values>[0]> = {
   stock: faChartLine, mutual_fund: faChartPie, sip: faCoins,
+  aif: faBuildingColumns,
   fd: faLandmark, ppf: faLeaf, epf: faHandHoldingDollar,
   nps: faSackDollar, bond: faFileContract, gold: faRing, crypto: faBitcoinSign,
 };
 
 const FILTER_TABS = [
-  { value: "all",     label: "All" },
-  { value: "stock",   label: "Stocks" },
+  { value: "all",         label: "All" },
+  { value: "stock",       label: "Stocks" },
   { value: "mutual_fund", label: "Mutual Funds" },
-  { value: "sip",     label: "SIP" },
-  { value: "fd",      label: "FD" },
-  { value: "ppf_epf", label: "PPF / EPF" },
-  { value: "gold",    label: "Gold" },
-  { value: "nps",     label: "NPS" },
-  { value: "bond",    label: "Bonds" },
-  { value: "crypto",  label: "Crypto" },
+  { value: "sip",         label: "SIP" },
+  { value: "aif",         label: "AIF" },
+  { value: "fd",          label: "FD" },
+  { value: "ppf_epf",     label: "PPF / EPF" },
+  { value: "gold",        label: "Gold" },
+  { value: "nps",         label: "NPS" },
+  { value: "bond",        label: "Bonds" },
+  { value: "crypto",      label: "Crypto" },
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -177,6 +180,28 @@ function EditModal({ inv, onClose, onSaved }: { inv: Investment; onClose: () => 
             <div>
               <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">Avg NAV (₹)</label>
               <input type="number" step="any" value={form.avgNav ?? ""} onChange={e => upd("avgNav", +e.target.value)} className={ic} />
+            </div>
+          </>)}
+          {form.type === "aif" && (<>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">Invested Capital (₹)</label>
+                <input type="number" value={form.investedAmount ?? ""} onChange={e => upd("investedAmount", +e.target.value)} className={ic} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">Latest Valuation (₹)</label>
+                <input type="number" value={form.currentPrice ?? ""} onChange={e => upd("currentPrice", +e.target.value)} className={ic} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">Fund House / AMC</label>
+                <input value={form.institution ?? ""} onChange={e => upd("institution", e.target.value)} className={ic} />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">Folio / Account ID</label>
+                <input value={form.folioNumber ?? ""} onChange={e => upd("folioNumber", e.target.value)} className={ic} />
+              </div>
             </div>
           </>)}
           {(["fd","ppf","epf","nps","bond"] as const).includes(form.type as never) && (
@@ -471,9 +496,11 @@ export default function PortfolioPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-[#1a1b23] text-[13px] truncate max-w-[180px]">{inv.name}</p>
-                            {inv.symbol && (
+                            {inv.symbol ? (
                               <p className="text-[#8a92a6] text-xs">{inv.symbol}{inv.exchange ? ` · ${inv.exchange}` : ""}</p>
-                            )}
+                            ) : inv.institution ? (
+                              <p className="text-[#8a92a6] text-xs">{inv.institution}{inv.folioNumber ? ` · Folio: ${inv.folioNumber}` : ""}</p>
+                            ) : null}
                           </div>
                         </div>
                       </td>

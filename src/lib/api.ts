@@ -43,7 +43,7 @@ export interface User {
 
 export type InvestmentType =
   | "stock" | "mutual_fund" | "sip" | "ppf" | "epf"
-  | "fd" | "nps" | "bond" | "gold" | "crypto";
+  | "fd" | "nps" | "bond" | "gold" | "crypto" | "aif" | "reit_invit";
 
 export interface Investment {
   _id: string;
@@ -52,6 +52,7 @@ export interface Investment {
   name: string;
   symbol?: string;
   exchange?: string;
+  folioNumber?: string;
   units?: number;
   buyPrice?: number;
   buyDate?: string;
@@ -171,6 +172,19 @@ export const pricesApi = {
 
   lookupCrypto: (symbol: string) =>
     request<{ price: number; symbol: string }>(`/api/prices/crypto/${symbol}`),
+
+  search: (type: "stock" | "mutual_fund" | "sip" | "crypto", query: string) =>
+    request<
+      Array<{
+        name: string;
+        symbol?: string;
+        code?: string;
+        fullSymbol?: string;
+        exchange?: string;
+        id?: string;
+        type: string;
+      }>
+    >(`/api/prices/search?type=${encodeURIComponent(type)}&q=${encodeURIComponent(query)}`),
 };
 
 export const portfolioApi = {
