@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { adminApi, AdminLead } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -12,19 +12,7 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 
-interface Lead {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  services: string[];
-  message: string;
-  connect_time: string;
-  source: string;
-  status: string;
-  notes: string;
-  created_at: string;
-}
+type Lead = AdminLead;
 
 const STATUS_BADGE: Record<string, string> = {
   new: "bg-[#FFF3EB] text-[#E8740C] border border-[#E8740C]",
@@ -71,18 +59,25 @@ export default function LeadsPage() {
   };
 
   const fetchLeads = useCallback(async () => {
-    const { data } = await supabase
-      .from("contact_submissions")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (data) {
-      setLeads(data);
-      const notesMap: Record<string, string> = {};
-      data.forEach(l => { notesMap[l.id] = l.notes ?? ""; });
-      setNotes(notesMap);
+    try {
+      const res = await adminApi.getLeads({
+        status: filter === "all" ? undefined : filter,
+        search: search.trim() || undefined,
+      });
+      if (res.success && res.data) {
+        setLeads(res.data.leads || []);
+        const notesMap: Record<string, string> = {};
+        (res.data.leads || []).forEach((l) => {
+          notesMap[l.id] = l.notes ?? "";
+        });
+        setNotes(notesMap);
+      }
+    } catch {
+      showToast("Failed to fetch leads", "error");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  }, [filter, search]);
 
   useEffect(() => {
     fetchLeads();
@@ -90,49 +85,55 @@ export default function LeadsPage() {
     return () => clearInterval(interval);
   }, [fetchLeads]);
 
-  async function updateStatus(id: string, status: string) {
+  async function updateStatus(id: string, status: "new" | "read" | "contacted") {
     setSaving(id);
-    const { error } = await supabase
-      .from("contact_submissions")
-      .update({ status })
-      .eq("id", id);
-    if (error) {
+    try {
+      const res = await adminApi.updateLead(id, { status });
+      if (!res.success) {
+        showToast("Failed to update status", "error");
+      } else {
+        setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+        showToast("Status updated", "success");
+      }
+    } catch {
       showToast("Failed to update status", "error");
-    } else {
-      setLeads(prev => prev.map(l => l.id === id ? { ...l, status } : l));
-      showToast("Status updated", "success");
+    } finally {
+      setSaving(null);
     }
-    setSaving(null);
   }
 
   async function saveNotes(id: string) {
     setSaving(id + "_notes");
-    const { error } = await supabase
-      .from("contact_submissions")
-      .update({ notes: notes[id] ?? "" })
-      .eq("id", id);
-    if (error) {
+    try {
+      const res = await adminApi.updateLead(id, { notes: notes[id] ?? "" });
+      if (!res.success) {
+        showToast("Failed to save notes", "error");
+      } else {
+        showToast("Notes saved", "success");
+      }
+    } catch {
       showToast("Failed to save notes", "error");
-    } else {
-      showToast("Notes saved", "success");
+    } finally {
+      setSaving(null);
     }
-    setSaving(null);
   }
 
   async function deleteLead(id: string) {
     if (!confirm("Are you sure you want to delete this lead? This action cannot be undone.")) return;
     setSaving(id + "_delete");
-    const { error } = await supabase
-      .from("contact_submissions")
-      .delete()
-      .eq("id", id);
-    if (error) {
-      showToast("Failed to delete lead: " + error.message, "error");
-    } else {
-      setLeads(prev => prev.filter(l => l.id !== id));
-      showToast("Lead entry deleted", "success");
+    try {
+      const res = await adminApi.deleteLead(id);
+      if (!res.success) {
+        showToast("Failed to delete lead", "error");
+      } else {
+        setLeads((prev) => prev.filter((l) => l.id !== id));
+        showToast("Lead entry deleted", "success");
+      }
+    } catch {
+      showToast("Failed to delete lead", "error");
+    } finally {
+      setSaving(null);
     }
-    setSaving(null);
   }
 
   const filtered = leads.filter(l => {

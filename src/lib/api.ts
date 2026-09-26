@@ -39,6 +39,7 @@ export interface User {
   phone: string;
   avatar?: string;
   authProvider?: "local" | "google";
+  role?: "user" | "admin";
   riskProfile: "conservative" | "moderate" | "aggressive";
   createdAt?: string;
 }
@@ -213,4 +214,135 @@ export const portfolioApi = {
 
   remove: (id: string) =>
     request<never>(`/api/portfolio/${id}`, { method: "DELETE" }),
+};
+
+// ─── Admin API ─────────────────────────────────────────────────────────────
+
+export interface AdminUser extends User {
+  stats?: {
+    investmentCount: number;
+    totalInvested: number;
+    totalCurrent: number;
+  };
+}
+
+export interface AdminLead {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  services: string[];
+  message: string;
+  connect_time: string;
+  source: string;
+  status: "new" | "read" | "contacted";
+  notes: string;
+  created_at: string;
+}
+
+export const adminApi = {
+  getStats: () => request<{
+    stats: {
+      totalUsers: number;
+      totalLeads: number;
+      newLeads: number;
+      totalServices: number;
+      totalFaqs: number;
+    };
+    recentLeads: AdminLead[];
+    recentUsers: AdminUser[];
+  }>("/api/admin/stats"),
+
+  getUsers: (params?: { search?: string; role?: string; page?: number; limit?: number }) => {
+    const q = params
+      ? "?" +
+        new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v != null && v !== "")
+            .map(([k, v]) => [k, String(v)])
+        ).toString()
+      : "";
+    return request<{ users: AdminUser[]; total: number; page: number; totalPages: number }>(`/api/admin/users${q}`);
+  },
+
+  getUser: (id: string) =>
+    request<{ user: AdminUser; investments: Investment[] }>(`/api/admin/users/${id}`),
+
+  updateUser: (id: string, data: Partial<User>) =>
+    request<{ user: AdminUser }>(`/api/admin/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+
+  deleteUser: (id: string) =>
+    request<never>(`/api/admin/users/${id}`, { method: "DELETE" }),
+
+  getLeads: (params?: { status?: string; search?: string; page?: number; limit?: number }) => {
+    const q = params
+      ? "?" +
+        new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v != null && v !== "")
+            .map(([k, v]) => [k, String(v)])
+        ).toString()
+      : "";
+    return request<{ leads: AdminLead[]; total: number; newCount: number }>(`/api/admin/leads${q}`);
+  },
+
+  updateLead: (id: string, data: { status?: string; notes?: string }) =>
+    request<{ lead: AdminLead }>(`/api/admin/leads/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+
+  deleteLead: (id: string) =>
+    request<never>(`/api/admin/leads/${id}`, { method: "DELETE" }),
+
+  getContent: (key: string) =>
+    request<{ key: string; content: unknown }>(`/api/admin/content/${key}`),
+
+  updateContent: (key: string, content: unknown) =>
+    request<{ key: string; content: unknown }>(`/api/admin/content/${key}`, { method: "PUT", body: JSON.stringify({ content }) }),
+
+  getServices: () =>
+    request<{ services: unknown[] }>("/api/admin/services"),
+
+  createService: (data: unknown) =>
+    request<{ service: unknown }>("/api/admin/services", { method: "POST", body: JSON.stringify(data) }),
+
+  updateService: (id: string, data: unknown) =>
+    request<{ service: unknown }>(`/api/admin/services/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+
+  deleteService: (id: string) =>
+    request<never>(`/api/admin/services/${id}`, { method: "DELETE" }),
+
+  getFaqs: () =>
+    request<{ faqs: unknown[] }>("/api/admin/faqs"),
+
+  createFaq: (data: unknown) =>
+    request<{ faq: unknown }>("/api/admin/faqs", { method: "POST", body: JSON.stringify(data) }),
+
+  updateFaq: (id: string, data: unknown) =>
+    request<{ faq: unknown }>(`/api/admin/faqs/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+
+  deleteFaq: (id: string) =>
+    request<never>(`/api/admin/faqs/${id}`, { method: "DELETE" }),
+};
+
+// ─── Public Content API ────────────────────────────────────────────────────
+
+export const publicApi = {
+  getContent: (key: string) =>
+    request<{ key: string; content: unknown }>(`/api/public/content/${key}`),
+
+  getServices: () =>
+    request<{ services: unknown[] }>("/api/public/services"),
+
+  getFaqs: () =>
+    request<{ faqs: unknown[] }>("/api/public/faqs"),
+
+  submitContact: (data: {
+    name: string;
+    phone: string;
+    email?: string;
+    services?: string[];
+    message?: string;
+    connect_time?: string;
+    source?: string;
+  }) =>
+    request<{ leadId: string }>("/api/public/contact", { method: "POST", body: JSON.stringify(data) }),
 };

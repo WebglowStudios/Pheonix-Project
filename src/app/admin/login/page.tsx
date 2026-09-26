@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { authApi, setToken, setStoredUser, clearToken } from "@/lib/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -17,16 +17,31 @@ export default function AdminLoginPage() {
     setLoading(true);
     setError("");
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const res = await authApi.login({
+        email: email.trim(),
+        password,
+      });
 
-    if (authError) {
-      setError(authError.message);
-      setLoading(false);
-    } else {
+      if (!res.success || !res.token || !res.user) {
+        setError(res.message || "Invalid admin credentials.");
+        setLoading(false);
+        return;
+      }
+
+      if (res.user.role !== "admin") {
+        clearToken();
+        setError("Access denied: This account does not have administrator privileges.");
+        setLoading(false);
+        return;
+      }
+
+      setToken(res.token);
+      setStoredUser(res.user);
       router.push("/admin");
+    } catch {
+      setError("Unable to connect to server. Please try again.");
+      setLoading(false);
     }
   }
 

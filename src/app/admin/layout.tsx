@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { clearToken, getStoredUser, authApi, setStoredUser, type User } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHouse,
+  faUsers,
   faInbox,
   faImage,
   faInfo,
@@ -25,6 +26,7 @@ import {
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: faHouse },
+  { href: "/admin/users", label: "Registered Clients", icon: faUsers },
   { href: "/admin/leads", label: "Leads", icon: faInbox },
   { href: "/admin/promo", label: "Promo Popup", icon: faBullhorn },
   { isHeader: true, label: "Homepage Sections" },
@@ -43,6 +45,7 @@ const NAV_ITEMS = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [adminUser, setAdminUser] = useState<User | null>(null);
   const [checking, setChecking] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -53,32 +56,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.replace("/admin/login");
-      } else {
+    const stored = getStoredUser();
+    if (stored && stored.role === "admin") {
+      setAdminUser(stored);
+      setChecking(false);
+    }
+
+    // Always verify with backend /api/auth/me
+    authApi.me().then((res) => {
+      if (res.success && res.user && res.user.role === "admin") {
+        setAdminUser(res.user);
+        setStoredUser(res.user);
         setChecking(false);
-      }
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session && pathname !== "/admin/login") {
+      } else {
         router.replace("/admin/login");
       }
+    }).catch(() => {
+      router.replace("/admin/login");
     });
-
-    return () => listener.subscription.unsubscribe();
   }, [router, pathname]);
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
+  function handleLogout() {
+    clearToken();
     router.replace("/admin/login");
   }
 
   if (checking) {
     return (
       <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#E8740C] border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-[#E8740C] border-t-transparent rounded-full animate-spin" />
+          <p className="text-white/60 text-xs font-medium tracking-wide">Authenticating Admin...</p>
+        </div>
       </div>
     );
   }
@@ -98,6 +107,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <p className="text-white font-bold text-sm leading-tight text-center">Phoenix Financial</p>
         <p className="text-[#E8740C] text-[11px] font-semibold mt-0.5 uppercase tracking-[1px]">Admin Panel</p>
       </div>
+
+      {/* Admin user pill */}
+      {adminUser && (
+        <div className="mx-3 mt-3 mb-1 px-3 py-2 rounded-lg bg-white/[0.05] border border-white/10 flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-md bg-[#E8740C] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            {adminUser.name?.charAt(0) || "A"}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-white text-xs font-semibold truncate leading-tight">{adminUser.name}</p>
+            <span className="inline-block text-[9px] font-bold text-[#E8740C] uppercase tracking-wider">
+              Administrator
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Nav items */}
       <nav className="flex-1 py-2 px-3 overflow-y-auto">
