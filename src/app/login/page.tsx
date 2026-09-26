@@ -13,6 +13,7 @@ import {
   faShieldHalved,
   faSackDollar,
 } from "@fortawesome/free-solid-svg-icons";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -174,6 +175,17 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
+
+            {/* Divider */}
+            <div className="flex items-center my-5">
+              <div className="flex-1 border-t border-[#E5E7EB]"></div>
+              <span className="px-3 text-xs text-[#9CA3AF] uppercase font-semibold tracking-wider">
+                Or continue with
+              </span>
+              <div className="flex-1 border-t border-[#E5E7EB]"></div>
+            </div>
+
+            <GoogleSignInButton text="continue_with" onError={(msg) => setError(msg)} />
 
             <p className="text-center text-sm text-[#666] mt-6">
               Don&apos;t have an account?{" "}

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { authApi, setToken, setStoredUser } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 const RISK_OPTIONS = [
   { value: "conservative", label: "Conservative", desc: "Low risk, stable returns" },
@@ -42,6 +43,11 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
+    const cleanedPhone = form.phone.replace(/[\s\-()]/g, "");
+    if (!cleanedPhone || cleanedPhone.length < 10) {
+      setError("Please enter a valid phone number (at least 10 digits).");
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -157,13 +163,14 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">
-                    Phone <span className="text-[#C0C4CC] font-normal normal-case tracking-normal">optional</span>
+                    Phone Number <span className="text-[#E8740C] font-semibold">*</span>
                   </label>
                   <input
                     type="tel"
                     value={form.phone}
                     onChange={(e) => update("phone", e.target.value)}
                     placeholder="+91 98765 43210"
+                    required
                     className={inputClass}
                   />
                 </div>
@@ -262,6 +269,17 @@ export default function RegisterPage() {
                 )}
               </button>
             </form>
+
+            {/* Divider */}
+            <div className="flex items-center my-4">
+              <div className="flex-1 border-t border-[#E5E7EB]"></div>
+              <span className="px-3 text-xs text-[#9CA3AF] uppercase font-semibold tracking-wider">
+                Or sign up with
+              </span>
+              <div className="flex-1 border-t border-[#E5E7EB]"></div>
+            </div>
+
+            <GoogleSignInButton text="signup_with" onError={(msg) => setError(msg)} />
 
             <p className="text-center text-sm text-[#8a92a6] mt-4">
               Already have an account?{" "}

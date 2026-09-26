@@ -53,7 +53,8 @@ export default function SettingsPage() {
       setStoredUser(res.user);
       setProfileMsg({ text: "Profile updated successfully.", ok: true });
     } else {
-      setProfileMsg({ text: res.message || "Failed to update profile.", ok: false });
+      const errMsg = res.errors?.[0]?.msg || res.message || "Failed to update profile.";
+      setProfileMsg({ text: errMsg, ok: false });
     }
     setProfileSaving(false);
     setTimeout(() => setProfileMsg(null), 4000);

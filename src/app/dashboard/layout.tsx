@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { clearToken, getStoredUser, authApi, setStoredUser, type User } from "@/lib/api";
+import PhonePromptModal from "@/components/PhonePromptModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faHouse,
@@ -59,9 +60,13 @@ function Sidebar({
       {/* User pill */}
       {user && (
         <div className="mx-3 mt-4 mb-1 px-3 py-2.5 rounded-[10px] bg-white/[0.06] border border-white/[0.08] flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#E8740C] flex items-center justify-center text-white font-bold text-xs flex-shrink-0 select-none">
-            {getInitials(user.name)}
-          </div>
+          {user.avatar ? (
+            <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-[#E8740C] flex items-center justify-center text-white font-bold text-xs flex-shrink-0 select-none">
+              {getInitials(user.name)}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-white text-[13px] font-semibold truncate leading-tight">{user.name}</p>
             <p className="text-white/40 text-[11px] truncate">{user.email}</p>
@@ -198,6 +203,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+
+      {/* Phone prompt modal for users without a registered phone number */}
+      {user && (!user.phone || user.phone.trim() === "") && (
+        <PhonePromptModal
+          user={user}
+          onSuccess={(updated) => setUser(updated)}
+        />
+      )}
 
       {/* slideIn keyframe for mobile sidebar */}
       <style>{`@keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>

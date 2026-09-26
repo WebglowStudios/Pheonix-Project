@@ -37,6 +37,8 @@ export interface User {
   name: string;
   email: string;
   phone: string;
+  avatar?: string;
+  authProvider?: "local" | "google";
   riskProfile: "conservative" | "moderate" | "aggressive";
   createdAt?: string;
 }
@@ -105,6 +107,8 @@ export interface ApiResponse<T = unknown> {
   message?: string;
   token?: string;
   user?: User;
+  isNewUser?: boolean;
+  needsPhone?: boolean;
   data?: T;
   count?: number;
   errors?: Array<{ msg: string; path: string }>;
@@ -136,11 +140,14 @@ async function request<T = unknown>(
 // ─── Auth API ──────────────────────────────────────────────────────────────
 
 export const authApi = {
-  register: (payload: { name: string; email: string; password: string; phone?: string; riskProfile?: string }) =>
+  register: (payload: { name: string; email: string; password: string; phone: string; riskProfile?: string }) =>
     request<never>("/api/auth/register", { method: "POST", body: JSON.stringify(payload) }),
 
   login: (payload: { email: string; password: string }) =>
     request<never>("/api/auth/login", { method: "POST", body: JSON.stringify(payload) }),
+
+  googleLogin: (credential: string) =>
+    request<never>("/api/auth/google", { method: "POST", body: JSON.stringify({ credential }) }),
 
   // /me returns { success, user } — user is top-level on ApiResponse
   me: () => request<never>("/api/auth/me"),
