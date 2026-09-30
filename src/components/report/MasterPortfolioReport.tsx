@@ -95,7 +95,8 @@ export default function MasterPortfolioReport({
   // Filter groups
   const mfHoldings = investments.filter((i) => i.type === "mutual_fund" || i.type === "sip");
   const equityHoldings = investments.filter((i) => i.type === "stock");
-  const otherHoldings = investments.filter((i) => !["mutual_fund", "sip", "stock"].includes(i.type));
+  const aifHoldings = investments.filter((i) => i.type === "aif");
+  const otherHoldings = investments.filter((i) => !["mutual_fund", "sip", "stock", "aif"].includes(i.type));
 
   // Multi-asset breakdown
   const assetTypesPresent = Array.from(new Set(investments.map((i) => i.type)));
@@ -477,6 +478,73 @@ export default function MasterPortfolioReport({
                           <td className="py-1.5 px-2 border-r border-gray-300 text-right">{fmtIndianCurrency(val, false)}</td>
                           <td className="py-1.5 px-2 border-r border-gray-300 text-right">{fmtIndianCurrency(gain, false)}</td>
                           <td colSpan={2} className="py-1.5 px-2 text-left">{fmtNumber(ret)}%</td>
+                        </tr>
+                      );
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Alternative Investment Funds (AIF) Holdings */}
+          {aifHoldings.length > 0 && (
+            <div className="mb-4 border border-gray-300">
+              <div className="bg-[#4E342E] print:bg-[#4E342E] text-white font-bold text-[12px] py-1.5 px-3 flex justify-between items-center">
+                <span>Alternative Investment Funds (AIF) Portfolio</span>
+                <span className="text-[10px] font-normal opacity-90">SEBI Regulated Category I / II / III Alternative Funds</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10.5px] text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#EFEBE9] print:bg-[#EFEBE9] font-bold text-gray-800 border-b border-gray-300">
+                      <th className="py-1.5 px-2 border-r border-gray-300">Fund / Scheme Name</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300">Fund House / AMC</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300">Category / Strategy</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300">Folio ID</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300">Inception Date</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300 text-right">Capital Invested</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300 text-right">Latest Valuation</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300 text-right">Unrealised Gain</th>
+                      <th className="py-1.5 px-2 text-right">Abs Ret (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {aifHoldings.map((inv) => {
+                      const cost = inv.investedAmount || 0;
+                      const val = inv.currentValue || cost;
+                      const gain = val - cost;
+                      const absRet = cost > 0 ? (gain / cost) * 100 : 0;
+                      return (
+                        <tr key={inv._id} className="border-b border-gray-200 hover:bg-gray-50">
+                          <td className="py-1.5 px-2 border-r border-gray-300 font-semibold text-gray-900">{inv.name}</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-gray-700">{inv.institution || "—"}</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-gray-700">{inv.notes || "Category III"}</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-gray-600">{inv.folioNumber || "—"}</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-gray-600">{formatDateIndian(inv.buyDate || inv.createdAt)}</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-right font-medium">{fmtIndianCurrency(cost, false)}</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-right font-bold text-gray-900">{fmtIndianCurrency(val, false)}</td>
+                          <td className={`py-1.5 px-2 border-r border-gray-300 text-right font-semibold ${gain >= 0 ? "text-green-700" : "text-red-700"}`}>
+                            {fmtIndianCurrency(gain, false)}
+                          </td>
+                          <td className={`py-1.5 px-2 text-right font-bold ${absRet >= 0 ? "text-green-700" : "text-red-700"}`}>
+                            {fmtNumber(absRet)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {(() => {
+                      const cost = aifHoldings.reduce((s, i) => s + (i.investedAmount || 0), 0);
+                      const val = aifHoldings.reduce((s, i) => s + (i.currentValue || i.investedAmount || 0), 0);
+                      const gain = val - cost;
+                      const ret = cost > 0 ? (gain / cost) * 100 : 0;
+                      return (
+                        <tr className="bg-[#D7CCC8] print:bg-[#D7CCC8] font-bold text-gray-900">
+                          <td colSpan={5} className="py-1.5 px-2 border-r border-gray-300 text-right">AIF Grand Total:</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-right">{fmtIndianCurrency(cost, false)}</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-right">{fmtIndianCurrency(val, false)}</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-right">{fmtIndianCurrency(gain, false)}</td>
+                          <td className="py-1.5 px-2 text-right">{fmtNumber(ret)}%</td>
                         </tr>
                       );
                     })()}

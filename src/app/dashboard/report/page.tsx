@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { portfolioApi, getStoredUser, type PortfolioSummary, type Investment, type User } from "@/lib/api";
+import { portfolioApi, familyApi, getStoredUser, type PortfolioSummary, type Investment, type User } from "@/lib/api";
 import MasterPortfolioReport from "@/components/report/MasterPortfolioReport";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -13,6 +13,7 @@ import {
   faFilePdf,
   faDownload,
   faSpinner,
+  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function ReportPage() {
@@ -21,6 +22,8 @@ export default function ReportPage() {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [reportScope, setReportScope] = useState<"individual" | "family">("individual");
+  const [familyMembersCount, setFamilyMembersCount] = useState<number>(0);
 
   async function loadData() {
     setLoading(true);
@@ -28,16 +31,31 @@ export default function ReportPage() {
       const stored = getStoredUser();
       setUser(stored);
 
-      const [sumRes, invRes] = await Promise.all([
-        portfolioApi.getSummary(),
-        portfolioApi.getAll(),
-      ]);
+      if (reportScope === "family") {
+        const famRes = await familyApi.getCumulative();
+        if (famRes.success && famRes.data) {
+          setSummary(famRes.data.summary);
+          setInvestments(famRes.data.investments || []);
+          setFamilyMembersCount(famRes.data.members?.length || 0);
+        }
+      } else {
+        const [sumRes, invRes, famMembersRes] = await Promise.all([
+          portfolioApi.getSummary(),
+          portfolioApi.getAll(),
+          familyApi.getMembers().catch(() => ({ success: false, data: null })),
+        ]);
 
-      if (sumRes.success && sumRes.data) {
-        setSummary(sumRes.data);
-      }
-      if (invRes.success && invRes.data) {
-        setInvestments(invRes.data);
+        if (sumRes.success && sumRes.data) {
+          setSummary(sumRes.data);
+        }
+        if (invRes.success && invRes.data) {
+          setInvestments(invRes.data);
+        }
+        if (famMembersRes.success && famMembersRes.data) {
+          setFamilyMembersCount(
+            (famMembersRes.data.members?.length || 0) + 1
+          );
+        }
       }
     } catch (err) {
       console.error("Failed to load report data", err);
@@ -48,7 +66,7 @@ export default function ReportPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [reportScope]);
 
   async function handleDownloadPdf() {
     if (generating) return;
@@ -100,8 +118,9 @@ export default function ReportPage() {
         pdf.addImage(imgData2, "PNG", margin, margin, contentWidth, Math.min(h2, pdfHeight - margin * 2));
       }
 
+      const prefix = reportScope === "family" ? "Phoenix_Family_Cumulative_Portfolio" : "Phoenix_Master_Portfolio";
       const userName = user?.name ? user.name.trim().replace(/[^a-zA-Z0-9]/g, "_") : "Client";
-      pdf.save(`Phoenix_Master_Portfolio_${userName}.pdf`);
+      pdf.save(`${prefix}_${userName}.pdf`);
     } catch (err) {
       console.error("PDF generation error:", err);
       window.print();
@@ -142,6 +161,31 @@ export default function ReportPage() {
             </h1>
             <p className="text-xs text-gray-500">Live investor statement ready for export</p>
           </div>
+        </div>
+
+        {/* Scope Toggle: Individual vs Family */}
+        <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200">
+          <button
+            onClick={() => setReportScope("individual")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              reportScope === "individual"
+                ? "bg-white text-gray-900 shadow-xs"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            My Individual Statement
+          </button>
+          <button
+            onClick={() => setReportScope("family")}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+              reportScope === "family"
+                ? "bg-[#E8740C] text-white shadow-xs"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            <FontAwesomeIcon icon={faUsers} className="text-xs" />
+            <span>Family Cumulative ({familyMembersCount})</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
@@ -188,7 +232,11 @@ export default function ReportPage() {
       {/* Printable Report Component */}
       <div className="print-surface">
         <MasterPortfolioReport
-          user={user}
+          user={
+            reportScope === "family" && user
+              ? { ...user, name: `${user.name} & Family` }
+              : user
+          }
           summary={summary}
           investments={investments}
           reportDate={new Date()}

@@ -248,6 +248,74 @@ export const portfolioApi = {
     request<never>(`/api/portfolio/${id}`, { method: "DELETE" }),
 };
 
+// ─── Family Portfolio API ──────────────────────────────────────────────────
+
+export interface FamilyMemberStats {
+  totalInvested: number;
+  currentValue: number;
+  totalGain: number;
+  totalGainPercent: number;
+  holdingsCount: number;
+}
+
+export interface FamilyMember {
+  userId: string;
+  name: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  riskProfile?: string;
+  relationship: string;
+  addedAt?: string;
+  isSelf?: boolean;
+  stats?: FamilyMemberStats;
+}
+
+export interface CumulativeInvestment extends Investment {
+  ownerId: string;
+  ownerName: string;
+  ownerEmail: string;
+  relationship: string;
+  isSelf: boolean;
+}
+
+export interface CumulativePortfolioSummary extends PortfolioSummary {
+  byMember?: Record<
+    string,
+    {
+      id: string;
+      name: string;
+      relationship: string;
+      isSelf: boolean;
+      invested: number;
+      currentValue: number;
+      gain: number;
+      holdings: number;
+    }
+  >;
+}
+
+export const familyApi = {
+  getMembers: () =>
+    request<{ primaryUser: FamilyMember; members: FamilyMember[] }>("/api/portfolio/family"),
+
+  linkMember: (payload: { email: string; password: string; relationship: string }) =>
+    request<{ member: FamilyMember }>("/api/portfolio/family/link", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  unlinkMember: (memberId: string) =>
+    request<never>(`/api/portfolio/family/${memberId}`, { method: "DELETE" }),
+
+  getCumulative: () =>
+    request<{
+      investments: CumulativeInvestment[];
+      summary: CumulativePortfolioSummary;
+      members: FamilyMember[];
+    }>("/api/portfolio/family/cumulative"),
+};
+
 // ─── Admin API ─────────────────────────────────────────────────────────────
 
 export interface AdminUser extends User {
@@ -304,7 +372,7 @@ export const adminApi = {
   },
 
   getUser: (id: string) =>
-    request<{ user: AdminUser; investments: Investment[] }>(`/api/admin/users/${id}`),
+    request<{ user: AdminUser; investments: Investment[]; summary?: PortfolioSummary }>(`/api/admin/users/${id}`),
 
   updateUser: (id: string, data: Partial<User>) =>
     request<{ user: AdminUser }>(`/api/admin/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),

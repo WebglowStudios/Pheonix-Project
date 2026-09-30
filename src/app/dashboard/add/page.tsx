@@ -339,8 +339,21 @@ function TypeForm({ type, form, upd }: {
               placeholder="e.g. ICICI Prudential AMC, ASK, Kotak"
               value={form.institution as string}
               onChange={e => upd("institution", e.target.value)}
+              list="aif-amc-list"
               className={ic}
             />
+            <datalist id="aif-amc-list">
+              <option value="ICICI Prudential AMC" />
+              <option value="Kotak Alternate Asset Managers" />
+              <option value="ASK Investment Managers" />
+              <option value="360 ONE Asset (IIFL Wealth)" />
+              <option value="WhiteOak Capital Management" />
+              <option value="Sundaram Alternate Assets" />
+              <option value="Edelweiss Alternative Asset Advisors" />
+              <option value="Abakkus Asset Manager" />
+              <option value="Nippon India AIF" />
+              <option value="HDFC AMC Alternative" />
+            </datalist>
           </Field>
           <Field label="AIF Category / Strategy">
             <select
@@ -369,26 +382,6 @@ function TypeForm({ type, form, upd }: {
               className={ic}
             />
           </Field>
-          <Field label="Latest Valuation / NAV (₹)">
-            <input
-              type="number"
-              min="0"
-              placeholder="Leave blank to match invested capital"
-              value={form.currentPrice as string}
-              onChange={e => upd("currentPrice", e.target.value)}
-              className={ic}
-            />
-          </Field>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Client Folio / Account ID">
-            <input
-              placeholder="e.g. AIF-2024-890"
-              value={form.folioNumber as string}
-              onChange={e => upd("folioNumber", e.target.value)}
-              className={ic}
-            />
-          </Field>
           <Field label="Commitment / Inception Date">
             <input
               type="date"
@@ -398,6 +391,14 @@ function TypeForm({ type, form, upd }: {
             />
           </Field>
         </div>
+        <Field label="Client Folio / Account ID (optional)">
+          <input
+            placeholder="e.g. AIF-2024-890"
+            value={form.folioNumber as string}
+            onChange={e => upd("folioNumber", e.target.value)}
+            className={ic}
+          />
+        </Field>
       </>);
 
     case "gold":
@@ -590,6 +591,9 @@ export default function AddInvestmentPage() {
       payload.investedAmount = Number(form.investedAmount || form.principal || 0);
       if (form.currentPrice) payload.currentPrice = Number(form.currentPrice);
       if (form.folioNumber) payload.folioNumber = String(form.folioNumber);
+      if (form.remarks) {
+        payload.notes = `${form.notes || "Category III"} | ${form.remarks}`;
+      }
     }
 
     const res = await portfolioApi.add(payload as never);
@@ -727,15 +731,27 @@ export default function AddInvestmentPage() {
 
             <TypeForm type={selectedType} form={form} upd={upd} />
 
-            <Field label="Notes (optional)">
-              <textarea
-                value={form.notes as string}
-                onChange={e => upd("notes", e.target.value)}
-                placeholder="Any additional notes or portfolio strategy details..."
-                rows={2}
-                className={ic + " resize-none"}
-              />
-            </Field>
+            {selectedType !== "aif" ? (
+              <Field label="Notes (optional)">
+                <textarea
+                  value={form.notes as string}
+                  onChange={e => upd("notes", e.target.value)}
+                  placeholder="Any additional notes or portfolio strategy details..."
+                  rows={2}
+                  className={ic + " resize-none"}
+                />
+              </Field>
+            ) : (
+              <Field label="Additional Remarks / Strategy Details (optional)">
+                <textarea
+                  value={(form.remarks as string) || ""}
+                  onChange={e => upd("remarks", e.target.value)}
+                  placeholder="e.g. Drawdown committed over 3 years, minimum lock-in period, hurdle rate..."
+                  rows={2}
+                  className={ic + " resize-none"}
+                />
+              </Field>
+            )}
 
             <div className="flex gap-3 pt-1">
               <button

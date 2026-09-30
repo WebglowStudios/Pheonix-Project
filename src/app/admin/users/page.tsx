@@ -14,7 +14,9 @@ import {
   faArrowRotateRight,
   faChartPie,
   faCheck,
+  faEye,
 } from "@fortawesome/free-solid-svg-icons";
+import AdminUserSneakPeekModal from "@/components/admin/AdminUserSneakPeekModal";
 
 function fmtCurrency(n: number) {
   return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -47,6 +49,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "admin">("all");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [sneakPeekUser, setSneakPeekUser] = useState<AdminUser | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const showToast = (message: string, type: "success" | "error") => {
@@ -285,21 +288,26 @@ export default function AdminUsersPage() {
                   >
                     {/* User Identity */}
                     <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
+                      <div
+                        className="flex items-center gap-3 cursor-pointer group"
+                        onClick={() => setSneakPeekUser(user)}
+                        title="Click to sneak peek into investor's profile & portfolio"
+                      >
                         {user.avatar ? (
                           <img
                             src={user.avatar}
                             alt={user.name}
-                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                            className="w-9 h-9 rounded-full object-cover flex-shrink-0 group-hover:ring-2 group-hover:ring-[#E8740C] transition-all"
                           />
                         ) : (
-                          <div className="w-9 h-9 rounded-full bg-[#E8740C] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-[#E8740C] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 group-hover:scale-105 transition-all">
                             {user.name.charAt(0).toUpperCase()}
                           </div>
                         )}
                         <div>
-                          <p className="font-bold text-[#1a1b23] text-sm leading-snug">
-                            {user.name}
+                          <p className="font-bold text-[#1a1b23] text-sm leading-snug group-hover:text-[#E8740C] transition-colors flex items-center gap-1.5">
+                            <span>{user.name}</span>
+                            <FontAwesomeIcon icon={faEye} className="text-[10px] text-[#E8740C] opacity-0 group-hover:opacity-100 transition-opacity" />
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className="text-xs text-[#64748B]">{user.email}</span>
@@ -371,9 +379,19 @@ export default function AdminUsersPage() {
                     {/* Actions */}
                     <td className="px-5 py-3.5 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Sneak Peek Button */}
+                        <button
+                          onClick={() => setSneakPeekUser(user)}
+                          title="Sneak peek into user's portfolio, stocks & export data"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8740C]/40 bg-[#FFF3EB] text-[#E8740C] hover:bg-[#E8740C] hover:text-white transition-all text-xs font-bold shadow-xs active:scale-95"
+                        >
+                          <FontAwesomeIcon icon={faEye} className="text-xs" />
+                          <span>Sneak Peek</span>
+                        </button>
+
                         <button
                           onClick={() => handleToggleRole(user)}
-                          disabled={savingId === user.id}
+                          disabled={savingId === (user.id || (user as any)._id)}
                           title={
                             user.role === "admin"
                               ? "Demote to regular user"
@@ -386,7 +404,7 @@ export default function AdminUsersPage() {
 
                         <button
                           onClick={() => handleDeleteUser(user)}
-                          disabled={savingId === user.id}
+                          disabled={savingId === (user.id || (user as any)._id)}
                           title="Delete user"
                           className="p-2 rounded-lg border border-[#FEE2E2] bg-white text-[#EF4444] hover:bg-[#FEE2E2] transition-colors"
                         >
@@ -401,6 +419,13 @@ export default function AdminUsersPage() {
           </table>
         </div>
       </div>
+
+      {/* Sneak Peek Modal */}
+      <AdminUserSneakPeekModal
+        user={sneakPeekUser}
+        isOpen={!!sneakPeekUser}
+        onClose={() => setSneakPeekUser(null)}
+      />
     </div>
   );
 }

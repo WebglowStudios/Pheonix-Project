@@ -25,7 +25,9 @@ import {
   faArrowRotateRight,
   faEnvelope,
   faCheckCircle,
+  faEye,
 } from "@fortawesome/free-solid-svg-icons";
+import AdminUserSneakPeekModal from "@/components/admin/AdminUserSneakPeekModal";
 
 // ─── Number Formatter ────────────────────────────────────────────────────────
 function fmt(n: number) {
@@ -177,6 +179,7 @@ export default function AdminDashboardPage() {
   });
   const [recentLeads, setRecentLeads] = useState<AdminLead[]>([]);
   const [recentUsers, setRecentUsers] = useState<AdminUser[]>([]);
+  const [sneakPeekUser, setSneakPeekUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function loadData() {
@@ -521,15 +524,18 @@ export default function AdminDashboardPage() {
                     <th className="text-left px-4 py-3 text-[#64748B] font-bold text-xs uppercase">
                       Invested
                     </th>
-                    <th className="text-right px-6 py-3 text-[#64748B] font-bold text-xs uppercase">
+                    <th className="text-left px-4 py-3 text-[#64748B] font-bold text-xs uppercase">
                       Joined
+                    </th>
+                    <th className="text-right px-6 py-3 text-[#64748B] font-bold text-xs uppercase">
+                      Action
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="text-center py-8 text-[#94A3B8]">
+                      <td colSpan={5} className="text-center py-8 text-[#94A3B8]">
                         No clients registered yet
                       </td>
                     </tr>
@@ -540,21 +546,26 @@ export default function AdminDashboardPage() {
                         className="border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors"
                       >
                         <td className="px-6 py-3.5">
-                          <div className="flex items-center gap-3">
+                          <div
+                            className="flex items-center gap-3 cursor-pointer group"
+                            onClick={() => setSneakPeekUser(u)}
+                            title="Click to sneak peek into investor's profile"
+                          >
                             {u.avatar ? (
                               <img
                                 src={u.avatar}
                                 alt={u.name}
-                                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                                className="w-8 h-8 rounded-full object-cover flex-shrink-0 group-hover:ring-2 group-hover:ring-[#E8740C] transition-all"
                               />
                             ) : (
-                              <div className="w-8 h-8 rounded-full bg-[#E8740C] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-[#E8740C] text-white flex items-center justify-center font-bold text-xs flex-shrink-0 group-hover:scale-105 transition-all">
                                 {u.name.charAt(0).toUpperCase()}
                               </div>
                             )}
                             <div>
-                              <p className="font-bold text-[#1a1b23] text-sm leading-tight">
-                                {u.name}
+                              <p className="font-bold text-[#1a1b23] text-sm leading-tight group-hover:text-[#E8740C] transition-colors flex items-center gap-1">
+                                <span>{u.name}</span>
+                                <FontAwesomeIcon icon={faEye} className="text-[10px] text-[#E8740C] opacity-0 group-hover:opacity-100 transition-opacity" />
                               </p>
                               <p className="text-xs text-[#64748B]">{u.email}</p>
                             </div>
@@ -584,8 +595,19 @@ export default function AdminDashboardPage() {
                           {fmt(u.stats?.totalInvested || 0)}
                         </td>
 
-                        <td className="px-6 py-3.5 text-right text-xs text-[#64748B] whitespace-nowrap">
+                        <td className="px-4 py-3.5 text-xs text-[#64748B] whitespace-nowrap">
                           {timeAgo(u.createdAt)}
+                        </td>
+
+                        <td className="px-6 py-3.5 text-right whitespace-nowrap">
+                          <button
+                            onClick={() => setSneakPeekUser(u)}
+                            title="Sneak peek into user portfolio & stocks"
+                            className="px-2.5 py-1 text-xs text-[#E8740C] bg-[#FFF3EB] hover:bg-[#E8740C] hover:text-white rounded-md transition-all font-bold inline-flex items-center gap-1 shadow-2xs active:scale-95"
+                          >
+                            <FontAwesomeIcon icon={faEye} className="text-[10px]" />
+                            <span>Sneak Peek</span>
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -725,6 +747,13 @@ export default function AdminDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Admin Sneak Peek Modal */}
+      <AdminUserSneakPeekModal
+        user={sneakPeekUser}
+        isOpen={!!sneakPeekUser}
+        onClose={() => setSneakPeekUser(null)}
+      />
     </div>
   );
 }

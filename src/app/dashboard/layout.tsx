@@ -17,11 +17,13 @@ import {
   faXmark,
   faFilePdf,
   faShieldHalved,
+  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: faHouse, exact: true },
   { href: "/dashboard/portfolio", label: "My Portfolio", icon: faChartPie, exact: false },
+  { href: "/dashboard/family", label: "Family Portfolio", icon: faUsers, exact: false },
   { href: "/dashboard/add", label: "Add Investment", icon: faPlus, exact: false },
   { href: "/dashboard/report", label: "Portfolio Report", icon: faFilePdf, exact: false },
   { href: "/dashboard/settings", label: "Settings", icon: faGear, exact: false },
