@@ -3,7 +3,12 @@
  * Typed fetch wrapper — auto-attaches JWT, handles auth errors.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL !== undefined
+    ? process.env.NEXT_PUBLIC_API_URL
+    : typeof window !== "undefined"
+    ? ""
+    : "http://92.4.77.226:5000";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
