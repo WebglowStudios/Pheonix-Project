@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 
@@ -58,32 +58,33 @@ export default function ProcessPage() {
   };
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "process_steps")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const loaded = data.content as Partial<ProcessContent>;
+    adminApi
+      .getContent("process_steps")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as Partial<ProcessContent> | undefined;
+        if (c) {
           setContent({
-            section_heading: loaded.section_heading || DEFAULTS.section_heading,
-            section_subheading: loaded.section_subheading || DEFAULTS.section_subheading,
-            steps: loaded.steps?.length ? loaded.steps : DEFAULT_STEPS,
+            section_heading: c.section_heading || DEFAULTS.section_heading,
+            section_subheading: c.section_subheading || DEFAULTS.section_subheading,
+            steps: c.steps?.length ? c.steps : DEFAULT_STEPS,
           });
         }
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "process_steps", content }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Process steps saved!", "success");
-    setSaving(false);
+    try {
+      const res = await adminApi.updateContent("process_steps", content);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("Process steps saved!", "success");
+    } catch {
+      showToast("Failed to save process steps.", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function updateStep(index: number, field: keyof ProcessStep, value: string | number) {

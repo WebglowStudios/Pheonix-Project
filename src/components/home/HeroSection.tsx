@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 interface HeroContent {
   title: string;
@@ -31,10 +31,10 @@ export default function HeroSection() {
   const [content, setContent] = useState<HeroContent>(DEFAULTS);
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "hero").single()
-      .then(({ data }) => {
-        if (data?.content) setContent({ ...DEFAULTS, ...data.content });
-      });
+    publicApi.getContent("hero").then((res) => {
+      const c = (res.content || (res.data as { content?: HeroContent })?.content) as HeroContent | undefined;
+      if (c) setContent({ ...DEFAULTS, ...c });
+    }).catch(() => {});
   }, []);
 
   // Parse title for "Future" highlight

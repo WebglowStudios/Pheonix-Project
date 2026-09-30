@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 interface BannerContent {
   heading: string;
@@ -19,16 +19,12 @@ export default function OpenAccountBanner() {
   const [content, setContent] = useState<BannerContent>(DEFAULT_BANNER);
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "open_account_strip")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) {
-          setContent({ ...DEFAULT_BANNER, ...data.content });
-        }
-      });
+    publicApi.getContent("open_account_strip").then((res) => {
+      const c = (res.content || (res.data as { content?: BannerContent })?.content) as BannerContent | undefined;
+      if (c) {
+        setContent({ ...DEFAULT_BANNER, ...c });
+      }
+    }).catch(() => {});
   }, []);
 
   return (

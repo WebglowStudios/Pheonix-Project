@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faPencil, faTrash, faCheck, faXmark, faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 
@@ -89,35 +89,39 @@ export default function FaqsPage() {
   useEffect(() => {
     fetchFaqs();
     // Load home_faq section content
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "home_faq")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) setHomeFaq({ ...HOME_FAQ_DEFAULTS, ...data.content });
+    adminApi
+      .getContent("home_faq")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as HomeFaqContent | undefined;
+        if (c) setHomeFaq({ ...HOME_FAQ_DEFAULTS, ...c });
         setHomeFaqLoading(false);
-      });
+      })
+      .catch(() => setHomeFaqLoading(false));
   }, []);
 
   async function fetchFaqs() {
-    const { data } = await supabase
-      .from("faqs")
-      .select("*")
-      .order("category")
-      .order("sort_order");
-    setFaqs(data ?? []);
-    setLoading(false);
+    try {
+      const res = await adminApi.getFaqs();
+      const list = (res.faqs || (res.data as any)?.faqs || []) as FAQ[];
+      setFaqs(list);
+    } catch {
+      showToast("Failed to load FAQs", "error");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function saveHomeFaq() {
     setHomeFaqSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "home_faq", content: homeFaq }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("FAQ section header saved!", "success");
-    setHomeFaqSaving(false);
+    try {
+      const res = await adminApi.updateContent("home_faq", homeFaq);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("FAQ section header saved!", "success");
+    } catch {
+      showToast("Failed to save FAQ header", "error");
+    } finally {
+      setHomeFaqSaving(false);
+    }
   }
 
   function startEdit(faq: FAQ) {
@@ -133,14 +137,20 @@ export default function FaqsPage() {
   async function saveEdit() {
     if (!editId) return;
     setSaving(true);
-    const { error } = await supabase.from("faqs").update(editData).eq("id", editId);
-    if (error) showToast("Failed to save", "error");
-    else {
-      showToast("FAQ updated", "success");
-      setEditId(null);
-      fetchFaqs();
+    try {
+      const res = await adminApi.updateFaq(editId, editData);
+      if (!res.success) {
+        showToast("Failed to save", "error");
+      } else {
+        showToast("FAQ updated", "success");
+        setEditId(null);
+        fetchFaqs();
+      }
+    } catch {
+      showToast("Failed to save", "error");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function addFaq() {
@@ -148,24 +158,35 @@ export default function FaqsPage() {
     const catFaqs = faqs.filter((f) => f.category === newData.category);
     const maxOrder =
       catFaqs.length > 0 ? Math.max(...catFaqs.map((f) => f.sort_order ?? 0)) + 1 : 0;
-    const { error } = await supabase.from("faqs").insert([{ ...newData, sort_order: maxOrder }]);
-    if (error) showToast("Failed to add FAQ", "error");
-    else {
-      showToast("FAQ added", "success");
-      setShowAdd(false);
-      setNewData(EMPTY_FAQ);
-      fetchFaqs();
+    try {
+      const res = await adminApi.createFaq({ ...newData, sort_order: maxOrder });
+      if (!res.success) {
+        showToast("Failed to add FAQ", "error");
+      } else {
+        showToast("FAQ added", "success");
+        setShowAdd(false);
+        setNewData(EMPTY_FAQ);
+        fetchFaqs();
+      }
+    } catch {
+      showToast("Failed to add FAQ", "error");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function deleteFaq(id: string) {
-    const { error } = await supabase.from("faqs").delete().eq("id", id);
-    if (error) showToast("Failed to delete", "error");
-    else {
-      showToast("FAQ deleted", "success");
-      setDeleteId(null);
-      fetchFaqs();
+    try {
+      const res = await adminApi.deleteFaq(id);
+      if (!res.success) {
+        showToast("Failed to delete", "error");
+      } else {
+        showToast("FAQ deleted", "success");
+        setDeleteId(null);
+        fetchFaqs();
+      }
+    } catch {
+      showToast("Failed to delete", "error");
     }
   }
 
@@ -181,8 +202,8 @@ export default function FaqsPage() {
     const a = catFaqs[idx];
     const b = catFaqs[swapIdx];
     await Promise.all([
-      supabase.from("faqs").update({ sort_order: b.sort_order }).eq("id", a.id),
-      supabase.from("faqs").update({ sort_order: a.sort_order }).eq("id", b.id),
+      adminApi.updateFaq(a.id, { sort_order: b.sort_order }),
+      adminApi.updateFaq(b.id, { sort_order: a.sort_order }),
     ]);
     fetchFaqs();
   }

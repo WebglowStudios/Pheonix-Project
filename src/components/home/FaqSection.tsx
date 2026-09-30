@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 interface FAQ {
   id: string;
@@ -26,31 +26,27 @@ export default function FaqSection() {
 
   useEffect(() => {
     // Fetch section heading/subheading
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "home_faq")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const c = data.content as { section_heading?: string; section_subheading?: string };
-          if (c.section_heading) setHeading(c.section_heading);
-          if (c.section_subheading) setSubheading(c.section_subheading);
-        }
-      });
+    publicApi.getContent("home_faq").then((res) => {
+      const c = (res.content || (res.data as { content?: { section_heading?: string; section_subheading?: string } })?.content) as { section_heading?: string; section_subheading?: string } | undefined;
+      if (c) {
+        if (c.section_heading) setHeading(c.section_heading);
+        if (c.section_subheading) setSubheading(c.section_subheading);
+      }
+    }).catch(() => {});
 
     // Fetch specific FAQ questions
-    supabase
-      .from("faqs")
-      .select("id, question, answer")
-      .order("sort_order", { ascending: true })
-      .limit(4)
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setFaqs(data);
-          setActive(data[0]?.id ?? null);
-        }
-      });
+    publicApi.getFaqs().then((res) => {
+      const list = (res.faqs || (res.data as { faqs?: Array<{ _id?: string; id?: string; question: string; answer: string }> })?.faqs || []) as Array<{ _id?: string; id?: string; question: string; answer: string }>;
+      if (list && list.length > 0) {
+        const mapped = list.slice(0, 4).map((f) => ({
+          id: f._id || f.id || String(Math.random()),
+          question: f.question,
+          answer: f.answer,
+        }));
+        setFaqs(mapped);
+        setActive(mapped[0]?.id ?? null);
+      }
+    }).catch(() => {});
   }, []);
 
   // Parse heading for orange highlight on last word

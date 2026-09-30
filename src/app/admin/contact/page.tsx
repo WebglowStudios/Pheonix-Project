@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 
@@ -64,21 +64,27 @@ function HomeContactTab() {
   };
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "home_contact").single()
-      .then(({ data }) => {
-        if (data?.content) setContent({ ...HOME_DEFAULTS, ...data.content });
+    adminApi
+      .getContent("home_contact")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as HomeContactContent | undefined;
+        if (c) setContent({ ...HOME_DEFAULTS, ...c });
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "home_contact", content }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Contact section saved!", "success");
-    setSaving(false);
+    try {
+      const res = await adminApi.updateContent("home_contact", content);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("Contact section saved!", "success");
+    } catch {
+      showToast("Failed to save contact section.", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {
@@ -138,20 +144,27 @@ function ContactDetailsTab() {
   };
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "contact_info").single().then(({ data }) => {
-      if (data?.content) setContent({ ...DETAILS_DEFAULTS, ...data.content });
-      setLoading(false);
-    });
+    adminApi
+      .getContent("contact_info")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as ContactDetailsContent | undefined;
+        if (c) setContent({ ...DETAILS_DEFAULTS, ...c });
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "contact_info", content }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Contact details saved!", "success");
-    setSaving(false);
+    try {
+      const res = await adminApi.updateContent("contact_info", content);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("Contact details saved!", "success");
+    } catch {
+      showToast("Failed to save contact details.", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {

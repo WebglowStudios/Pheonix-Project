@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 
@@ -48,31 +48,37 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "site_settings").single().then(({ data }) => {
-      if (data?.content) {
-        const c = data.content as any;
-        setContent({
-          footer_about: c.footer_about || "",
-          disclaimer: c.disclaimer || "",
-          whatsapp_channel: c.whatsapp_channel || "",
-          amfi_reg_no: c.amfi_reg_no || c.compliance?.amfi?.reg || "",
-          bse_reg_no: c.bse_reg_no || c.compliance?.bse?.reg || "",
-          nse_reg_no: c.nse_reg_no || c.compliance?.nse?.reg || "",
-          mcx_reg_no: c.mcx_reg_no || c.compliance?.mcx?.reg || "",
-        });
-      }
-      setLoading(false);
-    });
+    adminApi
+      .getContent("site_settings")
+      .then((res) => {
+        const data = (res.content || (res.data as any)?.content) as any;
+        if (data) {
+          setContent({
+            footer_about: data.footer_about || "",
+            disclaimer: data.disclaimer || "",
+            whatsapp_channel: data.whatsapp_channel || "",
+            amfi_reg_no: data.amfi_reg_no || data.compliance?.amfi?.reg || "",
+            bse_reg_no: data.bse_reg_no || data.compliance?.bse?.reg || "",
+            nse_reg_no: data.nse_reg_no || data.compliance?.nse?.reg || "",
+            mcx_reg_no: data.mcx_reg_no || data.compliance?.mcx?.reg || "",
+          });
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "site_settings", content }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Settings saved!", "success");
-    setSaving(false);
+    try {
+      const res = await adminApi.updateContent("site_settings", content);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("Settings saved!", "success");
+    } catch {
+      showToast("Failed to save settings.", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {

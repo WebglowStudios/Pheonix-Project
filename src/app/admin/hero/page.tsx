@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 import ImageSelectorModal from "@/components/admin/ImageSelectorModal";
@@ -59,25 +59,27 @@ export default function HeroPage() {
   };
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "hero")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) setContent({ ...DEFAULTS, ...data.content });
+    adminApi
+      .getContent("hero")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as HeroContent | undefined;
+        if (c) setContent({ ...DEFAULTS, ...c });
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "hero", content }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Hero section saved!", "success");
-    setSaving(false);
+    try {
+      const res = await adminApi.updateContent("hero", content);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("Hero section saved!", "success");
+    } catch {
+      showToast("Failed to save hero section.", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const titleParts = content.title.split("Future");

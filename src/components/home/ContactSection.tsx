@@ -5,7 +5,7 @@ import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLocationDot, faEnvelope, faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
 import { submitContactForm } from "@/lib/actions";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 export default function ContactSection() {
   const [submitted, setSubmitted] = useState(false);
@@ -35,29 +35,27 @@ export default function ContactSection() {
   });
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "home_contact").single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const c = data.content as { section_heading?: string; section_subheading?: string };
-          if (c.section_heading) setHeading(c.section_heading);
-          if (c.section_subheading) setSubheading(c.section_subheading);
-        }
-      });
+    publicApi.getContent("home_contact").then((res) => {
+      const c = (res.content || (res.data as { content?: { section_heading?: string; section_subheading?: string } })?.content) as { section_heading?: string; section_subheading?: string } | undefined;
+      if (c) {
+        if (c.section_heading) setHeading(c.section_heading);
+        if (c.section_subheading) setSubheading(c.section_subheading);
+      }
+    }).catch(() => {});
 
-    supabase.from("site_content").select("content").eq("id", "contact_info").single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const c = data.content as any;
-          setContactInfo({
-            phone_landline: c.phone_landline || "020 6689 3715",
-            phone_mobile: c.phone_mobile || "+91 70212 10788",
-            whatsapp_number: c.whatsapp_number || c.whatsapp || "917021210788",
-            email: c.email || "connect@phoenixfiserv.co.in",
-            pune_address: c.pune_address || "708, Global Business Hub, Kharadi, Pune 411014",
-            mumbai_address: c.mumbai_address || "11, Brahamsiddhi, Century Bazar Lane, Worli, Mumbai 400025",
-          });
-        }
-      });
+    publicApi.getContent("contact_info").then((res) => {
+      const c = (res.content || (res.data as { content?: Record<string, string> })?.content) as Record<string, string> | undefined;
+      if (c) {
+        setContactInfo({
+          phone_landline: c.phone_landline || "020 6689 3715",
+          phone_mobile: c.phone_mobile || "+91 70212 10788",
+          whatsapp_number: c.whatsapp_number || c.whatsapp || "917021210788",
+          email: c.email || "connect@phoenixfiserv.co.in",
+          pune_address: c.pune_address || "708, Global Business Hub, Kharadi, Pune 411014",
+          mumbai_address: c.mumbai_address || "11, Brahamsiddhi, Century Bazar Lane, Worli, Mumbai 400025",
+        });
+      }
+    }).catch(() => {});
   }, []);
 
   const handleServiceChange = (value: string) => {

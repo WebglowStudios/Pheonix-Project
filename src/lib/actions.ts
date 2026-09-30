@@ -8,6 +8,8 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export async function submitContactForm(data: {
   name: string;
   phone: string;
@@ -17,11 +19,25 @@ export async function submitContactForm(data: {
   message: string;
   source: string;
 }) {
-  // 1. Save to Supabase
-  const { error } = await supabaseAdmin.from("contact_submissions").insert([data]);
-  if (error) throw new Error(error.message);
+  // 1. Save to Phoenix Engine MongoDB Atlas (Primary Lead Storage)
+  try {
+    await fetch(`${API_URL}/api/public/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (err) {
+    console.error("Failed to save lead to Phoenix Engine MongoDB:", err);
+  }
 
-  // 2. Send email notifications (Admin notification + User Thank-You confirmation email)
+  // 2. Dual-write to Supabase as redundancy backup
+  try {
+    await supabaseAdmin.from("contact_submissions").insert([data]);
+  } catch (err) {
+    console.warn("Supabase backup insert error (non-fatal):", err);
+  }
+
+  // 3. Send email notifications (Admin notification + User Thank-You confirmation email)
   try {
     await Promise.allSettled([
       sendLeadNotification(data),

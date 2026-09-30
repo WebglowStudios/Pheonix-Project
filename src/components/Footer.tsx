@@ -6,7 +6,7 @@ import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBuildingColumns, faCertificate, faChartLine, faArrowRight, faScaleBalanced } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 const quickLinks = [
   { href: "/", label: "Home" },
@@ -45,10 +45,10 @@ export default function Footer() {
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "site_settings").single()
-      .then(({ data }) => {
-        if (data?.content) setSettings({ ...DEFAULT_SETTINGS, ...data.content });
-      });
+    publicApi.getContent("site_settings").then((res) => {
+      const c = (res.content || (res.data as { content?: SiteSettings })?.content) as SiteSettings | undefined;
+      if (c) setSettings({ ...DEFAULT_SETTINGS, ...c });
+    }).catch(() => {});
   }, []);
 
   const amfi = settings.amfi_reg_no || (settings as any).compliance?.amfi?.reg || null;

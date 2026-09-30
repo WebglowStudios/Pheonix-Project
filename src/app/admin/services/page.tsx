@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faPencil, faTrash, faCheck, faXmark, faGripVertical } from "@fortawesome/free-solid-svg-icons";
 import IconSelectorModal from "@/components/admin/IconSelectorModal";
@@ -71,9 +71,15 @@ export default function ServicesPage() {
   }, []);
 
   async function fetchServices() {
-    const { data } = await supabase.from("services").select("*").order("sort_order");
-    setServices(data ?? []);
-    setLoading(false);
+    try {
+      const res = await adminApi.getServices();
+      const list = (res.services || (res.data as any)?.services || []) as Service[];
+      setServices(list);
+    } catch {
+      showToast("Failed to load services", "error");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function startEdit(s: Service) {
@@ -93,40 +99,54 @@ export default function ServicesPage() {
   async function saveEdit() {
     if (!editId) return;
     setSaving(true);
-    const { error } = await supabase.from("services").update(editData).eq("id", editId);
-    if (error) {
+    try {
+      const res = await adminApi.updateService(editId, editData);
+      if (!res.success) {
+        showToast("Failed to save", "error");
+      } else {
+        showToast("Service updated", "success");
+        setEditId(null);
+        fetchServices();
+      }
+    } catch {
       showToast("Failed to save", "error");
-    } else {
-      showToast("Service updated", "success");
-      setEditId(null);
-      fetchServices();
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function addService() {
     setSaving(true);
     const maxOrder = services.length > 0 ? Math.max(...services.map(s => s.sort_order ?? 0)) + 1 : 0;
-    const { error } = await supabase.from("services").insert([{ ...newData, sort_order: maxOrder }]);
-    if (error) {
+    try {
+      const res = await adminApi.createService({ ...newData, sort_order: maxOrder });
+      if (!res.success) {
+        showToast("Failed to add service", "error");
+      } else {
+        showToast("Service added", "success");
+        setShowAdd(false);
+        setNewData(EMPTY_SERVICE);
+        fetchServices();
+      }
+    } catch {
       showToast("Failed to add service", "error");
-    } else {
-      showToast("Service added", "success");
-      setShowAdd(false);
-      setNewData(EMPTY_SERVICE);
-      fetchServices();
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   async function deleteService(id: string) {
-    const { error } = await supabase.from("services").delete().eq("id", id);
-    if (error) {
+    try {
+      const res = await adminApi.deleteService(id);
+      if (!res.success) {
+        showToast("Failed to delete", "error");
+      } else {
+        showToast("Service deleted", "success");
+        setDeleteId(null);
+        fetchServices();
+      }
+    } catch {
       showToast("Failed to delete", "error");
-    } else {
-      showToast("Service deleted", "success");
-      setDeleteId(null);
-      fetchServices();
     }
   }
 
@@ -142,8 +162,8 @@ export default function ServicesPage() {
     const tempOrder = a.sort_order;
 
     await Promise.all([
-      supabase.from("services").update({ sort_order: b.sort_order }).eq("id", a.id),
-      supabase.from("services").update({ sort_order: tempOrder }).eq("id", b.id),
+      adminApi.updateService(a.id, { sort_order: b.sort_order }),
+      adminApi.updateService(b.id, { sort_order: tempOrder }),
     ]);
     fetchServices();
   }

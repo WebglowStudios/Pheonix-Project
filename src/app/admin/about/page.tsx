@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 import ImageSelectorModal from "@/components/admin/ImageSelectorModal";
@@ -101,25 +101,27 @@ function HomeSnippetTab() {
   };
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "about_home")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) setContent({ ...HOME_DEFAULTS, ...data.content });
+    adminApi
+      .getContent("about_home")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as AboutHomeContent | undefined;
+        if (c) setContent({ ...HOME_DEFAULTS, ...c });
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "about_home", content }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Home snippet saved!", "success");
-    setSaving(false);
+    try {
+      const res = await adminApi.updateContent("about_home", content);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("Home snippet saved!", "success");
+    } catch {
+      showToast("Failed to save home snippet.", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {
@@ -244,25 +246,27 @@ function AboutPageTab() {
   };
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "about_page")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) setContent({ ...PAGE_DEFAULTS, ...data.content });
+    adminApi
+      .getContent("about_page")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as AboutPageContent | undefined;
+        if (c) setContent({ ...PAGE_DEFAULTS, ...c });
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "about_page", content }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("About page saved!", "success");
-    setSaving(false);
+    try {
+      const res = await adminApi.updateContent("about_page", content);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("About page saved!", "success");
+    } catch {
+      showToast("Failed to save about page.", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {

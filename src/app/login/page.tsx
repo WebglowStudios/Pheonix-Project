@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { authApi, setToken, setStoredUser } from "@/lib/api";
+import { authApi, setToken, setStoredUser, getStoredUser } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEye,
@@ -22,6 +22,17 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const user = getStoredUser();
+    if (user) {
+      if (user.role === "admin") {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/dashboard";
+      }
+    }
+  }, []);
 
   const inputClass =
     "w-full px-4 py-3 border border-[#DDD] rounded-[10px] text-[0.95rem] text-[#333] bg-white transition-all outline-none focus:border-[#E8740C] focus:shadow-[0_0_0_3px_rgba(232,116,12,0.12)] placeholder:text-[#aaa]";
@@ -42,7 +53,11 @@ export default function LoginPage() {
 
       setToken(res.token);
       setStoredUser(res.user);
-      router.push("/dashboard");
+      if (res.user.role === "admin") {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);

@@ -82,7 +82,11 @@ export default function GoogleSignInButton({
 
               setToken(res.token);
               setStoredUser(res.user);
-              router.push("/dashboard");
+              if (res.user.role === "admin") {
+                window.location.href = "/admin";
+              } else {
+                window.location.href = "/dashboard";
+              }
             } catch {
               onError?.("Unable to complete Google sign-in. Please try again.");
               setLoading(false);

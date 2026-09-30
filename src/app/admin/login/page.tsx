@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
 
       setToken(res.token);
       setStoredUser(res.user);
-      router.push("/admin");
+      window.location.href = "/admin";
     } catch {
       setError("Unable to connect to server. Please try again.");
       setLoading(false);

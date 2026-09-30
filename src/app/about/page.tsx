@@ -9,7 +9,7 @@ import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShieldHalved, faChartLine, faUserCheck, faScaleUnbalancedFlip } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 const PILLAR_ICONS: Record<string, IconDefinition> = {
   faShieldHalved,
@@ -59,10 +59,13 @@ export default function AboutPage() {
   const [content, setContent] = useState<AboutContent>(DEFAULTS);
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "about_page").single()
-      .then(({ data }) => {
-        if (data?.content) setContent({ ...DEFAULTS, ...data.content });
-      });
+    publicApi
+      .getContent("about_page")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as AboutContent | undefined;
+        if (c) setContent({ ...DEFAULTS, ...c });
+      })
+      .catch(() => {});
   }, []);
 
   return (

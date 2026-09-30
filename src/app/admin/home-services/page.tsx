@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 import IconSelectorModal from "@/components/admin/IconSelectorModal";
@@ -77,32 +77,33 @@ export default function HomeServicesPage() {
   };
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "home_services")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const loaded = data.content as Partial<HomeServicesContent>;
+    adminApi
+      .getContent("home_services")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as Partial<HomeServicesContent> | undefined;
+        if (c) {
           setContent({
-            section_heading: loaded.section_heading || DEFAULTS.section_heading,
-            section_subtitle: loaded.section_subtitle || DEFAULTS.section_subtitle,
-            cards: loaded.cards?.length ? loaded.cards : DEFAULTS.cards,
+            section_heading: c.section_heading || DEFAULTS.section_heading,
+            section_subtitle: c.section_subtitle || DEFAULTS.section_subtitle,
+            cards: c.cards?.length ? c.cards : DEFAULTS.cards,
           });
         }
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "home_services", content }, { onConflict: "id" });
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Home services saved!", "success");
-    setSaving(false);
+    try {
+      const res = await adminApi.updateContent("home_services", content);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("Home services saved!", "success");
+    } catch {
+      showToast("Failed to save home services.", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function updateCard(index: number, field: keyof ServiceCard, value: string) {

@@ -61,8 +61,8 @@ export default function AdminUsersPage() {
         search: search.trim() || undefined,
         role: roleFilter === "all" ? undefined : roleFilter,
       });
-      if (res.success && res.data) {
-        setUsers(res.data.users || []);
+      if (res.success) {
+        setUsers(res.users || res.data?.users || []);
       }
     } catch {
       showToast("Failed to fetch users", "error");
@@ -76,6 +76,7 @@ export default function AdminUsersPage() {
   }, [fetchUsers]);
 
   async function handleToggleRole(user: AdminUser) {
+    const userId = user.id || (user as any)._id;
     const newRole = user.role === "admin" ? "user" : "admin";
     if (
       !confirm(
@@ -85,12 +86,12 @@ export default function AdminUsersPage() {
       return;
     }
 
-    setSavingId(user.id);
+    setSavingId(userId);
     try {
-      const res = await adminApi.updateUser(user.id, { role: newRole });
+      const res = await adminApi.updateUser(userId, { role: newRole });
       if (res.success) {
         setUsers((prev) =>
-          prev.map((u) => (u.id === user.id ? { ...u, role: newRole } : u))
+          prev.map((u) => ((u.id || (u as any)._id) === userId ? { ...u, role: newRole } : u))
         );
         showToast(`Role updated to ${newRole}`, "success");
       } else {
@@ -104,6 +105,7 @@ export default function AdminUsersPage() {
   }
 
   async function handleDeleteUser(user: AdminUser) {
+    const userId = user.id || (user as any)._id;
     if (
       !confirm(
         `DANGER: Are you sure you want to permanently delete user "${user.name}" (${user.email}) and all their portfolio records?`
@@ -112,11 +114,11 @@ export default function AdminUsersPage() {
       return;
     }
 
-    setSavingId(user.id);
+    setSavingId(userId);
     try {
-      const res = await adminApi.deleteUser(user.id);
+      const res = await adminApi.deleteUser(userId);
       if (res.success) {
-        setUsers((prev) => prev.filter((u) => u.id !== user.id));
+        setUsers((prev) => prev.filter((u) => (u.id || (u as any)._id) !== userId));
         showToast("User deleted successfully", "success");
       } else {
         showToast(res.message || "Failed to delete user", "error");
@@ -278,7 +280,7 @@ export default function AdminUsersPage() {
               ) : (
                 users.map((user) => (
                   <tr
-                    key={user.id}
+                    key={user.id || (user as any)._id}
                     className="border-b border-[#F1F5F9] hover:bg-[#F8FAFC] transition-colors"
                   >
                     {/* User Identity */}

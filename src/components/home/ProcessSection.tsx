@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faChessKnight, faRocket, faRotate, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 const STEP_ICONS: IconDefinition[] = [faMagnifyingGlass, faChessKnight, faRocket, faRotate];
 
@@ -27,15 +27,14 @@ export default function ProcessSection() {
   const [subheading, setSubheading] = useState("A systematic, disciplined approach to building and protecting your wealth.");
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "process_steps").single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const c = data.content as { steps?: Step[]; section_heading?: string; section_subheading?: string };
-          if (c.steps?.length) setSteps(c.steps);
-          if (c.section_heading) setHeading(c.section_heading);
-          if (c.section_subheading) setSubheading(c.section_subheading);
-        }
-      });
+    publicApi.getContent("process_steps").then((res) => {
+      const c = (res.content || (res.data as { content?: { steps?: Step[]; section_heading?: string; section_subheading?: string } })?.content) as { steps?: Step[]; section_heading?: string; section_subheading?: string } | undefined;
+      if (c) {
+        if (c.steps?.length) setSteps(c.steps);
+        if (c.section_heading) setHeading(c.section_heading);
+        if (c.section_subheading) setSubheading(c.section_subheading);
+      }
+    }).catch(() => {});
   }, []);
 
   return (

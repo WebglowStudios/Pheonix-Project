@@ -10,7 +10,7 @@ import {
   faArrowRight,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 const ICON_MAP: Record<string, IconDefinition> = {
   faArrowTrendUp,
@@ -44,21 +44,16 @@ export default function ServicesSection() {
   const [content, setContent] = useState<ServicesContent>(DEFAULTS);
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "home_services")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const c = data.content as Partial<ServicesContent>;
-          setContent({
-            section_heading: c.section_heading || DEFAULTS.section_heading,
-            section_subtitle: c.section_subtitle || DEFAULTS.section_subtitle,
-            cards: c.cards?.length ? c.cards : DEFAULTS.cards,
-          });
-        }
-      });
+    publicApi.getContent("home_services").then((res) => {
+      const c = (res.content || (res.data as { content?: ServicesContent })?.content) as Partial<ServicesContent> | undefined;
+      if (c) {
+        setContent({
+          section_heading: c.section_heading || DEFAULTS.section_heading,
+          section_subtitle: c.section_subtitle || DEFAULTS.section_subtitle,
+          cards: c.cards?.length ? c.cards : DEFAULTS.cards,
+        });
+      }
+    }).catch(() => {});
   }, []);
 
   // Parse heading to highlight last word in orange

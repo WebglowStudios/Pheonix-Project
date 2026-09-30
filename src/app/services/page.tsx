@@ -11,7 +11,7 @@ import {
   faVault, faCheck, faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 const ICON_MAP: Record<string, IconDefinition> = {
   faArrowTrendUp, faSeedling, faBriefcase, faShieldHalved,
@@ -42,14 +42,14 @@ export default function ServicesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("services")
-      .select("*")
-      .order("sort_order")
-      .then(({ data }) => {
-        setProducts(data ?? []);
+    publicApi
+      .getServices()
+      .then((res) => {
+        const list = (res.services || (res.data as any)?.services || []) as Product[];
+        setProducts(list);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const filtered = activeFilter === "all"

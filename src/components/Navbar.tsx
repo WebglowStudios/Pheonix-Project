@@ -7,8 +7,7 @@ import { usePathname } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faPhone, faEnvelope, faChartPie } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-import { supabase } from "@/lib/supabase";
-import { getStoredUser } from "@/lib/api";
+import { publicApi, getStoredUser } from "@/lib/api";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -47,18 +46,17 @@ export default function Navbar() {
   }, [menuOpen]);
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "contact_info").single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const c = data.content as any;
-          setContactInfo({
-            phone_landline: c.phone_landline || "020 6689 3715",
-            phone_mobile: c.phone_mobile || "+91 70212 10788",
-            whatsapp_number: c.whatsapp_number || c.whatsapp || "917021210788",
-            email: c.email || "connect@phoenixfiserv.co.in",
-          });
-        }
-      });
+    publicApi.getContent("contact_info").then((res) => {
+      const c = (res.content || (res.data as { content?: Record<string, string> })?.content) as Record<string, string> | undefined;
+      if (c) {
+        setContactInfo({
+          phone_landline: c.phone_landline || "020 6689 3715",
+          phone_mobile: c.phone_mobile || "+91 70212 10788",
+          whatsapp_number: c.whatsapp_number || c.whatsapp || "917021210788",
+          email: c.email || "connect@phoenixfiserv.co.in",
+        });
+      }
+    }).catch(() => {});
   }, []);
 
   return (

@@ -64,10 +64,11 @@ export default function LeadsPage() {
         status: filter === "all" ? undefined : filter,
         search: search.trim() || undefined,
       });
-      if (res.success && res.data) {
-        setLeads(res.data.leads || []);
+      if (res.success) {
+        const leadList = res.leads || res.data?.leads || [];
+        setLeads(leadList);
         const notesMap: Record<string, string> = {};
-        (res.data.leads || []).forEach((l) => {
+        leadList.forEach((l) => {
           notesMap[l.id] = l.notes ?? "";
         });
         setNotes(notesMap);

@@ -6,7 +6,7 @@ import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUmbrellaBeach, faGraduationCap, faFlagCheckered, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 const GOAL_ICONS: IconDefinition[] = [faUmbrellaBeach, faGraduationCap, faFlagCheckered];
 
@@ -34,15 +34,14 @@ export default function GoalsSection() {
   const [subheading, setSubheading] = useState("Together, we can help define your priorities for today and help you build a better tomorrow for you and your family. Our team combines research-driven insight with genuine, one-on-one guidance — so every recommendation is built around your goals, not a generic playbook.");
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "goals").single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const c = data.content as { goals?: GoalCard[]; section_heading?: string; section_subheading?: string };
-          if (c.goals?.length) setGoals(c.goals);
-          if (c.section_heading) setHeading(c.section_heading);
-          if (c.section_subheading) setSubheading(c.section_subheading);
-        }
-      });
+    publicApi.getContent("goals").then((res) => {
+      const c = (res.content || (res.data as { content?: { goals?: GoalCard[]; section_heading?: string; section_subheading?: string } })?.content) as { goals?: GoalCard[]; section_heading?: string; section_subheading?: string } | undefined;
+      if (c) {
+        if (c.goals?.length) setGoals(c.goals);
+        if (c.section_heading) setHeading(c.section_heading);
+        if (c.section_subheading) setSubheading(c.section_subheading);
+      }
+    }).catch(() => {});
   }, []);
 
   return (

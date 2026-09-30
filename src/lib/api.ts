@@ -112,6 +112,28 @@ export interface ApiResponse<T = unknown> {
   needsPhone?: boolean;
   data?: T;
   count?: number;
+  total?: number;
+  users?: AdminUser[];
+  leads?: AdminLead[];
+  stats?: {
+    totalUsers: number;
+    totalClients?: number;
+    totalLeads: number;
+    newLeads: number;
+    totalServices: number;
+    totalFaqs: number;
+    totalInvested: number;
+    totalCurrent: number;
+    totalHoldings: number;
+    byType: Record<string, { count: number; invested: number }>;
+    riskProfiles: { conservative: number; moderate: number; aggressive: number };
+  };
+  recentLeads?: AdminLead[];
+  recentUsers?: AdminUser[];
+  services?: unknown[];
+  faqs?: unknown[];
+  content?: unknown;
+  key?: string;
   errors?: Array<{ msg: string; path: string }>;
 }
 
@@ -135,6 +157,11 @@ async function request<T = unknown>(
     clearToken();
     window.location.href = "/login";
   }
+
+  if (data && typeof data === "object" && data.data === undefined) {
+    data.data = data;
+  }
+
   return data;
 }
 
@@ -244,10 +271,16 @@ export const adminApi = {
   getStats: () => request<{
     stats: {
       totalUsers: number;
+      totalClients?: number;
       totalLeads: number;
       newLeads: number;
       totalServices: number;
       totalFaqs: number;
+      totalInvested: number;
+      totalCurrent: number;
+      totalHoldings: number;
+      byType: Record<string, { count: number; invested: number }>;
+      riskProfiles: { conservative: number; moderate: number; aggressive: number };
     };
     recentLeads: AdminLead[];
     recentUsers: AdminUser[];

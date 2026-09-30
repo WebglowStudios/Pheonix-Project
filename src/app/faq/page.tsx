@@ -7,7 +7,7 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faChevronDown, faChevronRight, faCircleQuestion, faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 interface FAQItem {
   id: string;
@@ -46,15 +46,14 @@ export default function FaqPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("faqs")
-      .select("*")
-      .order("category")
-      .order("sort_order")
-      .then(({ data }) => {
-        setAllFaqs(data ?? []);
+    publicApi
+      .getFaqs()
+      .then((res) => {
+        const list = (res.faqs || (res.data as any)?.faqs || []) as FAQItem[];
+        setAllFaqs(list);
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const toggleItem = (key: string) => {

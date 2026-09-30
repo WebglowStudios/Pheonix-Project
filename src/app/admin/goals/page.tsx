@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 import ImageSelectorModal from "@/components/admin/ImageSelectorModal";
@@ -88,39 +88,45 @@ export default function GoalsPage() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from("site_content").select("content").eq("id", "goals").single(),
-      supabase.from("site_content").select("content").eq("id", "open_account_strip").single(),
-    ]).then(([goalsRes, stripRes]) => {
-      if (goalsRes.data?.content) {
-        const loaded = goalsRes.data.content as Partial<GoalsContent>;
-        setContent({
-          section_heading: loaded.section_heading || DEFAULTS.section_heading,
-          section_subheading: loaded.section_subheading || DEFAULTS.section_subheading,
-          goals: loaded.goals?.length ? loaded.goals : DEFAULTS.goals,
-        });
-      }
-      if (stripRes.data?.content) {
-        setStripContent({ ...DEFAULT_STRIP, ...stripRes.data.content });
-      }
-      setLoading(false);
-    });
+      adminApi.getContent("goals"),
+      adminApi.getContent("open_account_strip"),
+    ])
+      .then(([goalsRes, stripRes]) => {
+        const goalsData = (goalsRes.content || (goalsRes.data as any)?.content) as Partial<GoalsContent> | undefined;
+        if (goalsData) {
+          setContent({
+            section_heading: goalsData.section_heading || DEFAULTS.section_heading,
+            section_subheading: goalsData.section_subheading || DEFAULTS.section_subheading,
+            goals: goalsData.goals?.length ? goalsData.goals : DEFAULTS.goals,
+          });
+        }
+        const stripData = (stripRes.content || (stripRes.data as any)?.content) as OpenAccountStrip | undefined;
+        if (stripData) {
+          setStripContent({ ...DEFAULT_STRIP, ...stripData });
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const [res1, res2] = await Promise.all([
-      supabase.from("site_content").upsert({ id: "goals", content }, { onConflict: "id" }),
-      supabase
-        .from("site_content")
-        .upsert({ id: "open_account_strip", content: stripContent }, { onConflict: "id" }),
-    ]);
+    try {
+      const [res1, res2] = await Promise.all([
+        adminApi.updateContent("goals", content),
+        adminApi.updateContent("open_account_strip", stripContent),
+      ]);
 
-    if (res1.error || res2.error) {
-      showToast("Failed to save: " + (res1.error?.message || res2.error?.message), "error");
-    } else {
-      showToast("Goals section and Open Account strip saved!", "success");
+      if (!res1.success || !res2.success) {
+        showToast("Failed to save: " + (res1.message || res2.message || "Error"), "error");
+      } else {
+        showToast("Goals section and Open Account strip saved!", "success");
+      }
+    } catch {
+      showToast("Failed to save goals section.", "error");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   function updateGoal(index: number, field: keyof GoalCard, value: string) {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { adminApi } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faFloppyDisk,
@@ -72,28 +72,29 @@ export default function PromoAdminPage() {
   };
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "promo_modal")
-      .single()
-      .then(({ data }) => {
-        if (data?.content) {
-          setContent({ ...DEFAULTS, ...data.content });
+    adminApi
+      .getContent("promo_modal")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as PromoContent | undefined;
+        if (c) {
+          setContent({ ...DEFAULTS, ...c });
         }
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function save() {
     setSaving(true);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ id: "promo_modal", content }, { onConflict: "id" });
-
-    if (error) showToast("Failed to save: " + error.message, "error");
-    else showToast("Promo Popup Modal updated successfully!", "success");
-    setSaving(false);
+    try {
+      const res = await adminApi.updateContent("promo_modal", content);
+      if (!res.success) showToast("Failed to save: " + (res.message || "Error"), "error");
+      else showToast("Promo Popup Modal updated successfully!", "success");
+    } catch {
+      showToast("Failed to save promo popup modal.", "error");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function addFeature() {

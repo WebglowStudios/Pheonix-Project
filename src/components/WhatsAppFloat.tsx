@@ -3,22 +3,21 @@
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 export default function WhatsAppFloat() {
   const [whatsappNumber, setWhatsappNumber] = useState("917021210788");
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "contact_info").single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const c = data.content as any;
-          const num = c.whatsapp_number || c.whatsapp;
-          if (num) {
-            setWhatsappNumber(num.replace(/\D/g, ""));
-          }
+    publicApi.getContent("contact_info").then((res) => {
+      const c = (res.content || (res.data as { content?: Record<string, string> })?.content) as Record<string, string> | undefined;
+      if (c) {
+        const num = c.whatsapp_number || c.whatsapp;
+        if (num) {
+          setWhatsappNumber(num.replace(/\D/g, ""));
         }
-      });
+      }
+    }).catch(() => {});
   }, []);
 
   return (

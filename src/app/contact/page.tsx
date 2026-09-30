@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPhone, faClock, faLocationDot, faArrowRight, faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { submitContactForm } from "@/lib/actions";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 const inputClass = "w-full px-[15px] py-[12px] border border-[#DDD] rounded-[8px] font-[inherit] text-[0.95rem] text-[#333] bg-white transition-all outline-none focus:border-[#E8740C] focus:shadow-[0_0_0_3px_#FFF3EB]";
 
@@ -47,10 +47,11 @@ export default function ContactPage() {
   ];
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "contact_info").single()
-      .then(({ data }) => {
-        if (data?.content) {
-          const c = data.content as any;
+    publicApi
+      .getContent("contact_info")
+      .then((res) => {
+        const c = (res.content || (res.data as any)?.content) as any;
+        if (c) {
           setContactInfo({
             phone_landline: c.phone_landline || "020 6689 3715",
             phone_mobile: c.phone_mobile || "+91 70212 10788",
@@ -63,7 +64,8 @@ export default function ContactPage() {
             setFormServices(c.services);
           }
         }
-      });
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {

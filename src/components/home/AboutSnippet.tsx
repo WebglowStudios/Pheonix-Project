@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 interface AboutHomeContent {
   heading: string;
@@ -26,10 +26,10 @@ export default function AboutSnippet() {
   const [content, setContent] = useState<AboutHomeContent>(DEFAULTS);
 
   useEffect(() => {
-    supabase.from("site_content").select("content").eq("id", "about_home").single()
-      .then(({ data }) => {
-        if (data?.content) setContent({ ...DEFAULTS, ...data.content });
-      });
+    publicApi.getContent("about_home").then((res) => {
+      const c = (res.content || (res.data as { content?: AboutHomeContent })?.content) as AboutHomeContent | undefined;
+      if (c) setContent({ ...DEFAULTS, ...c });
+    }).catch(() => {});
   }, []);
 
   return (

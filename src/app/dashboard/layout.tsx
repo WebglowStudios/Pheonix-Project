@@ -16,6 +16,7 @@ import {
   faBars,
   faXmark,
   faFilePdf,
+  faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 
 const NAV_ITEMS = [
@@ -71,6 +72,25 @@ function Sidebar({
             <p className="text-white text-[13px] font-semibold truncate leading-tight">{user.name}</p>
             <p className="text-white/40 text-[11px] truncate">{user.email}</p>
           </div>
+        </div>
+      )}
+
+      {/* Admin Quick Switch Pill */}
+      {user?.role === "admin" && (
+        <div className="mx-3 mt-1 mb-2 p-2.5 rounded-[10px] bg-[#E8740C]/10 border border-[#E8740C]/30 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-[#E8740C] uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#E8740C] animate-pulse" />
+              Administrator
+            </span>
+          </div>
+          <Link
+            href="/admin"
+            className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-[6px] bg-[#E8740C] hover:bg-[#d06405] text-white text-xs font-bold transition-all shadow-sm no-underline"
+          >
+            <FontAwesomeIcon icon={faShieldHalved} className="text-xs" />
+            Switch to Admin Portal
+          </Link>
         </div>
       )}
 
@@ -198,6 +218,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           )}
         </div>
+
+        {/* Admin Switch Banner */}
+        {user?.role === "admin" && (
+          <div className="bg-[#1a1b23] border-b border-[#E8740C]/30 px-5 py-3 flex flex-wrap items-center justify-between gap-3 shadow-sm print:hidden">
+            <div className="flex items-center gap-3">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#E8740C] text-white text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                <FontAwesomeIcon icon={faShieldHalved} className="text-[10px]" />
+                Firm Administrator
+              </span>
+              <p className="text-white/80 text-xs sm:text-sm font-medium">
+                You are viewing the investor client view. Click here to manage firm assets, clients, and inquiries.
+              </p>
+            </div>
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#E8740C] hover:bg-[#d06405] text-white font-bold text-xs transition-all shadow hover:shadow-md no-underline"
+            >
+              <span>Go to Admin Dashboard</span>
+              <span>→</span>
+            </Link>
+          </div>
+        )}
 
         <main className="flex-1 p-5 lg:p-8 overflow-auto">
           {children}

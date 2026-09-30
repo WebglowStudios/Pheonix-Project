@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFire, faCircleCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
-import { supabase } from "@/lib/supabase";
+import { publicApi } from "@/lib/api";
 
 export interface PromoContent {
   enabled: boolean;
@@ -39,26 +39,24 @@ export default function PromoModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("content")
-      .eq("id", "promo_modal")
-      .single()
-      .then(({ data }) => {
-        const c: PromoContent = data?.content
-          ? { ...PROMO_DEFAULTS, ...data.content }
-          : PROMO_DEFAULTS;
+    publicApi.getContent("promo_modal").then((res) => {
+      const raw = (res.content || (res.data as { content?: PromoContent })?.content) as PromoContent | undefined;
+      const c: PromoContent = raw
+        ? { ...PROMO_DEFAULTS, ...raw }
+        : PROMO_DEFAULTS;
 
-        setContent(c);
+      setContent(c);
 
-        if (c.enabled && !sessionStorage.getItem("promoDismissed")) {
-          const timer = setTimeout(() => {
-            setIsOpen(true);
-            document.body.style.overflow = "hidden";
-          }, 1500);
-          return () => clearTimeout(timer);
-        }
-      });
+      if (c.enabled && !sessionStorage.getItem("promoDismissed")) {
+        const timer = setTimeout(() => {
+          setIsOpen(true);
+          document.body.style.overflow = "hidden";
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }).catch(() => {
+      setContent(PROMO_DEFAULTS);
+    });
   }, []);
 
   const handleClose = () => {
