@@ -23,7 +23,6 @@ import {
   faUserPlus,
   faFileExcel,
   faFilePdf,
-  faPrint,
   faTrash,
   faTimes,
   faSearch,
@@ -274,72 +273,61 @@ export default function FamilyPortfolioPage() {
       )}
 
       {/* ── Top Header & Actions ────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-[#FFF3EB] text-[#E8740C] flex items-center justify-center text-xl shadow-xs">
-              <FontAwesomeIcon icon={faUsers} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-extrabold text-[#16171e] tracking-tight">
-                Family Wealth &amp; Cumulative Portfolio
-              </h1>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Consolidate and review household investments across family members in a single dashboard
-              </p>
-            </div>
+      <div className="bg-white rounded-2xl border border-gray-200 px-6 py-4 shadow-xs flex items-center justify-between gap-6">
+        {/* Left: Icon + Title */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-[#FFF3EB] text-[#E8740C] flex items-center justify-center text-base flex-shrink-0">
+            <FontAwesomeIcon icon={faUsers} />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-lg font-extrabold text-[#16171e] tracking-tight leading-tight whitespace-nowrap">
+              Family Wealth &amp; Cumulative Portfolio
+            </h1>
+            <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+              Consolidated household investments across linked accounts
+            </p>
           </div>
         </div>
 
-        {/* Action Toolbar */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Link Member Button */}
+        {/* Divider */}
+        <div className="h-10 w-px bg-gray-200 flex-shrink-0 hidden md:block" />
+
+        {/* Right: Action Buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E8740C] hover:bg-[#d06405] text-white text-xs font-bold shadow-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#E8740C] hover:bg-[#d06405] text-white text-xs font-bold shadow-sm transition-all active:scale-95"
           >
-            <FontAwesomeIcon icon={faUserPlus} className="text-sm" />
-            <span>Add Family Account</span>
+            <FontAwesomeIcon icon={faUserPlus} />
+            <span>Link Account</span>
           </button>
 
-          {/* Export Excel */}
           <button
             onClick={handleExcelExport}
             disabled={exportingExcel || loading}
-            title="Download complete cumulative family portfolio as Microsoft Excel (.xlsx)"
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            title="Download cumulative family portfolio as Excel (.xlsx)"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50"
           >
             {exportingExcel ? (
-              <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
+              <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
             ) : (
-              <FontAwesomeIcon icon={faFileExcel} className="text-sm" />
+              <FontAwesomeIcon icon={faFileExcel} />
             )}
-            <span>Cumulative Excel</span>
+            <span>Excel</span>
           </button>
 
-          {/* Export PDF */}
           <button
             onClick={handlePdfExport}
             disabled={exportingPdf || loading}
             title="Download official combined Family Master Statement as PDF"
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#C62828] hover:bg-[#B71C1C] text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#C62828] hover:bg-[#B71C1C] text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50"
           >
             {exportingPdf ? (
-              <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
+              <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
             ) : (
-              <FontAwesomeIcon icon={faFilePdf} className="text-sm" />
+              <FontAwesomeIcon icon={faFilePdf} />
             )}
-            <span>Cumulative PDF</span>
-          </button>
-
-          {/* Print */}
-          <button
-            onClick={() => window.print()}
-            title="Print Cumulative Statement"
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold border border-gray-300 transition-all"
-          >
-            <FontAwesomeIcon icon={faPrint} className="text-xs" />
-            <span>Print</span>
+            <span>PDF Report</span>
           </button>
         </div>
       </div>
