@@ -200,6 +200,7 @@ export function exportPortfolioToExcel(
     "S.No",
     ...(isFamily ? ["Family Member", "Relationship"] : []),
     "Asset Class",
+    "Category (EDEOH)",
     "Investment / Scheme Name",
     "Ticker / AMFI Code",
     "Exchange / Category",
@@ -243,6 +244,7 @@ export function exportPortfolioToExcel(
 
     row.push(
       TYPE_NAMES[inv.type] || inv.type.toUpperCase(),
+      inv.category ? inv.category.toUpperCase() : "—",
       inv.name,
       inv.symbol || "—",
       inv.exchange || (inv.type === "aif" ? "AIF" : "—"),
@@ -269,6 +271,7 @@ export function exportPortfolioToExcel(
     { wch: 6 },
     ...(isFamily ? [{ wch: 22 }, { wch: 18 }] : []),
     { wch: 24 },
+    { wch: 18 },
     { wch: 34 },
     { wch: 18 },
     { wch: 16 },

@@ -15,6 +15,7 @@ import {
 import { exportPortfolioToExcel, exportReportToPdf } from "@/lib/exportUtils";
 import MasterPortfolioReport from "@/components/report/MasterPortfolioReport";
 import InvestmentNotePopup from "@/components/InvestmentNotePopup";
+import { getEdeohMeta, EDEOH_CATEGORIES } from "@/lib/assetAllocation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTimes,
@@ -70,8 +71,33 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
   const [selectedType, setSelectedType] = useState<string>("all");
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [updatingCatId, setUpdatingCatId] = useState<string | null>(null);
 
   const userId = user?.id || (user as any)?._id;
+
+  const handleCategoryChange = async (investmentId: string, newCategory: string) => {
+    setUpdatingCatId(investmentId);
+    // Optimistic UI update
+    setInvestments((prev) =>
+      prev.map((inv) =>
+        inv._id === investmentId ? { ...inv, category: newCategory } : inv
+      )
+    );
+
+    try {
+      await adminApi.updateInvestmentCategory(investmentId, newCategory);
+    } catch (err) {
+      console.error("Failed to update investment category:", err);
+      if (userId) {
+        adminApi.getUser(userId).then((res) => {
+          const invList = res.data?.investments || (res as any).investments;
+          if (invList) setInvestments(invList);
+        });
+      }
+    } finally {
+      setUpdatingCatId(null);
+    }
+  };
 
   useEffect(() => {
     if (!isOpen || !userId) return;
@@ -145,7 +171,8 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
         inv.name.toLowerCase().includes(search.toLowerCase()) ||
         (inv.symbol && inv.symbol.toLowerCase().includes(search.toLowerCase())) ||
         (inv.institution && inv.institution.toLowerCase().includes(search.toLowerCase())) ||
-        (inv.folioNumber && inv.folioNumber.toLowerCase().includes(search.toLowerCase()));
+        (inv.folioNumber && inv.folioNumber.toLowerCase().includes(search.toLowerCase())) ||
+        (inv.category && inv.category.toLowerCase().includes(search.toLowerCase()));
       return matchType && matchSearch;
     });
   }, [investments, selectedType, search]);
@@ -620,7 +647,7 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                     />
                     <input
                       type="text"
-                      placeholder="Search holdings by name, symbol, or AMC..."
+                      placeholder="Search holdings by name, symbol, AMC, or category..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       className="w-full pl-9 pr-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs text-gray-900 outline-none focus:border-[#E8740C] focus:ring-1 focus:ring-[#E8740C]"
@@ -649,6 +676,7 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                       <tr>
                         <th className="py-3.5 px-4">Asset &amp; Scheme</th>
                         <th className="py-3.5 px-3">Type</th>
+                        <th className="py-3.5 px-3">Category (EDEOH)</th>
                         <th className="py-3.5 px-3">Units / Qty</th>
                         <th className="py-3.5 px-3">Buy Price / NAV</th>
                         <th className="py-3.5 px-3">Current Price</th>
@@ -661,7 +689,7 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                     <tbody className="divide-y divide-gray-100">
                       {filteredInvestments.length === 0 ? (
                         <tr>
-                          <td colSpan={9} className="text-center py-14 text-gray-400">
+                          <td colSpan={10} className="text-center py-14 text-gray-400">
                             No holdings match your search criteria.
                           </td>
                         </tr>
@@ -719,6 +747,45 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                                 >
                                   {meta.label}
                                 </span>
+                              </td>
+
+                              {/* Category (EDEOH) Admin Selector */}
+                              <td className="py-3 px-3 whitespace-nowrap">
+                                {(() => {
+                                  const edeoh = getEdeohMeta(inv.category);
+                                  const isUpdating = updatingCatId === inv._id;
+                                  return (
+                                    <div className="relative inline-flex items-center">
+                                      <select
+                                        value={inv.category || ""}
+                                        onChange={(e) => handleCategoryChange(inv._id, e.target.value)}
+                                        disabled={isUpdating}
+                                        title="Assign EDEOH Category (Equity, Debt, ELSS, Others, Hybrid)"
+                                        className={`text-[11px] font-bold pl-2 pr-5 py-1 rounded-md border transition-all outline-none cursor-pointer appearance-none ${
+                                          isUpdating ? "opacity-50 cursor-wait" : ""
+                                        }`}
+                                        style={{
+                                          backgroundColor: edeoh ? edeoh.bgLight : "#F8FAFC",
+                                          color: edeoh ? edeoh.color : "#64748B",
+                                          borderColor: edeoh ? edeoh.borderLight : "#CBD5E1",
+                                        }}
+                                      >
+                                        <option value="">— Uncategorized —</option>
+                                        <option value="equity">E · Equity</option>
+                                        <option value="debt">D · Debt</option>
+                                        <option value="elss">E · ELSS</option>
+                                        <option value="others">O · Others</option>
+                                        <option value="hybrid">H · Hybrid</option>
+                                      </select>
+                                      <span
+                                        className="pointer-events-none absolute right-1.5 text-[8px] font-black"
+                                        style={{ color: edeoh ? edeoh.color : "#94A3B8" }}
+                                      >
+                                        ▼
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                               </td>
 
                               {/* Units / Qty */}

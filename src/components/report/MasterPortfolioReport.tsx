@@ -9,6 +9,7 @@ import {
   formatDateIndian,
   estimateAnnualizedReturn,
 } from "@/lib/format";
+import { getMacroAssetClass, MACRO_ASSET_CLASSES, type MacroAssetClass } from "@/lib/assetAllocation";
 
 interface Props {
   user: User | null;
@@ -113,37 +114,39 @@ export default function MasterPortfolioReport({
     return "Client";
   }
 
-  // Multi-asset breakdown
-  const assetTypesPresent = Array.from(new Set(investments.map((i) => i.type)));
-  const assetBreakdown = assetTypesPresent.map((type) => {
-    const items = investments.filter((i) => i.type === type);
-    const cost = items.reduce((s, i) => s + (i.investedAmount || 0), 0);
-    const val = items.reduce((s, i) => s + (i.currentValue || i.investedAmount || 0), 0);
-    const gain = val - cost;
-    const absRet = cost > 0 ? (gain / cost) * 100 : 0;
-    const holdingPct = totalCurrentValue > 0 ? (val / totalCurrentValue) * 100 : 0;
+  // Macro Asset Allocation Breakdown (Equity, Debt, Alternatives, Others)
+  const macroBreakdown = (["equity", "debt", "alternatives", "others"] as MacroAssetClass[])
+    .map((macroKey) => {
+      const meta = MACRO_ASSET_CLASSES[macroKey];
+      const items = investments.filter((i) => getMacroAssetClass(i.type) === macroKey);
+      const cost = items.reduce((s, i) => s + (i.investedAmount || 0), 0);
+      const val = items.reduce((s, i) => s + (i.currentValue || i.investedAmount || 0), 0);
+      const gain = val - cost;
+      const absRet = cost > 0 ? (gain / cost) * 100 : 0;
+      const holdingPct = totalCurrentValue > 0 ? (val / totalCurrentValue) * 100 : 0;
 
-    // Earliest start date for XIRR proxy
-    const earliestDate = items.reduce<string | null>((earliest, i) => {
-      const d = i.buyDate || i.sipStartDate || i.createdAt;
-      if (!d) return earliest;
-      if (!earliest) return d;
-      return new Date(d) < new Date(earliest) ? d : earliest;
-    }, null);
+      const earliestDate = items.reduce<string | null>((earliest, i) => {
+        const d = i.buyDate || i.sipStartDate || i.createdAt;
+        if (!d) return earliest;
+        if (!earliest) return d;
+        return new Date(d) < new Date(earliest) ? d : earliest;
+      }, null);
 
-    const xirr = estimateAnnualizedReturn(cost, val, earliestDate);
+      const xirr = estimateAnnualizedReturn(cost, val, earliestDate);
 
-    return {
-      type,
-      label: ASSET_LABEL_MAP[type] || type.toUpperCase(),
-      cost,
-      val,
-      absRet,
-      xirr,
-      holdingPct,
-      color: ASSET_COLORS[type] || "#666",
-    };
-  });
+      return {
+        type: macroKey,
+        label: meta.label,
+        cost,
+        val,
+        absRet,
+        xirr,
+        holdingPct,
+        color: meta.color,
+        count: items.length,
+      };
+    })
+    .filter((m) => m.count > 0 || m.holdingPct > 0);
 
   // Calculate earliest portfolio date for overall XIRR proxy
   const earliestPortfolioDate = investments.reduce<string | null>((earliest, i) => {
@@ -157,7 +160,7 @@ export default function MasterPortfolioReport({
 
   // Donut chart calculation
   let cumulativePct = 0;
-  const donutSegments = assetBreakdown.map((item) => {
+  const donutSegments = macroBreakdown.map((item) => {
     const startPct = cumulativePct;
     cumulativePct += item.holdingPct;
     return {
@@ -260,16 +263,16 @@ export default function MasterPortfolioReport({
           </table>
         </div>
 
-        {/* Section: MultiAsset Exposure */}
+        {/* Section: Asset Allocation */}
         <div className="mt-4 mb-2">
           <div className="bg-[#bbf7d0] print:bg-[#bbf7d0] text-center font-bold text-[14px] text-gray-900 py-1 border border-[#86efac]">
-            MultiAsset Exposure
+            Portfolio Asset Allocation (Macro Asset Classes)
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 border border-gray-300 border-t-0">
             {/* Left: Donut chart */}
             <div className="md:col-span-5 p-3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-300 bg-white">
-              <span className="text-[13px] font-bold text-gray-700 mb-2">Portfolio Asset Allocation</span>
+              <span className="text-[13px] font-bold text-gray-700 mb-2">Macro Asset Allocation</span>
               {totalCurrentValue > 0 ? (
                 <div className="relative w-44 h-44 flex items-center justify-center my-1 flex-shrink-0">
                   <svg viewBox="0 0 200 200" className="w-full h-full">
@@ -311,21 +314,21 @@ export default function MasterPortfolioReport({
               </div>
             </div>
 
-            {/* Right: MultiAsset Exposure Table */}
+            {/* Right: Asset Allocation Table */}
             <div className="md:col-span-7 overflow-x-auto">
               <table className="w-full text-[12.5px] text-left border-collapse">
                 <thead>
                   <tr className="bg-[#dcfce7] print:bg-[#dcfce7] font-bold text-gray-800 border-b border-gray-300">
-                    <th className="py-1.5 px-2 border-r border-gray-300">Asset</th>
+                    <th className="py-1.5 px-2 border-r border-gray-300">Asset Class</th>
                     <th className="py-1.5 px-2 border-r border-gray-300 text-left">Inv. Cost</th>
                     <th className="py-1.5 px-2 border-r border-gray-300 text-left">Current Value</th>
                     <th className="py-1.5 px-2 border-r border-gray-300 text-left">Abs Ret (%)</th>
                     <th className="py-1.5 px-2 border-r border-gray-300 text-left">XIRR (%)</th>
-                    <th className="py-1.5 px-2 text-left">Holding (%)</th>
+                    <th className="py-1.5 px-2 text-left">Allocation (%)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {assetBreakdown.map((row) => (
+                  {macroBreakdown.map((row) => (
                     <tr key={row.type} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="py-1.5 px-2 border-r border-gray-300 font-semibold text-gray-800 flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-xs flex-shrink-0" style={{ backgroundColor: row.color }} />

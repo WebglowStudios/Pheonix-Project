@@ -13,6 +13,7 @@ import {
   formatDateIndian,
   estimateAnnualizedReturn,
 } from "@/lib/format";
+import { getMacroAssetClass, MACRO_ASSET_CLASSES, type MacroAssetClass } from "@/lib/assetAllocation";
 
 interface Props {
   primaryUser: User | null;
@@ -88,32 +89,40 @@ export default function FamilyPortfolioReport({
   const totalGain     = totalCurrent - totalInvested;
   const totalGainPct  = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
 
-  // Asset breakdown
-  const assetTypes = Array.from(new Set(investments.map((i) => i.type)));
-  const assetBreakdown = assetTypes.map((type) => {
-    const items = investments.filter((i) => i.type === type);
-    const cost  = items.reduce((s, i) => s + (i.investedAmount || 0), 0);
-    const val   = items.reduce((s, i) => s + (i.currentValue ?? i.investedAmount ?? 0), 0);
-    const gain  = val - cost;
-    const absRet    = cost > 0 ? (gain / cost) * 100 : 0;
-    const holdingPct = totalCurrent > 0 ? (val / totalCurrent) * 100 : 0;
-    const earliest  = items.reduce<string | null>((e, i) => {
-      const d = i.buyDate || i.sipStartDate || i.createdAt;
-      if (!d) return e;
-      if (!e) return d;
-      return new Date(d) < new Date(e) ? d : e;
-    }, null);
-    return {
-      type, label: ASSET_LABEL_MAP[type] || type.toUpperCase(),
-      cost, val, gain, absRet,
-      xirr: estimateAnnualizedReturn(cost, val, earliest),
-      holdingPct, color: ASSET_COLORS[type] || "#666",
-    };
-  });
+  // Macro Asset Allocation Breakdown (Equity, Debt, Alternatives, Others)
+  const macroBreakdown = (["equity", "debt", "alternatives", "others"] as MacroAssetClass[])
+    .map((macroKey) => {
+      const meta = MACRO_ASSET_CLASSES[macroKey];
+      const items = investments.filter((i) => getMacroAssetClass(i.type) === macroKey);
+      const cost  = items.reduce((s, i) => s + (i.investedAmount || 0), 0);
+      const val   = items.reduce((s, i) => s + (i.currentValue ?? i.investedAmount ?? 0), 0);
+      const gain  = val - cost;
+      const absRet    = cost > 0 ? (gain / cost) * 100 : 0;
+      const holdingPct = totalCurrent > 0 ? (val / totalCurrent) * 100 : 0;
+      const earliest  = items.reduce<string | null>((e, i) => {
+        const d = i.buyDate || i.sipStartDate || i.createdAt;
+        if (!d) return e;
+        if (!e) return d;
+        return new Date(d) < new Date(e) ? d : e;
+      }, null);
+      return {
+        type: macroKey,
+        label: meta.label,
+        cost,
+        val,
+        gain,
+        absRet,
+        xirr: estimateAnnualizedReturn(cost, val, earliest),
+        holdingPct,
+        color: meta.color,
+        count: items.length,
+      };
+    })
+    .filter((m) => m.count > 0 || m.holdingPct > 0);
 
   // Donut
   let cum = 0;
-  const donutSegs = assetBreakdown.map((a) => {
+  const donutSegs = macroBreakdown.map((a) => {
     const s = cum; cum += a.holdingPct;
     return { ...a, startPct: s, endPct: cum };
   });
@@ -278,14 +287,14 @@ export default function FamilyPortfolioReport({
           </div>
         </div>
 
-        {/* MultiAsset Exposure */}
+        {/* Asset Allocation */}
         <div className="mt-3 mb-2">
           <div className="bg-[#bbf7d0] print:bg-[#bbf7d0] text-center font-bold text-[14px] text-gray-900 py-1 border border-[#86efac]">
-            Household MultiAsset Exposure
+            Household Asset Allocation (Macro Asset Classes)
           </div>
           <div className="grid grid-cols-1 md:grid-cols-12 border border-gray-300 border-t-0">
             <div className="md:col-span-4 p-3 flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-gray-300 bg-white">
-              <span className="text-[13px] font-bold text-gray-700 mb-2">Portfolio Asset Allocation</span>
+              <span className="text-[13px] font-bold text-gray-700 mb-2">Macro Asset Allocation</span>
               {totalCurrent > 0 ? (
                 <div className="relative w-40 h-40 flex items-center justify-center my-1 flex-shrink-0">
                   <svg viewBox="0 0 200 200" className="w-full h-full">
@@ -317,16 +326,16 @@ export default function FamilyPortfolioReport({
               <table className="w-full text-[12.5px] text-left border-collapse">
                 <thead>
                   <tr className="bg-[#dcfce7] print:bg-[#dcfce7] font-bold text-gray-800 border-b border-gray-300">
-                    <th className="py-1.5 px-2 border-r border-gray-300">Asset</th>
+                    <th className="py-1.5 px-2 border-r border-gray-300">Asset Class</th>
                     <th className="py-1.5 px-2 border-r border-gray-300 text-left">Inv. Cost</th>
                     <th className="py-1.5 px-2 border-r border-gray-300 text-left">Current Value</th>
                     <th className="py-1.5 px-2 border-r border-gray-300 text-left">Abs Ret (%)</th>
                     <th className="py-1.5 px-2 border-r border-gray-300 text-left">XIRR (%)</th>
-                    <th className="py-1.5 px-2 text-left">Holding (%)</th>
+                    <th className="py-1.5 px-2 text-left">Allocation (%)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {assetBreakdown.map((row) => (
+                  {macroBreakdown.map((row) => (
                     <tr key={row.type} className="border-b border-gray-200 hover:bg-gray-50">
                       <td className="py-1.5 px-2 border-r border-gray-300 font-semibold text-gray-800 flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-xs flex-shrink-0" style={{ backgroundColor: row.color }} />

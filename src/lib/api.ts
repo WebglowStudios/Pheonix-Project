@@ -53,10 +53,13 @@ export type InvestmentType =
   | "stock" | "mutual_fund" | "sip" | "ppf" | "epf"
   | "fd" | "nps" | "bond" | "gold" | "crypto" | "aif" | "reit_invit";
 
+export type EdeohCategory = "equity" | "debt" | "elss" | "others" | "hybrid";
+
 export interface Investment {
   _id: string;
   userId: string;
   type: InvestmentType;
+  category?: EdeohCategory | "" | string;
   name: string;
   symbol?: string;
   exchange?: string;
@@ -445,6 +448,12 @@ export const adminApi = {
 
   deleteFaq: (id: string) =>
     request<never>(`/api/admin/faqs/${id}`, { method: "DELETE" }),
+
+  updateInvestmentCategory: (id: string, category: string) =>
+    request<{ success: boolean; data: Investment; message?: string }>(`/api/admin/investments/${id}/category`, {
+      method: "PATCH",
+      body: JSON.stringify({ category }),
+    }),
 };
 
 // ─── Public Content API ────────────────────────────────────────────────────

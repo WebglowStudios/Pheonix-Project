@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { portfolioApi, pricesApi, type Investment } from "@/lib/api";
 import InvestmentNotePopup from "@/components/InvestmentNotePopup";
+import { getEdeohMeta } from "@/lib/assetAllocation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus, faMagnifyingGlass, faPencil, faTrash, faXmark, faCheck,
@@ -508,9 +509,29 @@ export default function PortfolioPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
-                        <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-semibold" style={{ background: meta?.bg ?? "#f5f5f5", color: meta?.color ?? "#555" }}>
-                          {meta?.label ?? inv.type}
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-semibold" style={{ background: meta?.bg ?? "#f5f5f5", color: meta?.color ?? "#555" }}>
+                            {meta?.label ?? inv.type}
+                          </span>
+                          {(() => {
+                            const edeoh = getEdeohMeta(inv.category);
+                            if (!edeoh) return null;
+                            return (
+                              <span
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border"
+                                style={{
+                                  backgroundColor: edeoh.bgLight,
+                                  color: edeoh.color,
+                                  borderColor: edeoh.borderLight,
+                                }}
+                                title={`Category: ${edeoh.label} (${edeoh.code})`}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: edeoh.color }} />
+                                {edeoh.badgeLabel}
+                              </span>
+                            );
+                          })()}
+                        </div>
                       </td>
                       <td className="px-4 py-3.5 text-right font-semibold text-[#1a1b23] tabular-nums text-[13px]">
                         ₹{inv.investedAmount.toLocaleString("en-IN")}
@@ -567,10 +588,27 @@ export default function PortfolioPage() {
                     <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta?.label}>
                       <p className="font-semibold text-[#1a1b23] text-sm truncate">{inv.name}</p>
                     </InvestmentNotePopup>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: meta?.bg, color: meta?.color }}>
                         {meta?.label}
                       </span>
+                      {(() => {
+                        const edeoh = getEdeohMeta(inv.category);
+                        if (!edeoh) return null;
+                        return (
+                          <span
+                            className="text-[9px] font-bold px-1.5 py-0.5 rounded border inline-flex items-center gap-1"
+                            style={{
+                              backgroundColor: edeoh.bgLight,
+                              color: edeoh.color,
+                              borderColor: edeoh.borderLight,
+                            }}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: edeoh.color }} />
+                            {edeoh.badgeLabel}
+                          </span>
+                        );
+                      })()}
                       {gain !== 0 && (
                         <span className={`text-[11px] font-bold ${gain > 0 ? "text-[#1b5e20]" : "text-[#b71c1c]"}`}>
                           {gain > 0 ? "+" : "−"}{fmt(Math.abs(gain))}

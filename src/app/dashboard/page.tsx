@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { portfolioApi, getStoredUser, type PortfolioSummary } from "@/lib/api";
+import { portfolioApi, getStoredUser, type PortfolioSummary, type Investment } from "@/lib/api";
 import InvestmentNotePopup from "@/components/InvestmentNotePopup";
+import PerformanceGraph from "@/components/dashboard/PerformanceGraph";
+import AllocationWidget from "@/components/dashboard/AllocationWidget";
+import { calculateMacroFromByType, MACRO_ASSET_CLASSES } from "@/lib/assetAllocation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus, faArrowRight, faChartPie, faArrowTrendUp, faArrowTrendDown,
@@ -43,55 +46,6 @@ const TYPE_META: Record<string, { label: string; color: string }> = {
   gold:        { label: "Gold",          color: "#F9A825" },
   crypto:      { label: "Crypto",        color: "#4527A0" },
 };
-
-// ─── Allocation Donut Chart ──────────────────────────────────────────────────
-
-function AllocationChart({ byType, total }: {
-  byType: Record<string, { count: number; invested: number }>;
-  total: number;
-}) {
-  if (total === 0) return null;
-  const entries = Object.entries(byType);
-  let cumulative = 0;
-  const segments = entries.map(([type, data]) => {
-    const pct = (data.invested / total) * 100;
-    const start = cumulative;
-    cumulative += pct;
-    return { type, pct, start, end: cumulative, color: TYPE_META[type]?.color ?? "#999" };
-  });
-
-  const gradient = segments
-    .map(s => `${s.color} ${s.start.toFixed(1)}% ${s.end.toFixed(1)}%`)
-    .join(", ");
-
-  return (
-    <div className="flex flex-col md:flex-row items-center gap-8">
-      {/* Donut */}
-      <div className="relative flex-shrink-0 w-44 h-44">
-        <div
-          className="w-44 h-44 rounded-full"
-          style={{ background: `conic-gradient(${gradient})` }}
-        />
-        <div className="absolute inset-[26px] rounded-full bg-white flex flex-col items-center justify-center shadow-sm">
-          <p className="text-[9px] text-[#aaa] font-semibold uppercase tracking-widest mb-0.5">Portfolio</p>
-          <p className="text-sm font-extrabold text-[#1a1b23] leading-tight">{fmt(total)}</p>
-        </div>
-      </div>
-      {/* Legend */}
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        {segments.map(s => (
-          <div key={s.type} className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: s.color }} />
-            <span className="text-xs text-[#555] font-medium truncate flex-1">
-              {TYPE_META[s.type]?.label ?? s.type}
-            </span>
-            <span className="text-xs font-bold text-[#222] tabular-nums">{s.pct.toFixed(1)}%</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 // ─── Stat Card ───────────────────────────────────────────────────────────────
 
@@ -162,20 +116,38 @@ function SectionHeader({ title, action }: { title: string; action?: React.ReactN
 export default function DashboardPage() {
   const user = getStoredUser();
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
+  const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    portfolioApi.getSummary().then((res) => {
-      if (res.success && res.data) setSummary(res.data);
-      else setError("Could not load portfolio data.");
-      setLoading(false);
-    }).catch(() => { setError("Could not connect to server."); setLoading(false); });
+    Promise.all([
+      portfolioApi.getSummary(),
+      portfolioApi.getAll().catch(() => [] as Investment[]),
+    ])
+      .then(([resSummary, resAll]) => {
+        if (resSummary.success && resSummary.data) setSummary(resSummary.data);
+        else setError("Could not load portfolio data.");
+
+        const invs = Array.isArray(resAll)
+          ? resAll
+          : Array.isArray((resAll as any)?.data)
+          ? (resAll as any).data
+          : [];
+        setInvestments(invs);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Could not connect to server.");
+        setLoading(false);
+      });
   }, []);
 
   const gain = summary?.totalGain ?? 0;
   const gainPct = summary?.totalGainPercent ?? 0;
   const hasHoldings = (summary?.holdings ?? 0) > 0;
+
+  const macroSummary = calculateMacroFromByType(summary?.byType ?? {});
 
   return (
     <div>
@@ -252,98 +224,119 @@ export default function DashboardPage() {
           </div>
 
           {hasHoldings ? (
-            <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-5">
-              {/* Left: Allocation + Recent */}
-              <div className="flex flex-col gap-5">
-                {/* Allocation chart */}
-                <div className="bg-white rounded-xl border border-[#EAECEF] shadow-sm overflow-hidden">
-                  <SectionHeader title="Portfolio Allocation" />
-                  <div className="p-6">
-                    <AllocationChart byType={summary?.byType ?? {}} total={summary?.totalInvested ?? 0} />
-                  </div>
-                </div>
-
-                {/* Recent investments */}
-                <div className="bg-white rounded-xl border border-[#EAECEF] shadow-sm overflow-hidden">
-                  <SectionHeader
-                    title="Recent Investments"
-                    action={
-                      <Link href="/dashboard/portfolio" className="text-[#E8740C] text-xs font-semibold flex items-center gap-1.5 hover:text-[#d4660b] no-underline transition-colors">
-                        View all <FontAwesomeIcon icon={faArrowRight} className="text-[9px]" />
-                      </Link>
-                    }
+            <div className="flex flex-col gap-6">
+              {/* Row 1: Performance Graph & Allocation Widget */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                <div className="lg:col-span-7 flex flex-col h-full">
+                  <PerformanceGraph
+                    investments={investments.length > 0 ? investments : (summary?.recentInvestments as any[] || [])}
+                    totalCurrentValue={summary?.currentValue ?? 0}
+                    totalInvested={summary?.totalInvested ?? 0}
                   />
-                  <div className="divide-y divide-[#F5F7FA]">
-                    {(summary?.recentInvestments ?? []).map((inv) => (
-                      <div key={inv._id} className="flex items-center gap-3.5 px-5 py-3">
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ background: (TYPE_META[inv.type!]?.color ?? "#999") + "18" }}
-                        >
-                          <FontAwesomeIcon
-                            icon={TYPE_ICONS[inv.type!] ?? faSackDollar}
-                            style={{ color: TYPE_META[inv.type!]?.color ?? "#999" }}
-                            className="text-xs"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={TYPE_META[inv.type!]?.label}>
-                            <p className="font-semibold text-[#1a1b23] text-sm truncate">{inv.name}</p>
-                          </InvestmentNotePopup>
-                          <p className="text-[#8a92a6] text-xs">{TYPE_META[inv.type!]?.label ?? inv.type}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="font-bold text-[#1a1b23] text-sm tabular-nums">{fmt(inv.investedAmount ?? 0)}</p>
-                          <p className="text-[#aaa] text-xs">{timeAgo(inv.createdAt!)}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                </div>
+                <div className="lg:col-span-5 flex flex-col h-full">
+                  <AllocationWidget
+                    investments={investments}
+                    byType={summary?.byType ?? {}}
+                    totalInvested={summary?.totalInvested ?? 0}
+                    totalCurrentValue={summary?.currentValue ?? 0}
+                  />
                 </div>
               </div>
 
-              {/* Right: By asset class + Quick actions */}
-              <div className="flex flex-col gap-5">
-                {/* Asset class breakdown */}
-                <div className="bg-white rounded-xl border border-[#EAECEF] shadow-sm overflow-hidden">
-                  <SectionHeader title="By Asset Class" />
-                  <div className="p-4 flex flex-col gap-3.5">
-                    {Object.entries(summary?.byType ?? {}).map(([type, d]) => {
-                      const pct = summary?.totalInvested ? (d.invested / summary.totalInvested) * 100 : 0;
-                      const meta = TYPE_META[type];
-                      return (
-                        <div key={type}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[12px] font-semibold text-[#444]">{meta?.label ?? type}</span>
-                            <span className="text-[11px] text-[#8a92a6] font-medium tabular-nums">{fmt(d.invested)} · {pct.toFixed(1)}%</span>
-                          </div>
-                          <div className="h-1 bg-[#F0F2F5] rounded-full overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{ width: `${pct}%`, background: meta?.color ?? "#999" }}
+              {/* Row 2: Recent investments + Macro Asset breakdown & actions */}
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-5">
+                {/* Recent investments */}
+                <div className="bg-white rounded-xl border border-[#EAECEF] shadow-sm overflow-hidden flex flex-col justify-between">
+                  <div>
+                    <SectionHeader
+                      title="Recent Investments"
+                      action={
+                        <Link href="/dashboard/portfolio" className="text-[#E8740C] text-xs font-semibold flex items-center gap-1.5 hover:text-[#d4660b] no-underline transition-colors">
+                          View all <FontAwesomeIcon icon={faArrowRight} className="text-[9px]" />
+                        </Link>
+                      }
+                    />
+                    <div className="divide-y divide-[#F5F7FA]">
+                      {(summary?.recentInvestments ?? []).map((inv) => (
+                        <div key={inv._id} className="flex items-center gap-3.5 px-5 py-3">
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ background: (TYPE_META[inv.type!]?.color ?? "#999") + "18" }}
+                          >
+                            <FontAwesomeIcon
+                              icon={TYPE_ICONS[inv.type!] ?? faSackDollar}
+                              style={{ color: TYPE_META[inv.type!]?.color ?? "#999" }}
+                              className="text-xs"
                             />
                           </div>
+                          <div className="flex-1 min-w-0">
+                            <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={TYPE_META[inv.type!]?.label}>
+                              <p className="font-semibold text-[#1a1b23] text-sm truncate">{inv.name}</p>
+                            </InvestmentNotePopup>
+                            <p className="text-[#8a92a6] text-xs">{TYPE_META[inv.type!]?.label ?? inv.type}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="font-bold text-[#1a1b23] text-sm tabular-nums">{fmt(inv.investedAmount ?? 0)}</p>
+                            <p className="text-[#aaa] text-xs">{timeAgo(inv.createdAt!)}</p>
+                          </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Quick actions */}
-                <div className="bg-white rounded-xl border border-[#EAECEF] shadow-sm overflow-hidden">
-                  <SectionHeader title="Quick Actions" />
-                  <div className="p-3 flex flex-col gap-1">
-                    {[
-                      { href: "/dashboard/add", label: "Add Investment", icon: faPlus },
-                      { href: "/dashboard/portfolio", label: "View All Holdings", icon: faScaleBalanced },
-                    ].map(item => (
-                      <Link key={item.href} href={item.href}
-                        className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-[#444] hover:bg-[#FFF8F3] hover:text-[#E8740C] transition-all no-underline group">
-                        <FontAwesomeIcon icon={item.icon} className="text-[#E8740C] w-[13px]" />
-                        {item.label}
-                        <FontAwesomeIcon icon={faArrowRight} className="ml-auto text-[10px] text-[#D0D3DA] group-hover:text-[#E8740C] transition-colors" />
-                      </Link>
-                    ))}
+                {/* Right: Macro Asset class breakdown + Quick actions */}
+                <div className="flex flex-col gap-5">
+                  {/* Macro Asset class breakdown */}
+                  <div className="bg-white rounded-xl border border-[#EAECEF] shadow-sm overflow-hidden">
+                    <SectionHeader title="Macro Asset Exposure" />
+                    <div className="p-4 flex flex-col gap-3">
+                      {macroSummary.items.map((m) => (
+                        <div key={m.key}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[12px] font-semibold text-[#1a1b23] flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
+                              {m.label}
+                            </span>
+                            <span className="text-[11px] text-[#8a92a6] font-bold tabular-nums">
+                              {fmt(m.currentValue)} · {m.pct.toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-[#F0F2F5] rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(100, m.pct)}%`, backgroundColor: m.color }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quick actions */}
+                  <div className="bg-white rounded-xl border border-[#EAECEF] shadow-sm overflow-hidden">
+                    <SectionHeader title="Quick Actions" />
+                    <div className="p-3 flex flex-col gap-1">
+                      {[
+                        { href: "/dashboard/add", label: "Add Investment", icon: faPlus },
+                        { href: "/dashboard/portfolio", label: "View All Holdings", icon: faScaleBalanced },
+                        { href: "/dashboard/report", label: "Export PDF Report", icon: faFilePdf },
+                      ].map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold text-[#444] hover:bg-[#FFF8F3] hover:text-[#E8740C] transition-all no-underline group"
+                        >
+                          <FontAwesomeIcon icon={item.icon} className="text-[#E8740C] w-[13px]" />
+                          {item.label}
+                          <FontAwesomeIcon
+                            icon={faArrowRight}
+                            className="ml-auto text-[10px] text-[#D0D3DA] group-hover:text-[#E8740C] transition-colors"
+                          />
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
