@@ -14,6 +14,7 @@ import {
 } from "@/lib/format";
 import { exportPortfolioToExcel, exportReportToPdf } from "@/lib/exportUtils";
 import MasterPortfolioReport from "@/components/report/MasterPortfolioReport";
+import InvestmentNotePopup from "@/components/InvestmentNotePopup";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faTimes,
@@ -35,6 +36,7 @@ import {
   faCalendarAlt,
   faShieldHalved,
   faBuildingColumns,
+  faExternalLinkAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
@@ -222,6 +224,25 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
     }
   }
 
+  const [launchingSession, setLaunchingSession] = useState(false);
+
+  async function handleLaunchClientSession() {
+    if (!userId || launchingSession) return;
+    setLaunchingSession(true);
+    try {
+      const res = await adminApi.impersonateUser(userId);
+      if (res.success && res.token) {
+        window.open(`/dashboard?access_token=${encodeURIComponent(res.token)}`, "_blank");
+      } else {
+        alert(res.message || "Failed to launch client session.");
+      }
+    } catch {
+      alert("Network error launching client portfolio management session.");
+    } finally {
+      setLaunchingSession(false);
+    }
+  }
+
   if (!isOpen || !user) return null;
 
   const cleanPhone = user.phone ? user.phone.replace(/[^0-9]/g, "") : "";
@@ -232,59 +253,62 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md animate-fadeIn">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-[0_30px_90px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.08)] border border-gray-200/90 w-full max-w-6xl max-h-[92vh] flex flex-col overflow-hidden">
+        {/* ── Top Radiant Accent Bar ── */}
+        <div className="h-[3px] bg-gradient-to-r from-transparent via-[#E8740C] to-transparent shadow-[0_0_14px_#E8740C] flex-shrink-0" />
+
         {/* ── Top Header & Security Banner ─────────────────────────────────── */}
-        <div className="bg-[#16171e] text-white p-5 border-b border-gray-800 flex-shrink-0">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="bg-[#12131a] text-white p-5 sm:p-6 border-b border-white/[0.08] flex-shrink-0">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             {/* User Identity */}
             <div className="flex items-center gap-4">
               {user.avatar ? (
                 <img
                   src={user.avatar}
                   alt={user.name}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-[#E8740C] flex-shrink-0"
+                  className="w-14 h-14 rounded-2xl object-cover border-2 border-[#E8740C] shadow-[0_0_15px_rgba(232,116,12,0.3)] flex-shrink-0"
                 />
               ) : (
-                <div className="w-14 h-14 rounded-full bg-[#E8740C] text-white flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-md">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E8740C] to-[#b95704] text-white flex items-center justify-center font-black text-xl flex-shrink-0 shadow-[0_0_15px_rgba(232,116,12,0.3)] border border-white/10">
                   {user.name.charAt(0).toUpperCase()}
                 </div>
               )}
 
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-extrabold text-white tracking-wide">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                     {user.name}
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF3EB] text-[#E8740C]">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#FFF3EB] text-[#E8740C] border border-[#E8740C]/30 shadow-xs">
                     {user.riskProfile || "Moderate"} Risk
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-gray-800 text-gray-300 text-xs font-medium">
+                  <span className="px-2 py-0.5 rounded-md bg-white/[0.07] text-gray-300 text-[10px] font-mono border border-white/10">
                     ID: {user.id ? String(user.id).slice(-6) : "Client"}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 text-xs text-gray-400 mt-1 flex-wrap">
+                <div className="flex items-center gap-3.5 text-xs text-gray-400 mt-1.5 flex-wrap">
                   <span className="flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faEnvelope} className="text-[#E8740C]" />
-                    <a href={`mailto:${user.email}`} className="hover:underline text-gray-300">
+                    <FontAwesomeIcon icon={faEnvelope} className="text-[#E8740C] text-xs" />
+                    <a href={`mailto:${user.email}`} className="hover:underline text-gray-300 transition-colors">
                       {user.email}
                     </a>
                   </span>
 
                   {user.phone ? (
                     <span className="flex items-center gap-1.5">
-                      <FontAwesomeIcon icon={faPhone} className="text-[#2E7D32]" />
-                      <a href={`tel:${user.phone.replace(/\s+/g, "")}`} className="hover:underline text-gray-300 font-semibold">
+                      <FontAwesomeIcon icon={faPhone} className="text-[#10B981] text-xs" />
+                      <a href={`tel:${user.phone.replace(/\s+/g, "")}`} className="hover:underline text-gray-200 font-semibold transition-colors">
                         {user.phone}
                       </a>
                     </span>
                   ) : (
-                    <span className="text-red-400 font-medium">No Phone Number</span>
+                    <span className="text-rose-400 font-medium">No Phone Number</span>
                   )}
 
-                  <span className="flex items-center gap-1">
-                    <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500" />
+                  <span className="flex items-center gap-1.5 text-gray-400">
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500 text-xs" />
                     Joined {formatDateIndian(user.createdAt)}
                   </span>
                 </div>
@@ -292,102 +316,119 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
             </div>
 
             {/* Quick Action & Export Toolbar */}
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {/* Excel Download */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Manage Stocks (Client Portfolio Launcher) */}
               <button
-                onClick={handleExcelExport}
-                disabled={exportingExcel || loading}
-                title="Download user portfolio as formatted Microsoft Excel (.xlsx) spreadsheet"
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
+                onClick={handleLaunchClientSession}
+                disabled={launchingSession || loading}
+                title="Open client dashboard session to manage stocks, mutual funds and assets directly on their behalf"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#E8740C] to-[#d06405] hover:from-[#d06405] hover:to-[#b85603] text-white text-xs font-black shadow-[0_0_16px_rgba(232,116,12,0.35)] transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
               >
-                {exportingExcel ? (
-                  <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
-                ) : (
-                  <FontAwesomeIcon icon={faFileExcel} className="text-sm" />
-                )}
-                <span>Export Excel</span>
+                <FontAwesomeIcon
+                  icon={launchingSession ? faSpinner : faExternalLinkAlt}
+                  className={`text-xs ${launchingSession ? "animate-spin" : ""}`}
+                />
+                <span>Manage Stocks</span>
               </button>
 
-              {/* PDF Download */}
-              <button
-                onClick={handlePdfExport}
-                disabled={exportingPdf || loading}
-                title="Download official Master Portfolio Statement as PDF"
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#C62828] hover:bg-[#B71C1C] text-white text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-50"
-              >
-                {exportingPdf ? (
-                  <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
-                ) : (
-                  <FontAwesomeIcon icon={faFilePdf} className="text-sm" />
-                )}
-                <span>Download PDF</span>
-              </button>
+              {/* Segmented Export Group */}
+              <div className="inline-flex items-center p-0.5 rounded-xl bg-white/[0.06] border border-white/10 gap-0.5">
+                {/* Excel Download */}
+                <button
+                  onClick={handleExcelExport}
+                  disabled={exportingExcel || loading}
+                  title="Export portfolio as Microsoft Excel (.xlsx)"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/[0.1] text-gray-200 hover:text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  <FontAwesomeIcon
+                    icon={exportingExcel ? faSpinner : faFileExcel}
+                    className={`text-xs ${exportingExcel ? "animate-spin" : "text-emerald-400"}`}
+                  />
+                  <span className="hidden sm:inline">Excel</span>
+                </button>
 
-              {/* Print */}
-              <button
-                onClick={() => window.print()}
-                title="Print Master Statement"
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-bold border border-gray-700 transition-all"
-              >
-                <FontAwesomeIcon icon={faPrint} className="text-xs" />
-                <span>Print</span>
-              </button>
+                {/* PDF Download */}
+                <button
+                  onClick={handlePdfExport}
+                  disabled={exportingPdf || loading}
+                  title="Download Master Statement as PDF"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/[0.1] text-gray-200 hover:text-white text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  <FontAwesomeIcon
+                    icon={exportingPdf ? faSpinner : faFilePdf}
+                    className={`text-xs ${exportingPdf ? "animate-spin" : "text-rose-400"}`}
+                  />
+                  <span className="hidden sm:inline">PDF</span>
+                </button>
 
-              {/* Close */}
+                {/* Print */}
+                <button
+                  onClick={() => window.print()}
+                  title="Print Statement"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-white/[0.1] text-gray-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
+                >
+                  <FontAwesomeIcon icon={faPrint} className="text-xs text-sky-400" />
+                  <span className="hidden md:inline">Print</span>
+                </button>
+              </div>
+
+              {/* Close Button */}
               <button
                 onClick={onClose}
-                className="w-9 h-9 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white flex items-center justify-center transition-all ml-1"
+                className="w-9 h-9 rounded-xl bg-white/[0.08] hover:bg-white/[0.18] text-gray-300 hover:text-white border border-white/10 flex items-center justify-center transition-all ml-1 cursor-pointer"
                 aria-label="Close modal"
               >
-                <FontAwesomeIcon icon={faTimes} className="text-base" />
+                <FontAwesomeIcon icon={faTimes} className="text-sm" />
               </button>
             </div>
           </div>
 
           {/* Read-Only Notice Bar */}
-          <div className="mt-3.5 pt-3 border-t border-gray-800/80 flex items-center justify-between text-xs text-amber-400 bg-amber-950/30 px-3 py-1.5 rounded-lg border border-amber-800/40">
-            <div className="flex items-center gap-2">
-              <FontAwesomeIcon icon={faLock} className="text-amber-400 text-xs" />
+          <div className="mt-4 pt-3 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent px-3.5 py-2 rounded-xl border border-amber-500/20 text-amber-300">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+              <FontAwesomeIcon icon={faLock} className="text-amber-400 text-xs flex-shrink-0" />
               <span>
-                <strong>Admin Sneak Peek Mode:</strong> You are viewing live, read-only investor holdings. All edits and transactions are locked.
+                <strong className="text-white">Admin Sneak Peek:</strong> Real-time read-only inspection of client holdings, valuations, and notes.
               </span>
             </div>
-            <span className="hidden sm:inline-block text-[11px] text-gray-400">
-              Target Advisory &amp; Portfolio Diagnostics
+            <span className="text-[11px] text-amber-300/70 font-medium">
+              Portfolio Diagnostics &amp; Wealth Advisory
             </span>
           </div>
         </div>
 
         {/* ── Tabs Bar ─────────────────────────────────────────────────────── */}
-        <div className="bg-[#F8FAFC] border-b border-gray-200 px-6 py-2.5 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
+        <div className="bg-[#FAFBFD] border-b border-gray-200 px-6 py-2.5 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-1.5 p-1 bg-gray-100/90 rounded-xl border border-gray-200/80">
             <button
               onClick={() => setActiveTab("holdings")}
-              className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-xs font-extrabold tracking-wide transition-all cursor-pointer ${
                 activeTab === "holdings"
-                  ? "bg-[#E8740C] text-white shadow-sm"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  ? "bg-white text-[#16171e] shadow-xs border border-gray-200/80"
+                  : "text-gray-500 hover:text-gray-900"
               }`}
             >
-              <FontAwesomeIcon icon={faBriefcase} className="mr-2" />
+              <FontAwesomeIcon icon={faBriefcase} className={`mr-2 ${activeTab === "holdings" ? "text-[#E8740C]" : ""}`} />
               Holdings &amp; Live Analytics ({investments.length})
             </button>
 
             <button
               onClick={() => setActiveTab("statement")}
-              className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wide transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-xs font-extrabold tracking-wide transition-all cursor-pointer ${
                 activeTab === "statement"
-                  ? "bg-[#E8740C] text-white shadow-sm"
-                  : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                  ? "bg-white text-[#16171e] shadow-xs border border-gray-200/80"
+                  : "text-gray-500 hover:text-gray-900"
               }`}
             >
-              <FontAwesomeIcon icon={faFilePdf} className="mr-2" />
-              Institutional Statement (A4 PDF Preview)
+              <FontAwesomeIcon icon={faFilePdf} className={`mr-2 ${activeTab === "statement" ? "text-[#E8740C]" : ""}`} />
+              Institutional Statement (A4 Preview)
             </button>
           </div>
 
-          <div className="text-xs text-gray-500 hidden md:block">
-            Prices synced via Yahoo Finance &amp; AMFI
+          <div className="text-xs text-gray-500 hidden md:flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-semibold text-gray-600">Yahoo Finance &amp; AMFI Synced</span>
           </div>
         </div>
 
@@ -602,25 +643,25 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                 </div>
 
                 {/* Table */}
-                <div className="overflow-x-auto max-h-[420px]">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-[#F8FAFC] text-gray-600 font-bold uppercase tracking-wider border-b border-gray-200 sticky top-0 z-10">
+                <div className="overflow-x-auto max-h-[460px] rounded-2xl border border-gray-200/90 bg-white shadow-xs">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead className="bg-[#FAFBFD] text-gray-500 font-extrabold uppercase tracking-wider border-b border-gray-200 sticky top-0 z-10 text-[10px]">
                       <tr>
-                        <th className="py-3 px-4">Asset &amp; Scheme</th>
-                        <th className="py-3 px-3">Type</th>
-                        <th className="py-3 px-3">Units / Qty</th>
-                        <th className="py-3 px-3">Buy Price / NAV</th>
-                        <th className="py-3 px-3">Current Price</th>
-                        <th className="py-3 px-3">Invested (₹)</th>
-                        <th className="py-3 px-3">Current Value (₹)</th>
-                        <th className="py-3 px-3">Gain / Return</th>
-                        <th className="py-3 px-4 text-right">Details</th>
+                        <th className="py-3.5 px-4">Asset &amp; Scheme</th>
+                        <th className="py-3.5 px-3">Type</th>
+                        <th className="py-3.5 px-3">Units / Qty</th>
+                        <th className="py-3.5 px-3">Buy Price / NAV</th>
+                        <th className="py-3.5 px-3">Current Price</th>
+                        <th className="py-3.5 px-3">Invested (₹)</th>
+                        <th className="py-3.5 px-3">Current Value (₹)</th>
+                        <th className="py-3.5 px-3">Gain / Return</th>
+                        <th className="py-3.5 px-4 text-right">Details</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {filteredInvestments.length === 0 ? (
                         <tr>
-                          <td colSpan={9} className="text-center py-12 text-gray-400">
+                          <td colSpan={9} className="text-center py-14 text-gray-400">
                             No holdings match your search criteria.
                           </td>
                         </tr>
@@ -639,16 +680,18 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                           return (
                             <tr
                               key={inv._id}
-                              className="hover:bg-amber-50/40 transition-colors"
+                              className="hover:bg-amber-50/30 transition-colors group"
                             >
                               {/* Name & Symbol */}
-                              <td className="py-3 px-4 font-semibold text-gray-900 max-w-[220px]">
-                                <div className="truncate font-bold" title={inv.name}>
-                                  {inv.name}
-                                </div>
+                              <td className="py-3 px-4 font-semibold text-gray-900 max-w-[280px]">
+                                <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta.label}>
+                                  <div className="truncate font-bold text-gray-900 group-hover:text-[#E8740C] transition-colors" title={inv.name}>
+                                    {inv.name}
+                                  </div>
+                                </InvestmentNotePopup>
                                 <div className="text-[11px] text-gray-500 flex items-center gap-1.5 mt-0.5">
                                   {inv.symbol && (
-                                    <span className="font-mono px-1 py-0.2 bg-gray-100 rounded text-gray-700">
+                                    <span className="font-mono px-1 py-0.2 bg-gray-100 rounded text-gray-700 font-semibold text-[10px]">
                                       {inv.symbol}
                                     </span>
                                   )}
@@ -658,7 +701,7 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                                     </span>
                                   )}
                                   {inv.folioNumber && (
-                                    <span className="text-[10px] text-gray-400 truncate max-w-[100px]">
+                                    <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
                                       Folio: {inv.folioNumber}
                                     </span>
                                   )}

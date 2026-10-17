@@ -15,8 +15,12 @@ import {
   faChartPie,
   faCheck,
   faEye,
+  faUserPlus,
+  faExternalLinkAlt,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 import AdminUserSneakPeekModal from "@/components/admin/AdminUserSneakPeekModal";
+import CreateUserModal from "@/components/admin/CreateUserModal";
 
 function fmtCurrency(n: number) {
   return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -50,12 +54,32 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<"all" | "user" | "admin">("all");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [sneakPeekUser, setSneakPeekUser] = useState<AdminUser | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [launchingId, setLaunchingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
+
+  async function handleManageClient(user: AdminUser) {
+    const userId = user.id || (user as any)._id;
+    if (!userId) return;
+    setLaunchingId(userId);
+    try {
+      const res = await adminApi.impersonateUser(userId);
+      if (res.success && res.token) {
+        window.open(`/dashboard?access_token=${encodeURIComponent(res.token)}`, "_blank");
+      } else {
+        showToast(res.message || "Failed to launch client portfolio", "error");
+      }
+    } catch {
+      showToast("Server error launching client portfolio", "error");
+    } finally {
+      setLaunchingId(null);
+    }
+  }
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -151,13 +175,22 @@ export default function AdminUsersPage() {
             Active investor accounts, verified mobile numbers, and unified portfolio totals
           </p>
         </div>
-        <button
-          onClick={fetchUsers}
-          className="flex items-center gap-2 border border-[#E2E8F0] bg-white rounded-lg px-4 py-2 text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] transition-all shadow-sm"
-        >
-          <FontAwesomeIcon icon={faArrowRotateRight} className="text-xs" />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 bg-[#E8740C] text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-[#d06405] transition-all shadow-sm active:scale-95"
+          >
+            <FontAwesomeIcon icon={faUserPlus} className="text-xs" />
+            <span>Create Client Account</span>
+          </button>
+          <button
+            onClick={fetchUsers}
+            className="flex items-center gap-2 border border-[#E2E8F0] bg-white rounded-lg px-4 py-2 text-sm font-semibold text-[#475569] hover:bg-[#F8FAFC] transition-all shadow-sm"
+          >
+            <FontAwesomeIcon icon={faArrowRotateRight} className="text-xs" />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Stats Bar */}
@@ -379,6 +412,20 @@ export default function AdminUsersPage() {
                     {/* Actions */}
                     <td className="px-5 py-3.5 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Manage Stocks (Client Portfolio Launcher) */}
+                        <button
+                          onClick={() => handleManageClient(user)}
+                          disabled={launchingId === (user.id || (user as any)._id)}
+                          title="Open client dashboard session to manage stocks, mutual funds and holdings"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#16171e] bg-[#16171e] text-white hover:bg-[#2e3240] transition-all text-xs font-bold shadow-xs active:scale-95 disabled:opacity-50"
+                        >
+                          <FontAwesomeIcon
+                            icon={launchingId === (user.id || (user as any)._id) ? faSpinner : faExternalLinkAlt}
+                            className={`text-xs ${launchingId === (user.id || (user as any)._id) ? "animate-spin" : ""}`}
+                          />
+                          <span className="hidden sm:inline">Manage Stocks</span>
+                        </button>
+
                         {/* Sneak Peek Button */}
                         <button
                           onClick={() => setSneakPeekUser(user)}
@@ -425,6 +472,16 @@ export default function AdminUsersPage() {
         user={sneakPeekUser}
         isOpen={!!sneakPeekUser}
         onClose={() => setSneakPeekUser(null)}
+      />
+
+      {/* Create User Account Modal */}
+      <CreateUserModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onUserCreated={(newUser) => {
+          setUsers((prev) => [newUser, ...prev]);
+          showToast(`Account for ${newUser.name} created successfully!`, "success");
+        }}
       />
     </div>
   );

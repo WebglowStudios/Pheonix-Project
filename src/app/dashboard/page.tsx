@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { portfolioApi, getStoredUser, type PortfolioSummary } from "@/lib/api";
+import InvestmentNotePopup from "@/components/InvestmentNotePopup";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus, faArrowRight, faChartPie, faArrowTrendUp, faArrowTrendDown,
@@ -286,7 +287,9 @@ export default function DashboardPage() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[#1a1b23] text-sm truncate">{inv.name}</p>
+                          <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={TYPE_META[inv.type!]?.label}>
+                            <p className="font-semibold text-[#1a1b23] text-sm truncate">{inv.name}</p>
+                          </InvestmentNotePopup>
                           <p className="text-[#8a92a6] text-xs">{TYPE_META[inv.type!]?.label ?? inv.type}</p>
                         </div>
                         <div className="text-right flex-shrink-0">

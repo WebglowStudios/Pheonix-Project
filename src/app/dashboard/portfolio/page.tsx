@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { portfolioApi, pricesApi, type Investment } from "@/lib/api";
+import InvestmentNotePopup from "@/components/InvestmentNotePopup";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPlus, faMagnifyingGlass, faPencil, faTrash, faXmark, faCheck,
@@ -495,7 +496,9 @@ export default function PortfolioPage() {
                             <FontAwesomeIcon icon={TYPE_ICONS[inv.type] ?? faSackDollar} style={{ color: meta?.color ?? "#999" }} className="text-xs" />
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-[#1a1b23] text-[13px] truncate max-w-[180px]">{inv.name}</p>
+                            <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta?.label}>
+                              <p className="font-semibold text-[#1a1b23] text-[13px] truncate max-w-[180px]">{inv.name}</p>
+                            </InvestmentNotePopup>
                             {inv.symbol ? (
                               <p className="text-[#8a92a6] text-xs">{inv.symbol}{inv.exchange ? ` · ${inv.exchange}` : ""}</p>
                             ) : inv.institution ? (
@@ -561,7 +564,9 @@ export default function PortfolioPage() {
                     <FontAwesomeIcon icon={TYPE_ICONS[inv.type] ?? faSackDollar} style={{ color: meta?.color ?? "#999" }} className="text-sm" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#1a1b23] text-sm truncate">{inv.name}</p>
+                    <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta?.label}>
+                      <p className="font-semibold text-[#1a1b23] text-sm truncate">{inv.name}</p>
+                    </InvestmentNotePopup>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: meta?.bg, color: meta?.color }}>
                         {meta?.label}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { clearToken, getStoredUser, authApi, setStoredUser, type User } from "@/lib/api";
+import { clearToken, getStoredUser, authApi, setStoredUser, setToken, type User } from "@/lib/api";
 import PhonePromptModal from "@/components/PhonePromptModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -142,9 +142,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    let tokenParam: string | null = null;
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      tokenParam = urlParams.get("access_token");
+      if (tokenParam) {
+        setToken(tokenParam);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    if (tokenParam) {
+      authApi
+        .me()
+        .then((res) => {
+          if (res.success && res.user) {
+            setUser(res.user);
+            setStoredUser(res.user);
+            setChecking(false);
+          } else {
+            setChecking(false);
+            router.replace("/login");
+          }
+        })
+        .catch(() => {
+          setChecking(false);
+          router.replace("/login");
+        });
+      return;
+    }
+
     const stored = getStoredUser();
     if (!stored) {
-      setChecking(false);        // ← Fix B2: clear spinner before redirect
+      setChecking(false); // ← Fix B2: clear spinner before redirect
       router.replace("/login");
       return;
     }

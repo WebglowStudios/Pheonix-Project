@@ -207,7 +207,7 @@ export function exportPortfolioToExcel(
     "Folio / Account No",
     "Units / Qty",
     "Purchase Price / Buy NAV (₹)",
-    "Purchase / Start Date",
+    "Investment Date",
     "Current Price / Latest NAV (₹)",
     "Total Invested (₹)",
     "Current Value (₹)",
@@ -300,7 +300,8 @@ export function exportPortfolioToExcel(
 }
 
 /**
- * Exports user's official Master Portfolio Report pages to high-quality PDF.
+ * Exports official Master/Family Portfolio Report sections to high-quality PDF.
+ * Elements may be inside a hidden container — we temporarily reveal it during capture.
  */
 export async function exportReportToPdf(
   userName: string = "Client",
@@ -317,34 +318,96 @@ export async function exportReportToPdf(
     compress: true,
   });
 
-  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfWidth  = pdf.internal.pageSize.getWidth();
   const pdfHeight = pdf.internal.pageSize.getHeight();
-  const margin = 6;
+  const margin       = 6;
   const contentWidth = pdfWidth - margin * 2;
+
+  // --- Find the outermost hidden wrapper to temporarily reveal ---------------
+  // Priority: known wrapper IDs → walk up from first section to topmost hidden ancestor
+  const KNOWN_WRAPPER_IDS = ["family-pdf-wrapper", "master-pdf-wrapper"];
+  let wrapper: HTMLElement | null = null;
+
+  for (const id of KNOWN_WRAPPER_IDS) {
+    const el = document.getElementById(id);
+    if (el) { wrapper = el; break; }
+  }
+
+  // Fallback: walk UP from the first target section and find the topmost hidden ancestor
+  if (!wrapper) {
+    const firstSection = document.getElementById(pageIds[0]);
+    if (firstSection) {
+      let p = firstSection.parentElement;
+      let topHidden: HTMLElement | null = null;
+      while (p && p !== document.body) {
+        const style = getComputedStyle(p);
+        if (style.display === "none" || p.classList.contains("hidden")) {
+          topHidden = p;
+        }
+        p = p.parentElement;
+      }
+      wrapper = topHidden;
+    }
+  }
+
+  // Temporarily reveal wrapper by overriding inline style (beats any CSS class)
+  if (wrapper) {
+    console.log("[PDF] Revealing wrapper:", wrapper.id || wrapper.className.slice(0, 60));
+    wrapper.style.cssText +=
+      ";display:block!important;position:fixed!important;left:-9999px!important;top:0!important;z-index:-1!important;width:1060px!important;overflow:visible!important";
+    // Let the browser fully lay out the revealed subtree
+    await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 250)));
+  } else {
+    console.warn("[PDF] No hidden wrapper found — sections may already be visible.");
+  }
 
   let addedPage = false;
 
-  for (let i = 0; i < pageIds.length; i++) {
-    const el = document.getElementById(pageIds[i]);
-    if (!el) continue;
+  try {
+    for (let i = 0; i < pageIds.length; i++) {
+      const el = document.getElementById(pageIds[i]);
+      if (!el) {
+        console.warn(`[PDF] Section not found: ${pageIds[i]}`);
+        continue;
+      }
+      console.log(`[PDF] Capturing section: ${pageIds[i]} (${el.scrollWidth}×${el.scrollHeight})`);
 
-    if (addedPage) {
-      pdf.addPage();
+      if (addedPage) pdf.addPage();
+
+      const imgData = await toPng(el, {
+        quality: 0.98,
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+        width: el.scrollWidth || 1060,
+      });
+
+      // Validate the data URI before passing to jsPDF
+      if (!imgData || !imgData.startsWith("data:image/png")) {
+        console.warn(`[PDF] Skipping ${pageIds[i]}: invalid image data`);
+        continue;
+      }
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const h = (imgProps.height * contentWidth) / imgProps.width;
+      pdf.addImage(imgData, "PNG", margin, margin, contentWidth, Math.min(h, pdfHeight - margin * 2));
+      addedPage = true;
     }
-
-    const imgData = await toPng(el, {
-      quality: 0.98,
-      pixelRatio: 2,
-      backgroundColor: "#ffffff",
-    });
-
-    const imgProps = pdf.getImageProperties(imgData);
-    const h = (imgProps.height * contentWidth) / imgProps.width;
-    pdf.addImage(imgData, "PNG", margin, margin, contentWidth, Math.min(h, pdfHeight - margin * 2));
-    addedPage = true;
+  } finally {
+    // Restore: remove the inline cssText additions we injected
+    if (wrapper) {
+      wrapper.style.display   = "";
+      wrapper.style.position  = "";
+      wrapper.style.left      = "";
+      wrapper.style.top       = "";
+      wrapper.style.zIndex    = "";
+      wrapper.style.width     = "";
+      wrapper.style.overflow  = "";
+    }
   }
 
+  if (!addedPage) throw new Error("No pages were captured — check browser console for [PDF] logs.");
+
   const cleanName = userName.trim().replace(/[^a-zA-Z0-9]/g, "_");
-  const fileDate = new Date().toISOString().split("T")[0];
+  const fileDate  = new Date().toISOString().split("T")[0];
   pdf.save(`${filenamePrefix}_${cleanName}_${fileDate}.pdf`);
 }

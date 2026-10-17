@@ -17,6 +17,9 @@ import {
 } from "@/lib/format";
 import { exportPortfolioToExcel, exportReportToPdf } from "@/lib/exportUtils";
 import MasterPortfolioReport from "@/components/report/MasterPortfolioReport";
+import FamilyPortfolioReport from "@/components/report/FamilyPortfolioReport";
+import InvestmentNotePopup from "@/components/InvestmentNotePopup";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUsers,
@@ -242,15 +245,22 @@ export default function FamilyPortfolioPage() {
     if (exportingPdf || !currentUser) return;
     setExportingPdf(true);
     try {
+      // Page 1 = summary; then one page per member who has holdings
+      const pageIds = [
+        "family-report-page-1",
+        ...members
+          .map((_, idx) => `family-report-member-${idx}`)
+          .filter((id) => document.getElementById(id) !== null),
+      ];
       await exportReportToPdf(
         `${currentUser.name}_Family`,
-        ["report-page-1", "report-page-2"],
+        pageIds,
         "Phoenix_Family_Cumulative_Statement"
       );
       showToast("Cumulative PDF statement generated!", "success");
     } catch (err) {
       console.error("PDF generation error:", err);
-      window.print();
+      showToast("Failed to generate PDF", "error");
     } finally {
       setExportingPdf(false);
     }
@@ -680,9 +690,11 @@ export default function FamilyPortfolioPage() {
 
                       {/* Name & Symbol */}
                       <td className="py-3.5 px-4 font-semibold text-gray-900 max-w-[240px]">
-                        <div className="truncate font-bold" title={inv.name}>
-                          {inv.name}
-                        </div>
+                        <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta.label}>
+                          <div className="truncate font-bold" title={inv.name}>
+                            {inv.name}
+                          </div>
+                        </InvestmentNotePopup>
                         <div className="text-[11px] text-gray-500 flex items-center gap-1.5 mt-0.5">
                           {inv.symbol && (
                             <span className="font-mono px-1 py-0.2 bg-gray-100 rounded text-gray-700">
@@ -904,17 +916,11 @@ export default function FamilyPortfolioPage() {
         </div>
       )}
 
-      {/* Hidden Master Portfolio Report component for direct PDF capture */}
-      <div className="hidden">
-        <MasterPortfolioReport
-          user={
-            currentUser
-              ? {
-                  ...currentUser,
-                  name: `${currentUser.name} & Family`,
-                }
-              : null
-          }
+      {/* Hidden Family Portfolio Report for PDF capture */}
+      <div id="family-pdf-wrapper" className="hidden print:hidden" aria-hidden="true">
+        <FamilyPortfolioReport
+          primaryUser={currentUser}
+          members={members}
           summary={summary}
           investments={investments}
           reportDate={new Date()}

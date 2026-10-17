@@ -374,7 +374,25 @@ export const adminApi = {
   getUser: (id: string) =>
     request<{ user: AdminUser; investments: Investment[]; summary?: PortfolioSummary }>(`/api/admin/users/${id}`),
 
-  updateUser: (id: string, data: Partial<User>) =>
+  createUser: (payload: {
+    name: string;
+    email: string;
+    password: string;
+    phone?: string;
+    role?: "user" | "admin";
+    riskProfile?: "conservative" | "moderate" | "aggressive";
+  }) =>
+    request<{ user: AdminUser }>("/api/admin/users", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  impersonateUser: (id: string) =>
+    request<{ token: string; user: User }>(`/api/admin/users/${id}/impersonate`, {
+      method: "POST",
+    }),
+
+  updateUser: (id: string, data: Partial<User & { password?: string }>) =>
     request<{ user: AdminUser }>(`/api/admin/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
 
   deleteUser: (id: string) =>
