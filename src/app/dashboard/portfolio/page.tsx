@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { portfolioApi, pricesApi, type Investment } from "@/lib/api";
 import InvestmentNotePopup from "@/components/InvestmentNotePopup";
+import SellModal from "@/components/SellModal";
 import { getEdeohMeta } from "@/lib/assetAllocation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -12,6 +13,7 @@ import {
   faLandmark, faLeaf, faHandHoldingDollar, faSackDollar,
   faFileContract, faRing, faBitcoinSign, faClock, faTriangleExclamation,
   faCircleCheck, faCircleXmark, faFilePdf, faBuildingColumns,
+  faScaleBalanced, faReceipt,
 } from "@fortawesome/free-solid-svg-icons";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -275,6 +277,7 @@ export default function PortfolioPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editInv, setEditInv] = useState<Investment | null>(null);
+  const [sellingInv, setSellingInv] = useState<Investment | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [error, setError] = useState("");
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
@@ -282,6 +285,15 @@ export default function PortfolioPage() {
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleSellSuccess = (result: any) => {
+    showToast(
+      result?.summary?.isFreeShares
+        ? `Sale executed! Remaining ${result.summary.remainingUnits} shares are now 100% FREE SHARES!`
+        : `Sale executed successfully! Realized profit: ₹${result?.summary?.realizedGain?.toLocaleString("en-IN")}.`
+    );
+    load();
   };
 
   const load = useCallback(async () => {
@@ -356,6 +368,13 @@ export default function PortfolioPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            href="/dashboard/activity"
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E2E5EB] text-[#444] font-semibold rounded-lg hover:bg-[#F5F6F8] transition-all no-underline text-sm shadow-sm"
+          >
+            <FontAwesomeIcon icon={faReceipt} className="text-[#E8740C] text-xs" />
+            Exit P&amp;L History
+          </Link>
           <Link
             href="/dashboard/report"
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E2E5EB] text-[#444] font-semibold rounded-lg hover:bg-[#F5F6F8] transition-all no-underline text-sm shadow-sm"
@@ -498,7 +517,14 @@ export default function PortfolioPage() {
                           </div>
                           <div className="min-w-0">
                             <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta?.label}>
-                              <p className="font-semibold text-[#1a1b23] text-[13px] truncate max-w-[180px]">{inv.name}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-semibold text-[#1a1b23] text-[13px] truncate max-w-[180px]">{inv.name}</p>
+                                {inv.isFreeShare && (
+                                  <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                    FREE
+                                  </span>
+                                )}
+                              </div>
                             </InvestmentNotePopup>
                             {inv.symbol ? (
                               <p className="text-[#8a92a6] text-xs">{inv.symbol}{inv.exchange ? ` · ${inv.exchange}` : ""}</p>
@@ -550,6 +576,14 @@ export default function PortfolioPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => setSellingInv(inv)}
+                            className="h-7 px-2.5 rounded-lg border border-amber-300 bg-amber-50 text-[#E8740C] hover:bg-[#E8740C] hover:text-white flex items-center gap-1 text-[11px] font-bold transition-all shadow-2xs"
+                            title="Sell & Recover Capital (Compounding)"
+                          >
+                            <FontAwesomeIcon icon={faScaleBalanced} style={{ fontSize: 9 }} />
+                            Sell
+                          </button>
                           <button
                             onClick={() => setEditInv(inv)}
                             className="w-7 h-7 rounded-lg border border-[#E2E5EB] flex items-center justify-center text-[#8a92a6] hover:bg-[#FFF3EB] hover:text-[#E8740C] hover:border-[#E8740C]/30 transition-all"
@@ -619,7 +653,14 @@ export default function PortfolioPage() {
                   <div className="text-right flex-shrink-0">
                     <p className="font-extrabold text-[#1a1b23] text-sm tabular-nums">₹{cv.toLocaleString("en-IN")}</p>
                     <p className="text-[#aaa] text-xs tabular-nums">inv: ₹{inv.investedAmount.toLocaleString("en-IN")}</p>
-                    <div className="flex gap-2 mt-1 justify-end">
+                    <div className="flex gap-2 mt-1 justify-end items-center">
+                      <button
+                        onClick={() => setSellingInv(inv)}
+                        className="px-2 py-0.5 rounded bg-amber-50 border border-amber-300 text-[#E8740C] font-bold text-[11px] flex items-center gap-1"
+                      >
+                        <FontAwesomeIcon icon={faScaleBalanced} style={{ fontSize: 9 }} />
+                        Sell
+                      </button>
                       <button onClick={() => setEditInv(inv)} className="text-[#8a92a6] hover:text-[#E8740C] transition-colors p-0.5">
                         <FontAwesomeIcon icon={faPencil} style={{ fontSize: 11 }} />
                       </button>
@@ -633,6 +674,17 @@ export default function PortfolioPage() {
             })}
           </div>
         </div>
+      )}
+
+      {/* Sell Modal */}
+      {sellingInv && (
+        <SellModal
+          investment={sellingInv}
+          isOpen={!!sellingInv}
+          onClose={() => setSellingInv(null)}
+          onSuccess={handleSellSuccess}
+          isAdmin={false}
+        />
       )}
     </div>
   );

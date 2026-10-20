@@ -83,10 +83,64 @@ export interface Investment {
   tags?: string[];
   createdAt: string;
   updatedAt: string;
+  // Compounding & Capital Recovery (Free Shares)
+  status?: "active" | "closed";
+  originalInvestedAmount?: number;
+  realizedGain?: number;
+  totalProceeds?: number;
+  isFreeShare?: boolean;
   // Computed by backend on GET /api/portfolio
   currentValue?: number;
   gain?: number;
   gainPercent?: number;
+}
+
+export interface Transaction {
+  _id: string;
+  userId: string;
+  investmentId: string;
+  investmentName: string;
+  type: "sell" | "buy" | "sip" | "dividend";
+  units: number;
+  price: number;
+  buyPrice: number;
+  totalProceeds: number;
+  realizedGain: number;
+  realizedGainPercent: number;
+  capitalRecovered: number;
+  isFreeShares: boolean;
+  remainingUnits: number;
+  remainingValue: number;
+  sellDate: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface SellResult {
+  investment: Investment;
+  transaction: Transaction;
+  summary: {
+    unitsSold: number;
+    sellPrice: number;
+    totalProceeds: number;
+    realizedGain: number;
+    realizedGainPercent: number;
+    remainingUnits: number;
+    isFreeShares: boolean;
+    capitalRecoveredPercent: number;
+  };
+}
+
+export interface ExitReportSummary {
+  totalTrades: number;
+  totalRealizedProfit: number;
+  totalProceeds: number;
+  totalCostBasis: number;
+  overallReturnPercent: number;
+  profitableCount: number;
+  lossCount: number;
+  winRate: number;
+  freeSharesCount: number;
 }
 
 export interface PortfolioSummary {
@@ -249,6 +303,19 @@ export const portfolioApi = {
 
   remove: (id: string) =>
     request<never>(`/api/portfolio/${id}`, { method: "DELETE" }),
+
+  sell: (id: string, payload: { units: number; sellPrice: number; sellDate?: string; notes?: string }) =>
+    request<SellResult>(`/api/portfolio/${id}/sell`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getTransactions: (investmentId?: string) => {
+    const q = investmentId ? `?investmentId=${investmentId}` : "";
+    return request<{ data: Transaction[]; transactions: Transaction[]; summary: ExitReportSummary; count: number }>(
+      `/api/portfolio/transactions${q}`
+    );
+  },
 };
 
 // ─── Family Portfolio API ──────────────────────────────────────────────────
@@ -454,6 +521,15 @@ export const adminApi = {
       method: "PATCH",
       body: JSON.stringify({ category }),
     }),
+
+  sellInvestment: (id: string, payload: { units: number; sellPrice: number; sellDate?: string; notes?: string }) =>
+    request<SellResult>(`/api/admin/investments/${id}/sell`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getUserTransactions: (userId: string) =>
+    request<{ transactions: Transaction[]; summary: ExitReportSummary }>(`/api/admin/users/${userId}/transactions`),
 };
 
 // ─── Public Content API ────────────────────────────────────────────────────

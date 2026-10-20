@@ -6,6 +6,8 @@ import {
   type AdminUser,
   type Investment,
   type PortfolioSummary,
+  type Transaction,
+  type ExitReportSummary,
 } from "@/lib/api";
 import {
   fmtIndianCurrency,
@@ -14,7 +16,9 @@ import {
 } from "@/lib/format";
 import { exportPortfolioToExcel, exportReportToPdf } from "@/lib/exportUtils";
 import MasterPortfolioReport from "@/components/report/MasterPortfolioReport";
+import ExitPnlReport from "@/components/report/ExitPnlReport";
 import InvestmentNotePopup from "@/components/InvestmentNotePopup";
+import SellModal from "@/components/SellModal";
 import { getEdeohMeta, EDEOH_CATEGORIES } from "@/lib/assetAllocation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -38,6 +42,8 @@ import {
   faShieldHalved,
   faBuildingColumns,
   faExternalLinkAlt,
+  faScaleBalanced,
+  faReceipt,
 } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 
@@ -66,14 +72,54 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
   const [loading, setLoading] = useState(true);
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
-  const [activeTab, setActiveTab] = useState<"holdings" | "statement">("holdings");
+  const [activeTab, setActiveTab] = useState<"holdings" | "activity" | "statement">("holdings");
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [exitSummary, setExitSummary] = useState<ExitReportSummary | null>(null);
+  const [loadingTransactions, setLoadingTransactions] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [updatingCatId, setUpdatingCatId] = useState<string | null>(null);
+  const [sellingInv, setSellingInv] = useState<Investment | null>(null);
 
   const userId = user?.id || (user as any)?._id;
+
+  const loadTransactions = () => {
+    if (!userId) return;
+    setLoadingTransactions(true);
+    adminApi
+      .getUserTransactions(userId)
+      .then((res) => {
+        if (res.success && res.data) {
+          setTransactions(res.data.transactions || (res as any).transactions || []);
+          setExitSummary(res.data.summary || (res as any).summary || null);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load user transactions:", err);
+      })
+      .finally(() => {
+        setLoadingTransactions(false);
+      });
+  };
+
+  const handleSellSuccess = (result: any) => {
+    setInvestments((prev) => {
+      if (result?.investment?.status === "closed" || result?.summary?.remainingUnits === 0) {
+        return prev.filter((i) => i._id !== result.investment._id);
+      }
+      return prev.map((i) => (i._id === result?.investment?._id ? result.investment : i));
+    });
+    loadTransactions();
+    if (userId) {
+      adminApi.getUser(userId).then((res) => {
+        if (res.success && res.data?.summary) {
+          setSummary(res.data.summary);
+        }
+      });
+    }
+  };
 
   const handleCategoryChange = async (investmentId: string, newCategory: string) => {
     setUpdatingCatId(investmentId);
@@ -104,6 +150,7 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
 
     let isMounted = true;
     setLoading(true);
+    loadTransactions();
 
     adminApi
       .getUser(userId)
@@ -441,6 +488,21 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
             </button>
 
             <button
+              onClick={() => {
+                setActiveTab("activity");
+                loadTransactions();
+              }}
+              className={`px-4 py-1.5 rounded-lg text-xs font-extrabold tracking-wide transition-all cursor-pointer ${
+                activeTab === "activity"
+                  ? "bg-white text-[#16171e] shadow-xs border border-gray-200/80"
+                  : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              <FontAwesomeIcon icon={faReceipt} className={`mr-2 ${activeTab === "activity" ? "text-[#E8740C]" : ""}`} />
+              Exit P&amp;L &amp; Activity Report ({transactions.length})
+            </button>
+
+            <button
               onClick={() => setActiveTab("statement")}
               className={`px-4 py-1.5 rounded-lg text-xs font-extrabold tracking-wide transition-all cursor-pointer ${
                 activeTab === "statement"
@@ -468,8 +530,18 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                 Fetching investor's live portfolio &amp; stock holdings...
               </p>
             </div>
+          ) : activeTab === "activity" ? (
+            /* ── TAB 2: Activity & Exit P&L Report ── */
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+              <ExitPnlReport
+                transactions={transactions}
+                summary={exitSummary}
+                user={user}
+                loading={loadingTransactions}
+              />
+            </div>
           ) : activeTab === "statement" ? (
-            /* ── TAB 2: Institutional Statement Preview ── */
+            /* ── TAB 3: Institutional Statement Preview ── */
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 sm:p-6">
               <div className="mb-4 flex items-center justify-between pb-3 border-b border-gray-200">
                 <div>
@@ -683,13 +755,14 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                         <th className="py-3.5 px-3">Invested (₹)</th>
                         <th className="py-3.5 px-3">Current Value (₹)</th>
                         <th className="py-3.5 px-3">Gain / Return</th>
+                        <th className="py-3.5 px-3 text-center">Action</th>
                         <th className="py-3.5 px-4 text-right">Details</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {filteredInvestments.length === 0 ? (
                         <tr>
-                          <td colSpan={10} className="text-center py-14 text-gray-400">
+                          <td colSpan={11} className="text-center py-14 text-gray-400">
                             No holdings match your search criteria.
                           </td>
                         </tr>
@@ -713,8 +786,13 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                               {/* Name & Symbol */}
                               <td className="py-3 px-4 font-semibold text-gray-900 max-w-[280px]">
                                 <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta.label}>
-                                  <div className="truncate font-bold text-gray-900 group-hover:text-[#E8740C] transition-colors" title={inv.name}>
-                                    {inv.name}
+                                  <div className="truncate font-bold text-gray-900 group-hover:text-[#E8740C] transition-colors flex items-center gap-1.5" title={inv.name}>
+                                    <span>{inv.name}</span>
+                                    {inv.isFreeShare && (
+                                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        FREE
+                                      </span>
+                                    )}
                                   </div>
                                 </InvestmentNotePopup>
                                 <div className="text-[11px] text-gray-500 flex items-center gap-1.5 mt-0.5">
@@ -846,8 +924,20 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                                 </div>
                               </td>
 
-                              {/* Details / Notes */}
-                              <td className="py-3 px-4 text-right whitespace-nowrap text-[11px] text-gray-500">
+                              {/* Sell Action */}
+                                <td className="py-3 px-3 text-center whitespace-nowrap">
+                                  <button
+                                    onClick={() => setSellingInv(inv)}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-[#E8740C] text-[#E8740C] hover:text-white border border-amber-200/90 shadow-2xs transition-all hover:scale-105"
+                                    title="Sell units & free compounding capital"
+                                  >
+                                    <FontAwesomeIcon icon={faScaleBalanced} className="text-[10px]" />
+                                    Sell
+                                  </button>
+                                </td>
+
+                                {/* Details / Notes */}
+                                <td className="py-3 px-4 text-right whitespace-nowrap text-[11px] text-gray-500">
                                 {inv.institution && (
                                   <div className="font-medium text-gray-700 truncate max-w-[120px]">
                                     {inv.institution}
@@ -982,6 +1072,17 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
             Close Sneak Peek
           </button>
         </div>
+
+        {/* Sell / Compounding Modal */}
+        {sellingInv && (
+          <SellModal
+            investment={sellingInv}
+            isOpen={!!sellingInv}
+            onClose={() => setSellingInv(null)}
+            onSuccess={handleSellSuccess}
+            isAdmin={true}
+          />
+        )}
       </div>
     </div>
   );
