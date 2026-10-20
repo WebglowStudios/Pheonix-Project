@@ -7,7 +7,6 @@ import MasterPortfolioReport from "@/components/report/MasterPortfolioReport";
 import FamilyPortfolioReport from "@/components/report/FamilyPortfolioReport";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faPrint,
   faArrowLeft,
   faRotateRight,
   faCircleCheck,
@@ -86,14 +85,10 @@ export default function ReportPage() {
       });
     } catch (err) {
       console.error("PDF generation error:", err);
-      window.print();
+      alert("Failed to generate PDF. Please try again or check console.");
     } finally {
       setGenerating(false);
     }
-  }
-
-  function handlePrint() {
-    window.print();
   }
 
   if (loading) {
@@ -160,15 +155,6 @@ export default function ReportPage() {
           >
             <FontAwesomeIcon icon={faRotateRight} className="text-xs text-gray-500" />
             Refresh
-          </button>
-          <button
-            onClick={handlePrint}
-            disabled={generating}
-            className="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 bg-white hover:bg-gray-50 border border-gray-300 rounded-lg transition-colors cursor-pointer shadow-xs disabled:opacity-50"
-            title="Print to printer"
-          >
-            <FontAwesomeIcon icon={faPrint} className="text-xs text-gray-600" />
-            Print
           </button>
           <button
             onClick={handleDownloadPdf}

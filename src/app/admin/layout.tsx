@@ -54,9 +54,9 @@ function AdminSidebar({
   onLogout: () => void;
 }) {
   return (
-    <aside className="w-[260px] h-full bg-[#16171e] text-white flex flex-col flex-shrink-0">
+    <aside className="w-[260px] h-full bg-[#16171e] text-white flex flex-col flex-shrink-0 overflow-hidden">
       {/* Logo area */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10 flex-shrink-0">
         <div className="w-9 h-9 rounded-full overflow-hidden bg-white flex items-center justify-center ring-2 ring-[#E8740C]/40 flex-shrink-0">
           <Image src="/logo.jpg" alt="Logo" width={36} height={36} className="object-contain" />
         </div>
@@ -70,7 +70,7 @@ function AdminSidebar({
 
       {/* Admin user pill */}
       {adminUser && (
-        <div className="mx-3 mt-4 mb-2 px-3 py-2.5 rounded-[10px] bg-white/[0.06] border border-white/[0.08] flex items-center gap-2.5">
+        <div className="mx-3 mt-4 mb-2 px-3 py-2.5 rounded-[10px] bg-white/[0.06] border border-white/[0.08] flex items-center gap-2.5 flex-shrink-0">
           <div className="w-8 h-8 rounded-lg bg-[#E8740C] flex items-center justify-center text-white font-bold text-xs flex-shrink-0 select-none">
             {adminUser.name?.charAt(0).toUpperCase() || "A"}
           </div>
@@ -89,7 +89,10 @@ function AdminSidebar({
       )}
 
       {/* Nav items */}
-      <nav className="flex-1 py-2 px-3 overflow-y-auto">
+      <nav
+        className="flex-1 py-2 px-3 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         {NAV_ITEMS.map((item, idx) => {
           if (item.isHeader) {
             return (
@@ -123,7 +126,7 @@ function AdminSidebar({
       </nav>
 
       {/* Switch to Client Dashboard & Logout */}
-      <div className="p-3 border-t border-white/[0.08] flex flex-col gap-1">
+      <div className="p-3 border-t border-white/[0.08] flex flex-col gap-1 flex-shrink-0">
         <Link
           href="/dashboard"
           className="flex items-center gap-3 w-full px-3.5 py-[8px] rounded-[8px] text-[13px] font-semibold !text-white hover:bg-white/[0.08] transition-all no-underline group"
@@ -211,7 +214,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen bg-[#F3F4F7]">
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex sticky top-0 h-screen">
+      <div className="hidden lg:flex sticky top-0 h-screen overflow-hidden">
         <AdminSidebar
           adminUser={adminUser}
           pathname={pathname}

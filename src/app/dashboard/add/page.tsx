@@ -8,40 +8,47 @@ import {
   faChartLine, faChartPie, faCoins, faLeaf, faHandHoldingDollar,
   faLandmark, faSackDollar, faFileContract, faRing, faBitcoinSign,
   faBuildingColumns, faArrowLeft, faCheck, faBolt, faTriangleExclamation,
-  faMagnifyingGlass, faSpinner, faCircleCheck,
+  faMagnifyingGlass, faSpinner, faCircleCheck, faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons";
 
 // ─── Investment type catalogue ───────────────────────────────────────────────
 
-const TYPES: {
+export const MAIN_PRODUCTS: {
   value: InvestmentType; label: string; desc: string;
   color: string; bg: string;
   icon: ReturnType<typeof Object.values>[0];
 }[] = [
-  { value: "stock",       label: "Stocks",        desc: "NSE / BSE equities",           color: "#1565C0", bg: "#EBF3FD", icon: faChartLine },
-  { value: "mutual_fund", label: "Mutual Fund",   desc: "Lump-sum MF investment",       color: "#2E7D32", bg: "#EAF5EB", icon: faChartPie },
-  { value: "sip",         label: "SIP",           desc: "Monthly systematic plan",       color: "#E8740C", bg: "#FFF3EB", icon: faCoins },
-  { value: "aif",         label: "AIF",           desc: "Alternative Investment Fund",   color: "#4E342E", bg: "#EFEBE9", icon: faBuildingColumns },
-  { value: "fd",          label: "Fixed Deposit", desc: "Bank / NBFC FD",                color: "#6A1B9A", bg: "#F4E8FB", icon: faLandmark },
-  { value: "ppf",         label: "PPF",           desc: "Public Provident Fund",         color: "#E65100", bg: "#FBE9E7", icon: faLeaf },
-  { value: "epf",         label: "EPF / PF",      desc: "Employee Provident Fund",       color: "#00838F", bg: "#E0F7FA", icon: faHandHoldingDollar },
-  { value: "nps",         label: "NPS",           desc: "National Pension Scheme",       color: "#F57F17", bg: "#FFF9E6", icon: faSackDollar },
-  { value: "bond",        label: "Bonds",         desc: "Govt / corporate bonds",        color: "#880E4F", bg: "#FCE4EC", icon: faFileContract },
-  { value: "gold",        label: "Gold / SGB",    desc: "Physical gold or SGB",          color: "#B8860B", bg: "#FDF8E1", icon: faRing },
-  { value: "crypto",      label: "Crypto",        desc: "Digital assets",                color: "#4527A0", bg: "#EDE7F6", icon: faBitcoinSign },
+  { value: "stock",       label: "Stocks",         desc: "NSE & BSE equities, shares",           color: "#1565C0", bg: "#EBF3FD", icon: faChartLine },
+  { value: "mutual_fund", label: "Mutual Funds",   desc: "Equity, debt, hybrid & index funds",   color: "#2E7D32", bg: "#EAF5EB", icon: faChartPie },
+  { value: "fd",          label: "Fixed Deposits", desc: "Bank & NBFC term deposits",            color: "#6A1B9A", bg: "#F4E8FB", icon: faLandmark },
+  { value: "bond",        label: "Bonds",          desc: "Govt securities & corporate bonds",    color: "#880E4F", bg: "#FCE4EC", icon: faFileContract },
 ];
 
-// ─── Shared input class ──────────────────────────────────────────────────────
+export const OTHER_PRODUCTS: {
+  value: InvestmentType; label: string; desc: string;
+  color: string; bg: string;
+  icon: ReturnType<typeof Object.values>[0];
+}[] = [
+  { value: "sip",    label: "SIP (Systematic Plan)",        desc: "Monthly recurring mutual fund plan", color: "#E8740C", bg: "#FFF3EB", icon: faCoins },
+  { value: "gold",   label: "Gold / SGB",                   desc: "Physical gold, digital gold or SGB",  color: "#B8860B", bg: "#FDF8E1", icon: faRing },
+  { value: "ppf",    label: "PPF (Public Provident Fund)",  desc: "Govt-backed 15-year tax-free scheme", color: "#E65100", bg: "#FBE9E7", icon: faLeaf },
+  { value: "epf",    label: "EPF / PF (Provident Fund)",    desc: "Employee Provident Fund balance",    color: "#00838F", bg: "#E0F7FA", icon: faHandHoldingDollar },
+  { value: "nps",    label: "NPS (National Pension Scheme)",desc: "Retirement pension fund (Tier I/II)", color: "#F57F17", bg: "#FFF9E6", icon: faSackDollar },
+  { value: "aif",    label: "AIF (Alternative Investment)",desc: "Category I/II/III private funds",   color: "#4E342E", bg: "#EFEBE9", icon: faBuildingColumns },
+  { value: "crypto", label: "Crypto Assets",                desc: "Bitcoin, Ethereum & digital assets", color: "#4527A0", bg: "#EDE7F6", icon: faBitcoinSign },
+];
 
-const ic = "w-full border border-[#E2E5EB] rounded-lg px-3.5 py-2.5 text-sm text-[#1a1b23] outline-none focus:border-[#E8740C] focus:ring-2 focus:ring-[#E8740C]/10 bg-white placeholder:text-[#C0C4CC] transition-all";
+const TYPES = [...MAIN_PRODUCTS, ...OTHER_PRODUCTS];
+
+const ic = "w-full border border-[#CBD5E1] rounded-xl px-4 py-3 text-sm sm:text-base text-[#1a1b23] outline-none focus:border-[#E8740C] focus:ring-2 focus:ring-[#E8740C]/10 bg-white placeholder:text-[#94A3B8] transition-all";
 
 // ─── Field wrapper ───────────────────────────────────────────────────────────
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest mb-1.5">
-        {label}{required && <span className="text-[#E8740C] ml-0.5">*</span>}
+      <label className="block text-xs sm:text-[13px] font-bold text-[#475569] uppercase tracking-wider mb-2">
+        {label}{required && <span className="text-[#E8740C] ml-1">*</span>}
       </label>
       {children}
     </div>
@@ -613,56 +620,106 @@ export default function AddInvestmentPage() {
     selectedType === "crypto";
 
   return (
-    <div className="max-w-[620px] mx-auto">
+    <div className="max-w-[960px] mx-auto px-1 sm:px-4">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-extrabold text-[#1a1b23]">Add Investment</h1>
-        <p className="text-[#8a92a6] text-sm mt-0.5">
-          {step === 1 ? "Select the type of investment to add." : "Fill in the details below."}
+      <div className="mb-7">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1a1b23] tracking-tight">Add Investment</h1>
+        <p className="text-[#64748B] text-sm sm:text-base mt-1.5 font-medium">
+          {step === 1 ? "Select the type of investment to add to your portfolio." : "Fill in the details below to complete tracking."}
         </p>
       </div>
 
       {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-3 mb-8">
         {([1, 2] as const).map(s => (
-          <div key={s} className="flex items-center gap-2">
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all border-2 ${
+          <div key={s} className="flex items-center gap-2.5">
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all border-2 ${
               step > s
                 ? "bg-[#1b5e20] border-[#1b5e20] text-white"
                 : step === s
-                ? "bg-[#E8740C] border-[#E8740C] text-white"
-                : "bg-white border-[#E2E5EB] text-[#aaa]"
+                ? "bg-[#E8740C] border-[#E8740C] text-white shadow-sm"
+                : "bg-white border-[#CBD5E1] text-[#94A3B8]"
             }`}>
-              {step > s ? <FontAwesomeIcon icon={faCheck} className="text-[9px]" /> : s}
+              {step > s ? <FontAwesomeIcon icon={faCheck} className="text-xs" /> : s}
             </div>
-            <span className={`text-xs font-semibold ${step >= s ? "text-[#1a1b23]" : "text-[#aaa]"}`}>
+            <span className={`text-sm sm:text-base font-bold ${step >= s ? "text-[#1a1b23]" : "text-[#94A3B8]"}`}>
               {s === 1 ? "Select Type" : "Enter Details"}
             </span>
             {s < 2 && (
-              <div className={`h-px w-8 mx-1 ${step > s ? "bg-[#1b5e20]" : "bg-[#E2E5EB]"}`} />
+              <div className={`h-0.5 w-10 sm:w-16 mx-1 ${step > s ? "bg-[#1b5e20]" : "bg-[#E2E8F0]"}`} />
             )}
           </div>
         ))}
       </div>
 
-      {/* Step 1: Type grid */}
+      {/* Step 1: Type selection (4 Main Products + 1 Single Option with Dropdown for Others) */}
       {step === 1 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {TYPES.map(t => (
-            <button
-              key={t.value}
-              onClick={() => selectType(t.value)}
-              className="flex flex-col items-start gap-3 p-4 rounded-xl border-2 border-[#EAECEF] bg-white hover:border-[#E8740C] hover:shadow-md transition-all text-left group"
-            >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform" style={{ background: t.bg }}>
-                <FontAwesomeIcon icon={t.icon} style={{ color: t.color }} className="text-base" />
+        <div className="space-y-4 sm:space-y-5">
+          {/* 4 Main Products Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+            {MAIN_PRODUCTS.map((t) => (
+              <button
+                key={t.value}
+                type="button"
+                onClick={() => selectType(t.value)}
+                className="flex items-start gap-4 sm:gap-5 p-5 sm:p-7 rounded-2xl border-2 border-[#EAECEF] bg-white hover:border-[#E8740C] hover:shadow-lg transition-all text-left group cursor-pointer active:scale-[0.99]"
+              >
+                <div
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform shadow-xs"
+                  style={{ background: t.bg }}
+                >
+                  <FontAwesomeIcon icon={t.icon} style={{ color: t.color }} className="text-2xl sm:text-3xl" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-extrabold text-[#1a1b23] text-base sm:text-lg group-hover:text-[#E8740C] transition-colors leading-snug">
+                    {t.label}
+                  </p>
+                  <p className="text-[#64748B] text-xs sm:text-sm mt-1 leading-relaxed">{t.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* 5th Single Option: Other Products with Dropdown Selector */}
+          <div className="p-5 sm:p-7 rounded-2xl border-2 border-dashed border-[#CBD5E1] bg-gradient-to-br from-[#FAFBFC] via-[#F8FAFC] to-[#F1F5F9] hover:border-[#E8740C] transition-all shadow-xs">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5">
+              <div className="flex items-center gap-4 sm:gap-5">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#FFF3EB] text-[#E8740C] flex items-center justify-center flex-shrink-0 shadow-xs">
+                  <FontAwesomeIcon icon={faLayerGroup} className="text-2xl sm:text-3xl" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <p className="font-extrabold text-[#1a1b23] text-base sm:text-lg">Other Asset Classes</p>
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#E8740C]/10 text-[#E8740C] text-[11px] font-bold uppercase tracking-wider">
+                      7 Options
+                    </span>
+                  </div>
+                  <p className="text-[#64748B] text-xs sm:text-sm mt-1 leading-relaxed">
+                    SIP, Gold / SGB, PPF, EPF, NPS, AIF, Crypto
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-bold text-[#1a1b23] text-sm">{t.label}</p>
-                <p className="text-[#8a92a6] text-[11px] mt-0.5 leading-tight">{t.desc}</p>
+
+              <div className="w-full md:w-72 flex-shrink-0">
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      selectType(e.target.value as InvestmentType);
+                    }
+                  }}
+                  className="w-full bg-white border-2 border-[#CBD5E1] hover:border-[#E8740C] rounded-xl px-4 py-3.5 text-xs sm:text-sm font-bold text-[#1a1b23] focus:border-[#E8740C] focus:ring-4 focus:ring-[#E8740C]/15 outline-none transition-all cursor-pointer shadow-xs"
+                >
+                  <option value="" disabled>Select Product to Add ▾</option>
+                  {OTHER_PRODUCTS.map((op) => (
+                    <option key={op.value} value={op.value}>
+                      {op.label}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </button>
-          ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -670,24 +727,47 @@ export default function AddInvestmentPage() {
       {step === 2 && selectedType && typeMeta && (
         <div className="bg-white rounded-2xl border border-[#EAECEF] shadow-sm overflow-hidden">
           {/* Selected type header */}
-          <div className="px-6 py-4 border-b border-[#F0F2F5] flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: typeMeta.bg }}>
-              <FontAwesomeIcon icon={typeMeta.icon} style={{ color: typeMeta.color }} className="text-sm" />
+          <div className="px-6 sm:px-8 py-5 border-b border-[#F0F2F5] flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: typeMeta.bg }}>
+              <FontAwesomeIcon icon={typeMeta.icon} style={{ color: typeMeta.color }} className="text-xl" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-[#1a1b23] text-sm">{typeMeta.label}</p>
-              <p className="text-[#8a92a6] text-xs">{typeMeta.desc}</p>
+              <p className="font-extrabold text-[#1a1b23] text-base sm:text-lg">{typeMeta.label}</p>
+              <p className="text-[#64748B] text-xs sm:text-sm">{typeMeta.desc}</p>
             </div>
             <button
               onClick={() => setStep(1)}
-              className="flex items-center gap-1.5 text-xs font-semibold text-[#8a92a6] hover:text-[#E8740C] transition-colors px-3 py-1.5 rounded-lg hover:bg-[#FFF8F3]"
+              className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#64748B] hover:text-[#E8740C] transition-colors px-3.5 py-2 rounded-lg hover:bg-[#FFF8F3]"
             >
-              <FontAwesomeIcon icon={faArrowLeft} className="text-[9px]" />
+              <FontAwesomeIcon icon={faArrowLeft} className="text-xs" />
               Change
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
+          {/* Quick-switch dropdown for Other Products in Step 2 */}
+          {OTHER_PRODUCTS.some((o) => o.value === selectedType) && (
+            <div className="px-6 sm:px-8 py-3 bg-[#FFF8F3] border-b border-[#FFE0CC] flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-bold text-[#E8740C] uppercase tracking-wider">
+                  Asset Class:
+                </span>
+                <select
+                  value={selectedType}
+                  onChange={(e) => selectType(e.target.value as InvestmentType)}
+                  className="bg-white border border-[#E8740C]/40 text-[#1a1b23] rounded-lg px-3 py-1.5 text-xs sm:text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#E8740C]/20 cursor-pointer shadow-2xs"
+                >
+                  {OTHER_PRODUCTS.map((op) => (
+                    <option key={op.value} value={op.value}>
+                      {op.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <span className="text-xs text-[#64748B]">Switch product anytime</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="p-6 sm:p-8 flex flex-col gap-5">
             {error && (
               <div className="flex items-center gap-2 px-3 py-2.5 bg-[#fff8f8] border border-[#FFCDD2] rounded-lg text-[#c62828] text-sm">
                 <FontAwesomeIcon icon={faTriangleExclamation} className="flex-shrink-0 text-xs" />
@@ -753,18 +833,18 @@ export default function AddInvestmentPage() {
               </Field>
             )}
 
-            <div className="flex gap-3 pt-1">
+            <div className="flex gap-4 pt-3">
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="flex-1 border border-[#E2E5EB] bg-white rounded-lg py-3 text-sm font-semibold text-[#444] hover:bg-[#F5F6F8] transition-all"
+                className="flex-1 border-2 border-[#E2E5EB] bg-white rounded-xl py-3.5 text-sm sm:text-base font-bold text-[#475569] hover:bg-[#F8FAFC] hover:border-[#CBD5E1] transition-all"
               >
                 Back
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-2 flex-1 bg-[#E8740C] !text-white rounded-lg py-3 text-sm font-semibold hover:bg-[#d4660b] disabled:opacity-50 transition-all shadow-sm active:scale-95"
+                className="flex-2 flex-1 bg-[#E8740C] !text-white rounded-xl py-3.5 text-sm sm:text-base font-bold hover:bg-[#d4660b] disabled:opacity-50 transition-all shadow-md active:scale-95"
               >
                 {saving ? (
                   <span className="flex items-center justify-center gap-2">

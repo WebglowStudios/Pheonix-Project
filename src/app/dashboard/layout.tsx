@@ -50,9 +50,9 @@ function Sidebar({
   onLogout: () => void;
 }) {
   return (
-    <aside className="w-[252px] h-full bg-[#16171e] text-white flex flex-col flex-shrink-0">
+    <aside className="w-[252px] h-full bg-[#16171e] text-white flex flex-col flex-shrink-0 overflow-hidden">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10 flex-shrink-0">
         <div className="w-9 h-9 rounded-full overflow-hidden bg-white flex items-center justify-center ring-2 ring-[#E8740C]/40 flex-shrink-0">
           <Image src="/logo.jpg" alt="Logo" width={36} height={36} className="object-contain" />
         </div>
@@ -64,7 +64,7 @@ function Sidebar({
 
       {/* User pill */}
       {user && (
-        <div className="mx-3 mt-4 mb-1 px-3 py-2.5 rounded-[10px] bg-white/[0.06] border border-white/[0.08] flex items-center gap-2.5">
+        <div className="mx-3 mt-4 mb-1 px-3 py-2.5 rounded-[10px] bg-white/[0.06] border border-white/[0.08] flex items-center gap-2.5 flex-shrink-0">
           {user.avatar ? (
             <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
           ) : (
@@ -81,7 +81,7 @@ function Sidebar({
 
       {/* Admin Quick Switch Pill */}
       {user?.role === "admin" && (
-        <div className="mx-3 mt-1 mb-2 p-2.5 rounded-[10px] bg-[#E8740C]/10 border border-[#E8740C]/30 flex flex-col gap-2">
+        <div className="mx-3 mt-1 mb-2 p-2.5 rounded-[10px] bg-[#E8740C]/10 border border-[#E8740C]/30 flex flex-col gap-2 flex-shrink-0">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-[#E8740C] uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#E8740C] animate-pulse" />
@@ -99,7 +99,10 @@ function Sidebar({
       )}
 
       {/* Nav */}
-      <nav className="flex-1 py-3 px-3 overflow-y-auto">
+      <nav
+        className="flex-1 py-3 px-3 overflow-y-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
         {NAV_ITEMS.map((item) => {
           const isActive = item.exact
             ? pathname === item.href
@@ -123,7 +126,7 @@ function Sidebar({
       </nav>
 
       {/* Logout */}
-      <div className="p-3 border-t border-white/[0.08]">
+      <div className="p-3 border-t border-white/[0.08] flex-shrink-0">
         <button
           onClick={onLogout}
           className="flex items-center gap-3 w-full px-3.5 py-[9px] rounded-[8px] text-[13px] font-semibold !text-gray-300 hover:bg-[#c62828]/20 hover:!text-[#f87171] transition-all"
@@ -212,7 +215,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen bg-[#F3F4F7]">
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex sticky top-0 h-screen print:hidden">
+      <div className="hidden lg:flex sticky top-0 h-screen overflow-hidden print:hidden">
         <Sidebar user={user} pathname={pathname} onClose={() => setSidebarOpen(false)} onLogout={handleLogout} />
       </div>
 

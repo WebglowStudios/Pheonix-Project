@@ -25,7 +25,6 @@ import {
   faTimes,
   faFileExcel,
   faFilePdf,
-  faPrint,
   faPhone,
   faEnvelope,
   faLock,
@@ -298,8 +297,7 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
       });
     } catch (err) {
       console.error("PDF export error:", err);
-      // Fallback to print
-      window.print();
+      alert("Failed to export PDF. Please try again.");
     } finally {
       setExportingPdf(false);
     }
@@ -441,16 +439,6 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                   />
                   <span className="hidden sm:inline">PDF</span>
                 </button>
-
-                {/* Print */}
-                <button
-                  onClick={() => window.print()}
-                  title="Print Statement"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-white/[0.1] text-gray-300 hover:text-white text-xs font-bold transition-all cursor-pointer"
-                >
-                  <FontAwesomeIcon icon={faPrint} className="text-xs text-sky-400" />
-                  <span className="hidden md:inline">Print</span>
-                </button>
               </div>
 
               {/* Close Button */}
@@ -556,7 +544,7 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                     Master Portfolio Statement
                   </h3>
                   <p className="text-xs text-gray-500">
-                    Official 2-page statement ready for print or direct PDF client dispatch.
+                    Official 2-page statement ready for direct PDF client dispatch.
                   </p>
                 </div>
                 <div className="flex gap-2">

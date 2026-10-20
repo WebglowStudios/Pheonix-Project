@@ -13,7 +13,6 @@ import {
   faShieldHalved,
   faSearch,
   faFileExcel,
-  faPrint,
   faStar,
   faFilter,
   faCheckCircle,
@@ -186,13 +185,6 @@ export default function ExitPnlReport({
           >
             <FontAwesomeIcon icon={faFileExcel} className="text-emerald-600" />
             Export Excel Report
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all shadow-xs"
-          >
-            <FontAwesomeIcon icon={faPrint} />
-            Print Report
           </button>
         </div>
       </div>
