@@ -480,14 +480,17 @@ export default function MasterPortfolioReport({
                 <table className="w-full text-[12px] text-left border-collapse">
                   <thead>
                     <tr className="bg-[#dcfce7] print:bg-[#dcfce7] font-bold text-gray-800 border-b border-gray-300">
-                      <th className="py-1.5 px-2 border-r border-gray-300">Investor Name</th>
-                      <th className="py-1.5 px-2 border-r border-gray-300">Scrip Name / Symbol</th>
+                      {hasFamilyOwners && (
+                        <th className="py-1.5 px-2 border-r border-gray-300">Investor Name</th>
+                      )}
+                      <th className="py-1.5 px-2 border-r border-gray-300">Company / Stock Name</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300">Symbol / Ticker</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300">Investment Date</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300 text-left">Qty / Shares</th>
                       <th className="py-1.5 px-2 border-r border-gray-300 text-left">Avg Price</th>
-                      <th className="py-1.5 px-2 border-r border-gray-300 text-left">No of Shares</th>
-                      <th className="py-1.5 px-2 border-r border-gray-300 text-left">Invested Amount</th>
-                      <th className="py-1.5 px-2 border-r border-gray-300 text-left">Current Price</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300 text-left">Inv. Cost</th>
                       <th className="py-1.5 px-2 border-r border-gray-300 text-left">Current Value</th>
-                      <th className="py-1.5 px-2 border-r border-gray-300 text-left">Gain</th>
+                      <th className="py-1.5 px-2 border-r border-gray-300 text-left">Unrealised Gain</th>
                       <th className="py-1.5 px-2 text-left">Abs Ret (%)</th>
                     </tr>
                   </thead>
@@ -500,15 +503,37 @@ export default function MasterPortfolioReport({
 
                       return (
                         <tr key={inv._id} className="border-b border-gray-200 hover:bg-gray-50">
-                          <td className="py-1.5 px-2 border-r border-gray-300 font-semibold text-gray-800">{getInvestorName(inv)}</td>
-                          <td className="py-1.5 px-2 border-r border-gray-300 font-bold text-gray-900">
-                            {inv.name} {inv.symbol ? `(${inv.symbol})` : ""}
+                          {hasFamilyOwners && (
+                            <td className="py-1.5 px-2 border-r border-gray-300 font-semibold text-gray-800">
+                              {getInvestorName(inv)}
+                            </td>
+                          )}
+                          <td className="py-1.5 px-2 border-r border-gray-300 font-semibold text-gray-900">
+                            {inv.name}
                           </td>
-                          <td className="py-1.5 px-2 border-r border-gray-300 text-left">{fmtNumber(inv.buyPrice)}</td>
-                          <td className="py-1.5 px-2 border-r border-gray-300 text-left">{fmtNumber(inv.units, 0)}</td>
-                          <td className="py-1.5 px-2 border-r border-gray-300 text-left">{fmtIndianCurrency(cost, false)}</td>
-                          <td className="py-1.5 px-2 border-r border-gray-300 text-left">{fmtNumber(inv.currentPrice)}</td>
-                          <td className="py-1.5 px-2 border-r border-gray-300 text-left font-medium">{fmtIndianCurrency(val, false)}</td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-gray-600 font-mono text-[11px]">
+                            {inv.symbol || "—"}
+                          </td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-gray-600">
+                            {formatDateIndian(inv.buyDate || inv.createdAt)}
+                          </td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-left">
+                            {fmtNumber(inv.units, 0)}
+                          </td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-left">
+                            <div>{fmtNumber(inv.buyPrice)}</div>
+                            {inv.currentPrice && inv.currentPrice !== inv.buyPrice && (
+                              <div className="text-[10px] text-gray-500 font-normal">
+                                CMP: {fmtNumber(inv.currentPrice)}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-left">
+                            {fmtIndianCurrency(cost, false)}
+                          </td>
+                          <td className="py-1.5 px-2 border-r border-gray-300 text-left font-medium">
+                            {fmtIndianCurrency(val, false)}
+                          </td>
                           <td className={`py-1.5 px-2 border-r border-gray-300 text-left font-medium ${gain >= 0 ? "text-green-700" : "text-red-700"}`}>
                             {fmtIndianCurrency(gain, false)}
                           </td>
@@ -526,9 +551,10 @@ export default function MasterPortfolioReport({
                       const ret = cost > 0 ? (gain / cost) * 100 : 0;
                       return (
                         <tr className="bg-[#bbf7d0] print:bg-[#bbf7d0] font-bold text-gray-900">
-                          <td colSpan={4} className="py-1.5 px-2 border-r border-gray-300 text-left">Equity Grand Total:</td>
+                          <td colSpan={hasFamilyOwners ? 6 : 5} className="py-1.5 px-2 border-r border-gray-300 text-left">
+                            Equity Portfolio Total:
+                          </td>
                           <td className="py-1.5 px-2 border-r border-gray-300 text-left">{fmtIndianCurrency(cost, false)}</td>
-                          <td className="py-1.5 px-2 border-r border-gray-300 text-left">—</td>
                           <td className="py-1.5 px-2 border-r border-gray-300 text-left">{fmtIndianCurrency(val, false)}</td>
                           <td className="py-1.5 px-2 border-r border-gray-300 text-left">{fmtIndianCurrency(gain, false)}</td>
                           <td className="py-1.5 px-2 text-left">{fmtNumber(ret)}%</td>

@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowTrendUp, faSeedling, faBriefcase, faShieldHalved,
   faHandHoldingDollar, faCoins, faPercent, faBuildingColumns,
-  faVault, faCheck, faSpinner,
+  faVault, faCheck, faSpinner, faGlobe,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { publicApi } from "@/lib/api";
@@ -16,6 +16,7 @@ import { publicApi } from "@/lib/api";
 const ICON_MAP: Record<string, IconDefinition> = {
   faArrowTrendUp, faSeedling, faBriefcase, faShieldHalved,
   faHandHoldingDollar, faCoins, faPercent, faBuildingColumns, faVault,
+  faGlobe,
 };
 
 interface Product {
@@ -111,7 +112,7 @@ export default function ServicesPage() {
                       </div>
                       <div className="flex-1 flex flex-col">
                         <h3 className="text-[1.4rem] font-extrabold text-[#E8740C] mb-[15px] tracking-[1.5px]">{p.title}</h3>
-                        <p className="text-[#444] text-[0.95rem] leading-[1.5] mb-5">{p.description}</p>
+                        <p className="text-[#444] text-[0.95rem] leading-[1.5] mb-5 whitespace-pre-line">{p.description}</p>
                         <ul className="flex flex-col gap-2">
                           {(p.features ?? []).map((feat) => (
                             <li key={feat} className="flex items-center gap-2 text-[0.9rem] font-medium text-[#333]">

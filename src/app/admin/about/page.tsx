@@ -35,6 +35,14 @@ interface AboutPageContent {
   why_invest_body: string;
   image_url: string;
   pillars?: AboutPillar[];
+  founder_section_heading?: string;
+  founder_name?: string;
+  founder_title?: string;
+  founder_bio_1?: string;
+  founder_bio_2?: string;
+  founder_bio_3?: string;
+  founder_tagline?: string;
+  founder_image?: string;
 }
 
 const HOME_DEFAULTS: AboutHomeContent = {
@@ -56,6 +64,17 @@ const PAGE_DEFAULTS: AboutPageContent = {
     "Phoenix Financial Services was built around one founding belief — that comprehensive, tailored wealth solutions should be available under one roof, without compromise.",
   body_2:
     "We take a disciplined, compliance-first approach — helping clients optimise portfolios, eliminate inefficiencies, and rebalance assets with precision.",
+  founder_section_heading: "About the Founder",
+  founder_name: "Chirag Chheda",
+  founder_title: "Founder, Phoenix Financial Services",
+  founder_bio_1:
+    "With two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, investor-focused approach to wealth management.",
+  founder_bio_2:
+    "In 2010, he founded Phoenix Financial Services with a simple belief: wealth creation should be thoughtful, personalised, and aligned with each investor’s objectives, risk profile, and long-term interests.",
+  founder_bio_3:
+    "Chirag shapes the investment philosophy at Phoenix, with every portfolio designed around the individual—not a standard template.",
+  founder_tagline: "Personalised thinking. Disciplined investing. Long-term perspective.",
+  founder_image: "/founder.png",
   why_invest_heading: "Why Invest With Us?",
   why_invest_body:
     "Together, we can help define your priorities for today and help you build a better tomorrow for you and your family.",
@@ -237,6 +256,7 @@ function AboutPageTab() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [isMediaOpen, setIsMediaOpen] = useState(false);
+  const [mediaTarget, setMediaTarget] = useState<"image_url" | "founder_image">("image_url");
   const [isIconOpen, setIsIconOpen] = useState(false);
   const [activePillarIndex, setActivePillarIndex] = useState<number | null>(null);
 
@@ -363,12 +383,115 @@ function AboutPageTab() {
               />
               <button
                 type="button"
-                onClick={() => setIsMediaOpen(true)}
+                onClick={() => {
+                  setMediaTarget("image_url");
+                  setIsMediaOpen(true);
+                }}
                 className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
               >
                 Browse Media
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* About the Founder */}
+      <div className="bg-white rounded-[10px] shadow-sm p-6 mb-5">
+        <h3 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">About the Founder</h3>
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Section Heading</label>
+              <input
+                value={content.founder_section_heading || ""}
+                onChange={(e) => setContent((p) => ({ ...p, founder_section_heading: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Founder Name</label>
+              <input
+                value={content.founder_name || ""}
+                onChange={(e) => setContent((p) => ({ ...p, founder_name: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>Founder Title / Role</label>
+            <input
+              value={content.founder_title || ""}
+              onChange={(e) => setContent((p) => ({ ...p, founder_title: e.target.value }))}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Bio Paragraph 1</label>
+            <textarea
+              rows={3}
+              value={content.founder_bio_1 || ""}
+              onChange={(e) => setContent((p) => ({ ...p, founder_bio_1: e.target.value }))}
+              className={inputClass + " resize-none"}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Bio Paragraph 2</label>
+            <textarea
+              rows={3}
+              value={content.founder_bio_2 || ""}
+              onChange={(e) => setContent((p) => ({ ...p, founder_bio_2: e.target.value }))}
+              className={inputClass + " resize-none"}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Bio Paragraph 3</label>
+            <textarea
+              rows={3}
+              value={content.founder_bio_3 || ""}
+              onChange={(e) => setContent((p) => ({ ...p, founder_bio_3: e.target.value }))}
+              className={inputClass + " resize-none"}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Philosophy / Tagline</label>
+            <input
+              value={content.founder_tagline || ""}
+              onChange={(e) => setContent((p) => ({ ...p, founder_tagline: e.target.value }))}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Founder Image Path</label>
+            <div className="flex gap-2">
+              <input
+                value={content.founder_image || ""}
+                onChange={(e) => setContent((p) => ({ ...p, founder_image: e.target.value }))}
+                placeholder="/founder.png"
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaTarget("founder_image");
+                  setIsMediaOpen(true);
+                }}
+                className="bg-gray-100 border border-gray-300 text-gray-700 px-3.5 rounded-[8px] text-xs font-semibold hover:bg-gray-200 transition-all whitespace-nowrap"
+              >
+                Browse Media
+              </button>
+            </div>
+            {content.founder_image && (
+              <div className="mt-3 flex items-center gap-3 p-2 bg-[#F9F9F9] rounded-[8px] border border-[#EEE] w-fit">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={content.founder_image}
+                  alt={content.founder_name || "Founder"}
+                  className="w-16 h-16 rounded-[6px] object-cover border border-[#DDD]"
+                />
+                <span className="text-xs text-[#666]">Preview: {content.founder_name || "Founder"}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -466,7 +589,11 @@ function AboutPageTab() {
         isOpen={isMediaOpen}
         onClose={() => setIsMediaOpen(false)}
         onSelect={(url) => {
-          setContent((p) => ({ ...p, image_url: url }));
+          if (mediaTarget === "founder_image") {
+            setContent((p) => ({ ...p, founder_image: url }));
+          } else {
+            setContent((p) => ({ ...p, image_url: url }));
+          }
           setIsMediaOpen(false);
         }}
       />

@@ -35,6 +35,14 @@ interface AboutContent {
   why_invest_body: string;
   image_url: string;
   pillars?: AboutPillar[];
+  founder_section_heading?: string;
+  founder_name?: string;
+  founder_title?: string;
+  founder_bio_1?: string;
+  founder_bio_2?: string;
+  founder_bio_3?: string;
+  founder_tagline?: string;
+  founder_image?: string;
 }
 
 const DEFAULTS: AboutContent = {
@@ -44,6 +52,14 @@ const DEFAULTS: AboutContent = {
   lead: "We understand that every investor brings a unique set of goals, risk appetites, and timelines to the table.",
   body_1: "Phoenix Financial Services was built around one founding belief — that comprehensive, tailored wealth solutions should be available under one roof, without compromise. Whether you are pursuing aggressive equity growth, building a stable fixed-income portfolio, or seeking sophisticated alternative strategies, our expert team is equipped to guide you at every stage.",
   body_2: "We take a disciplined, compliance-first approach — helping clients optimise portfolios, eliminate inefficiencies, and rebalance assets with precision — ensuring every decision is built around long-term net returns, not short-term noise.",
+  founder_section_heading: "About the Founder",
+  founder_name: "Chirag Chheda",
+  founder_title: "Founder, Phoenix Financial Services",
+  founder_bio_1: "With two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, investor-focused approach to wealth management.",
+  founder_bio_2: "In 2010, he founded Phoenix Financial Services with a simple belief: wealth creation should be thoughtful, personalised, and aligned with each investor’s objectives, risk profile, and long-term interests.",
+  founder_bio_3: "Chirag shapes the investment philosophy at Phoenix, with every portfolio designed around the individual—not a standard template.",
+  founder_tagline: "Personalised thinking. Disciplined investing. Long-term perspective.",
+  founder_image: "/founder.png",
   why_invest_heading: "Why Invest With Us?",
   why_invest_body: "Together, we can help define your priorities for today and help you build a better tomorrow for you and your family. Our team combines research-driven insight with genuine, one-on-one guidance — so every recommendation is built around your goals, not a generic playbook.",
   image_url: "/meeting.png",
@@ -100,6 +116,86 @@ export default function AboutPage() {
                 <p className="text-[1.15rem] text-[#333] font-semibold mb-5">{content.lead}</p>
                 <p className="text-[#444] mb-[30px]">{content.body_1}</p>
                 <p className="text-[#444] mb-[30px]">{content.body_2}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* About the Founder Section */}
+        <section id="founder" className="py-[50px] sm:py-[70px] lg:py-[90px] bg-[#F8F9FA] border-t border-[#E5E7EB]">
+          <div className="max-w-[1200px] mx-auto px-5">
+            <div className="grid grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[400px_1fr] gap-8 sm:gap-10 lg:gap-16 items-center">
+              {/* Founder Image Sub-section */}
+              <div className="relative group max-w-[280px] sm:max-w-[340px] md:max-w-none mx-auto w-full">
+                <div className="absolute inset-0 bg-[#E8740C]/20 rounded-[16px] transform rotate-2 group-hover:rotate-1 transition-transform duration-300" />
+                <div className="relative bg-white p-3 sm:p-3.5 rounded-[16px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] border border-[#E5E7EB] overflow-hidden">
+                  <div className="relative aspect-[4/4.6] w-full rounded-[12px] overflow-hidden bg-gray-100">
+                    <Image
+                      src={content.founder_image || "/founder.png"}
+                      alt={`${content.founder_name || "Chirag Chheda"} — ${content.founder_title || "Founder, Phoenix Financial Services"}`}
+                      fill
+                      className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                      priority
+                    />
+                  </div>
+                  <div className="mt-3 text-center pb-0.5">
+                    <h4 className="text-base sm:text-lg font-extrabold text-[#333] tracking-[0.5px]">
+                      {content.founder_name || "Chirag Chheda"}
+                    </h4>
+                    <p className="text-[11px] sm:text-xs font-semibold text-[#E8740C] uppercase tracking-wider mt-0.5">
+                      {content.founder_title || "Founder, Phoenix Financial Services"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Founder Narrative Content */}
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="text-[#E8740C] font-bold text-[11px] sm:text-xs uppercase tracking-[1.5px]">
+                    Advisory Leadership
+                  </span>
+                  <span className="inline-flex items-center text-[10px] sm:text-[11px] font-semibold text-[#E8740C] bg-[#FFF3EB] px-2.5 py-0.5 rounded-full border border-[#E8740C]/25">
+                    20+ Years Experience
+                  </span>
+                </div>
+
+                <h2 className="text-[1.85rem] sm:text-[2.2rem] lg:text-[2.6rem] font-extrabold text-[#222] leading-tight mb-2 tracking-[0.5px]">
+                  About the <span className="text-[#E8740C]">Founder</span>
+                </h2>
+
+                <div className="mb-4 sm:mb-5 pb-3 border-b border-gray-200/80 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span className="text-base sm:text-lg font-bold text-[#1F2937]">
+                    {content.founder_name || "Chirag Chheda"}
+                  </span>
+                  <span className="text-gray-300 hidden sm:inline">•</span>
+                  <span className="text-xs sm:text-sm font-semibold text-[#E8740C]">
+                    {content.founder_title || "Founder, Phoenix Financial Services"}
+                  </span>
+                </div>
+
+                <div className="space-y-3 sm:space-y-3.5 text-[#4B5563] text-[0.93rem] sm:text-[1rem] leading-[1.7]">
+                  <p>
+                    {content.founder_bio_1 || "With two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, investor-focused approach to wealth management."}
+                  </p>
+                  <p>
+                    {content.founder_bio_2 || "In 2010, he founded Phoenix Financial Services with a simple belief: wealth creation should be thoughtful, personalised, and aligned with each investor’s objectives, risk profile, and long-term interests."}
+                  </p>
+                  <p>
+                    {content.founder_bio_3 || "Chirag shapes the investment philosophy at Phoenix, with every portfolio designed around the individual—not a standard template."}
+                  </p>
+                </div>
+
+                <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-gray-200">
+                  <div className="relative pl-3.5 sm:pl-4 border-l-[3px] border-[#E8740C] py-1.5 bg-gradient-to-r from-[#FFF3EB]/80 to-transparent rounded-r-[8px]">
+                    <p className="text-[0.93rem] sm:text-[1.02rem] font-bold text-[#1F2937] italic tracking-wide leading-snug">
+                      &ldquo;{content.founder_tagline || "Personalised thinking. Disciplined investing. Long-term perspective."}&rdquo;
+                    </p>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-[#E8740C] uppercase tracking-[1.5px] block mt-1 not-italic">
+                      Investment Philosophy
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
