@@ -94,7 +94,7 @@ export default function PhonePromptModal({ user, onSuccess }: PhonePromptModalPr
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-[#E8740C] text-white font-bold text-sm transition-all hover:bg-[#d4660b] shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+            className="w-full py-3 rounded-xl bg-[#E8740C] !text-white font-bold text-sm transition-all hover:bg-[#d4660b] shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed mt-1 active:scale-95"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

@@ -146,10 +146,10 @@ export default function PromoAdminPage() {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-5 py-2.5 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all shadow-sm"
+          className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-5 py-2.5 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all shadow-sm active:scale-95"
         >
-          <FontAwesomeIcon icon={faFloppyDisk} />
-          {saving ? "Saving..." : "Save Changes"}
+          <FontAwesomeIcon icon={faFloppyDisk} className="text-white" />
+          <span className="!text-white">{saving ? "Saving..." : "Save Changes"}</span>
         </button>
       </div>
 
@@ -273,7 +273,7 @@ export default function PromoAdminPage() {
                   />
                   <button
                     onClick={() => setIsMediaOpen(true)}
-                    className="px-4 py-2 bg-[#F2F3F5] border border-[#DDD] text-[#333] rounded-[8px] font-semibold text-sm hover:bg-[#E8740C] hover:text-white hover:border-[#E8740C] transition-all whitespace-nowrap"
+                    className="px-4 py-2 bg-[#F2F3F5] border border-[#DDD] text-[#333] rounded-[8px] font-semibold text-sm hover:bg-[#E8740C] hover:!text-white hover:border-[#E8740C] transition-all whitespace-nowrap active:scale-95"
                   >
                     Choose Image
                   </button>
@@ -372,7 +372,7 @@ export default function PromoAdminPage() {
                     )}
 
                     <div className="flex gap-2">
-                      <div className="flex-1 text-center py-2 rounded-[30px] font-semibold text-xs bg-[#E8740C] text-white">
+                      <div className="flex-1 text-center py-2 rounded-[30px] font-semibold text-xs bg-[#E8740C] !text-white">
                         {content.cta_text || "Learn More"}
                       </div>
                       <div className="flex-1 text-center py-2 rounded-[30px] font-semibold text-xs border border-[#333] text-[#333]">

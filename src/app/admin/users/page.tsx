@@ -178,10 +178,10 @@ export default function AdminUsersPage() {
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-[#E8740C] text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-[#d06405] transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-lg px-4 py-2 text-sm font-bold hover:bg-[#d06405] transition-all shadow-sm active:scale-95"
           >
-            <FontAwesomeIcon icon={faUserPlus} className="text-xs" />
-            <span>Create Client Account</span>
+            <FontAwesomeIcon icon={faUserPlus} className="text-xs text-white" />
+            <span className="!text-white">Create Client Account</span>
           </button>
           <button
             onClick={fetchUsers}
@@ -430,7 +430,7 @@ export default function AdminUsersPage() {
                         <button
                           onClick={() => setSneakPeekUser(user)}
                           title="Sneak peek into user's portfolio, stocks & export data"
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8740C]/40 bg-[#FFF3EB] text-[#E8740C] hover:bg-[#E8740C] hover:text-white transition-all text-xs font-bold shadow-xs active:scale-95"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E8740C]/40 bg-[#FFF3EB] text-[#E8740C] hover:bg-[#E8740C] hover:!text-white transition-all text-xs font-bold shadow-xs active:scale-95"
                         >
                           <FontAwesomeIcon icon={faEye} className="text-xs" />
                           <span>Sneak Peek</span>

@@ -174,10 +174,10 @@ export default function DashboardPage() {
           </Link>
           <Link
             href="/dashboard/add"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8740C] text-white font-semibold rounded-lg hover:bg-[#d4660b] transition-colors text-sm no-underline shadow-sm flex-shrink-0"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8740C] !text-white font-semibold rounded-lg hover:bg-[#d4660b] transition-colors text-sm no-underline shadow-sm flex-shrink-0 active:scale-95"
           >
-            <FontAwesomeIcon icon={faPlus} className="text-xs" />
-            Add Investment
+            <FontAwesomeIcon icon={faPlus} className="text-xs text-white" />
+            <span className="!text-white">Add Investment</span>
           </Link>
         </div>
       </div>
@@ -352,9 +352,9 @@ export default function DashboardPage() {
                 Add your first investment to start tracking your portfolio — stocks, SIPs, mutual funds, FDs, gold, and more.
               </p>
               <Link href="/dashboard/add"
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#E8740C] text-white font-semibold rounded-lg hover:bg-[#d4660b] transition-colors shadow-sm no-underline text-sm">
-                <FontAwesomeIcon icon={faPlus} className="text-xs" />
-                Add First Investment
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#E8740C] !text-white font-semibold rounded-lg hover:bg-[#d4660b] transition-colors shadow-sm no-underline text-sm active:scale-95">
+                <FontAwesomeIcon icon={faPlus} className="text-xs text-white" />
+                <span className="!text-white">Add First Investment</span>
               </Link>
             </div>
           )}

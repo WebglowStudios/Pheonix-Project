@@ -177,15 +177,15 @@ export default function SettingsPage() {
           <button
             type="submit"
             disabled={profileSaving}
-            className="w-full py-3 bg-[#E8740C] text-white font-semibold rounded-lg hover:bg-[#d4660b] disabled:opacity-50 transition-all shadow-sm mt-1 flex items-center justify-center gap-2"
+            className="w-full py-3 bg-[#E8740C] !text-white font-semibold rounded-lg hover:bg-[#d4660b] disabled:opacity-50 transition-all shadow-sm mt-1 flex items-center justify-center gap-2 active:scale-95"
           >
             {profileSaving ? (
               <>
                 <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />
-                Saving...
+                <span className="!text-white">Saving...</span>
               </>
             ) : (
-              <><FontAwesomeIcon icon={faCheck} className="text-xs" />Save Profile</>
+              <><FontAwesomeIcon icon={faCheck} className="text-xs text-white" /><span className="!text-white">Save Profile</span></>
             )}
           </button>
         </form>

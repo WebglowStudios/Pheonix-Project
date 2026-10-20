@@ -226,9 +226,9 @@ export default function ServicesPage() {
               onNewFeatureChange("");
             }
           }}
-          className="px-3 py-2 bg-[#E8740C] text-white rounded-[8px] text-sm hover:bg-[#FF9433] flex-shrink-0"
+          className="px-3 py-2 bg-[#E8740C] !text-white rounded-[8px] text-sm hover:bg-[#FF9433] flex-shrink-0 active:scale-95"
         >
-          <FontAwesomeIcon icon={faPlus} />
+          <FontAwesomeIcon icon={faPlus} className="text-white" />
         </button>
       </div>
     </div>
@@ -259,9 +259,9 @@ export default function ServicesPage() {
         </div>
         <button
           onClick={() => { setShowAdd(true); setNewData(EMPTY_SERVICE); }}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] transition-all"
+          className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] transition-all active:scale-95"
         >
-          <FontAwesomeIcon icon={faPlus} /> Add Service
+          <FontAwesomeIcon icon={faPlus} className="text-white" /> <span className="!text-white">Add Service</span>
         </button>
       </div>
 
@@ -320,8 +320,8 @@ export default function ServicesPage() {
           </div>
           <div className="flex gap-3 mt-4">
             <button onClick={() => setShowAdd(false)} className="border border-[#DDD] bg-white rounded-[8px] px-4 py-2 text-sm font-semibold text-[#444]">Cancel</button>
-            <button onClick={addService} disabled={saving || !newData.title} className="bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold disabled:opacity-60 hover:bg-[#FF9433]">
-              {saving ? "Adding..." : "Add Service"}
+            <button onClick={addService} disabled={saving || !newData.title} className="bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold disabled:opacity-60 hover:bg-[#FF9433] active:scale-95">
+              <span className="!text-white">{saving ? "Adding..." : "Add Service"}</span>
             </button>
           </div>
         </div>
@@ -384,8 +384,8 @@ export default function ServicesPage() {
                 </div>
                 <div className="flex gap-3 mt-4">
                   <button onClick={() => setEditId(null)} className="border border-[#DDD] bg-white rounded-[8px] px-4 py-2 text-sm font-semibold text-[#444]">Cancel</button>
-                  <button onClick={saveEdit} disabled={saving} className="bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold disabled:opacity-60 hover:bg-[#FF9433]">
-                    {saving ? "Saving..." : <><FontAwesomeIcon icon={faCheck} className="mr-1" />Save</>}
+                  <button onClick={saveEdit} disabled={saving} className="bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold disabled:opacity-60 hover:bg-[#FF9433] active:scale-95">
+                    {saving ? "Saving..." : <><FontAwesomeIcon icon={faCheck} className="mr-1 text-white" /><span className="!text-white">Save</span></>}
                   </button>
                 </div>
               </div>

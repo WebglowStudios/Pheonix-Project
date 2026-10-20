@@ -158,10 +158,10 @@ function HomeSnippetTab() {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
+          className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all active:scale-95"
         >
-          <FontAwesomeIcon icon={faFloppyDisk} />
-          {saving ? "Saving..." : "Save Changes"}
+          <FontAwesomeIcon icon={faFloppyDisk} className="text-white" />
+          <span className="!text-white">{saving ? "Saving..." : "Save Changes"}</span>
         </button>
       </div>
 
@@ -304,10 +304,10 @@ function AboutPageTab() {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
+          className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all active:scale-95"
         >
-          <FontAwesomeIcon icon={faFloppyDisk} />
-          {saving ? "Saving..." : "Save Changes"}
+          <FontAwesomeIcon icon={faFloppyDisk} className="text-white" />
+          <span className="!text-white">{saving ? "Saving..." : "Save Changes"}</span>
         </button>
       </div>
 
@@ -637,7 +637,7 @@ export default function AboutAdminPage() {
           onClick={() => setTab("home")}
           className={`px-5 py-2 rounded-[8px] text-sm font-semibold transition-all ${
             tab === "home"
-              ? "bg-[#E8740C] text-white"
+              ? "bg-[#E8740C] !text-white shadow-sm"
               : "text-[#666] hover:bg-[#f5f5f5]"
           }`}
         >
@@ -647,7 +647,7 @@ export default function AboutAdminPage() {
           onClick={() => setTab("page")}
           className={`px-5 py-2 rounded-[8px] text-sm font-semibold transition-all ${
             tab === "page"
-              ? "bg-[#E8740C] text-white"
+              ? "bg-[#E8740C] !text-white shadow-sm"
               : "text-[#666] hover:bg-[#f5f5f5]"
           }`}
         >

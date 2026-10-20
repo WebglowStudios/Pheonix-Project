@@ -115,10 +115,10 @@ export default function ProcessPage() {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
+          className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all active:scale-95"
         >
-          <FontAwesomeIcon icon={faFloppyDisk} />
-          {saving ? "Saving..." : "Save Changes"}
+          <FontAwesomeIcon icon={faFloppyDisk} className="text-white" />
+          <span className="!text-white">{saving ? "Saving..." : "Save Changes"}</span>
         </button>
       </div>
 
@@ -181,10 +181,10 @@ export default function ProcessPage() {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-6 py-3 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
+          className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-6 py-3 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all active:scale-95"
         >
-          <FontAwesomeIcon icon={faFloppyDisk} />
-          {saving ? "Saving..." : "Save All Changes"}
+          <FontAwesomeIcon icon={faFloppyDisk} className="text-white" />
+          <span className="!text-white">{saving ? "Saving..." : "Save All Changes"}</span>
         </button>
       </div>
     </div>

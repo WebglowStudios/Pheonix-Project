@@ -164,10 +164,10 @@ export default function ImageSelectorModal({ isOpen, onClose, onSelect }: ImageS
                       <div className="mt-3 flex gap-1.5">
                         <button
                           onClick={() => onSelect(img.url)}
-                          className="flex-1 bg-[#E8740C] text-white rounded-[6px] py-1.5 text-[10px] font-bold hover:bg-[#FF9433] transition-all flex items-center justify-center gap-1"
+                          className="flex-1 bg-[#E8740C] !text-white rounded-[6px] py-1.5 text-[10px] font-bold hover:bg-[#FF9433] transition-all flex items-center justify-center gap-1 active:scale-95"
                         >
-                          <FontAwesomeIcon icon={faCheck} className="text-[8px]" />
-                          Select
+                          <FontAwesomeIcon icon={faCheck} className="text-[8px] text-white" />
+                          <span className="!text-white">Select</span>
                         </button>
                         <button
                           onClick={() => setDeleteConfirm(img.name)}

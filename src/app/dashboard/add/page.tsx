@@ -764,15 +764,15 @@ export default function AddInvestmentPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-2 flex-1 bg-[#E8740C] text-white rounded-lg py-3 text-sm font-semibold hover:bg-[#d4660b] disabled:opacity-50 transition-all shadow-sm"
+                className="flex-2 flex-1 bg-[#E8740C] !text-white rounded-lg py-3 text-sm font-semibold hover:bg-[#d4660b] disabled:opacity-50 transition-all shadow-sm active:scale-95"
               >
                 {saving ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin inline-block" />
-                    Saving...
+                    <span className="!text-white">Saving...</span>
                   </span>
                 ) : (
-                  <><FontAwesomeIcon icon={faCheck} className="mr-2 text-xs" />Save Investment</>
+                  <><FontAwesomeIcon icon={faCheck} className="mr-2 text-xs text-white" /><span className="!text-white">Save Investment</span></>
                 )}
               </button>
             </div>

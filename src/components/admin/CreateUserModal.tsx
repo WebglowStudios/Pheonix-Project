@@ -267,10 +267,10 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Prop
                   type="button"
                   onClick={handleLaunchClientSession}
                   disabled={impersonating}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#E8740C] hover:bg-[#d06405] text-white font-bold text-xs transition-all shadow-sm"
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#E8740C] hover:bg-[#d06405] !text-white font-bold text-xs transition-all shadow-sm active:scale-95"
                 >
-                  <FontAwesomeIcon icon={impersonating ? faSpinner : faExternalLinkAlt} className={impersonating ? "animate-spin" : ""} />
-                  <span>Manage Stocks in Dashboard</span>
+                  <FontAwesomeIcon icon={impersonating ? faSpinner : faExternalLinkAlt} className={`${impersonating ? "animate-spin" : ""} text-white`} />
+                  <span className="!text-white">Manage Stocks in Dashboard</span>
                 </button>
               </div>
 
@@ -430,10 +430,10 @@ export default function CreateUserModal({ isOpen, onClose, onUserCreated }: Prop
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2 rounded-xl bg-[#E8740C] hover:bg-[#d06405] text-white text-sm font-bold flex items-center gap-2 transition-all shadow-sm disabled:opacity-60"
+                  className="px-5 py-2 rounded-xl bg-[#E8740C] hover:bg-[#d06405] !text-white text-sm font-bold flex items-center gap-2 transition-all shadow-sm disabled:opacity-60 active:scale-95"
                 >
-                  {loading && <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />}
-                  <span>{loading ? "Creating Account..." : "Create Client Account"}</span>
+                  {loading && <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs text-white" />}
+                  <span className="!text-white">{loading ? "Creating Account..." : "Create Client Account"}</span>
                 </button>
               </div>
             </form>

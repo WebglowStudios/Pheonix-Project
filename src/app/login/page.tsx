@@ -178,7 +178,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-[30px] bg-[#E8740C] text-white font-bold text-[1rem] border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.25)] disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+                className="w-full py-3 rounded-[30px] bg-[#E8740C] !text-white font-bold text-[1rem] border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.25)] disabled:opacity-60 disabled:cursor-not-allowed mt-1 active:scale-95"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">

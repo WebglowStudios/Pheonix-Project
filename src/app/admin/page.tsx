@@ -274,10 +274,10 @@ export default function AdminDashboardPage() {
           </button>
           <Link
             href="/admin/users"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E8740C] hover:bg-[#d4660b] text-white text-xs font-bold transition-all shadow-sm no-underline"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E8740C] hover:bg-[#d4660b] !text-white text-xs font-bold transition-all shadow-sm no-underline active:scale-95"
           >
-            <FontAwesomeIcon icon={faUsers} />
-            View All Clients
+            <FontAwesomeIcon icon={faUsers} className="text-white text-xs" />
+            <span className="!text-white">View All Clients</span>
           </Link>
         </div>
       </div>

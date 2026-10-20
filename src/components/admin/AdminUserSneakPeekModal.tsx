@@ -288,7 +288,14 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
     if (!user || exportingPdf) return;
     setExportingPdf(true);
     try {
-      await exportReportToPdf(user.name);
+      const { generatePortfolioReportPdf } = await import("@/lib/generatePortfolioPdf");
+      await generatePortfolioReportPdf({
+        user: user as any,
+        summary,
+        investments,
+        reportDate: new Date(),
+        reportScope: "individual",
+      });
     } catch (err) {
       console.error("PDF export error:", err);
       // Fallback to print
@@ -928,11 +935,11 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                                 <td className="py-3 px-3 text-center whitespace-nowrap">
                                   <button
                                     onClick={() => setSellingInv(inv)}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-[#E8740C] text-[#E8740C] hover:text-white border border-amber-200/90 shadow-2xs transition-all hover:scale-105"
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-[#E8740C] text-[#E8740C] hover:!text-white border border-amber-200/90 shadow-2xs transition-all hover:scale-105"
                                     title="Sell units & free compounding capital"
                                   >
                                     <FontAwesomeIcon icon={faScaleBalanced} className="text-[10px]" />
-                                    Sell
+                                    <span>Sell</span>
                                   </button>
                                 </td>
 

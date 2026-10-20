@@ -255,10 +255,10 @@ export default function FaqsPage() {
           <button
             onClick={saveHomeFaq}
             disabled={homeFaqSaving || homeFaqLoading}
-            className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
+            className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all active:scale-95"
           >
-            <FontAwesomeIcon icon={faFloppyDisk} />
-            {homeFaqSaving ? "Saving..." : "Save"}
+            <FontAwesomeIcon icon={faFloppyDisk} className="text-white" />
+            <span className="!text-white">{homeFaqSaving ? "Saving..." : "Save"}</span>
           </button>
         </div>
 
@@ -299,9 +299,9 @@ export default function FaqsPage() {
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] transition-all"
+          className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] transition-all active:scale-95"
         >
-          <FontAwesomeIcon icon={faPlus} /> Add FAQ
+          <FontAwesomeIcon icon={faPlus} className="text-white" /> <span className="!text-white">Add FAQ</span>
         </button>
       </div>
 
@@ -352,9 +352,9 @@ export default function FaqsPage() {
             <button
               onClick={addFaq}
               disabled={saving || !newData.question || !newData.answer}
-              className="bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold disabled:opacity-60 hover:bg-[#FF9433]"
+              className="bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold disabled:opacity-60 hover:bg-[#FF9433] active:scale-95"
             >
-              {saving ? "Adding..." : "Add FAQ"}
+              <span className="!text-white">{saving ? "Adding..." : "Add FAQ"}</span>
             </button>
           </div>
         </div>
@@ -437,10 +437,10 @@ export default function FaqsPage() {
                             <button
                               onClick={saveEdit}
                               disabled={saving}
-                              className="bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold disabled:opacity-60 hover:bg-[#FF9433]"
+                              className="bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold disabled:opacity-60 hover:bg-[#FF9433] active:scale-95"
                             >
-                              <FontAwesomeIcon icon={faCheck} className="mr-1" />
-                              {saving ? "Saving..." : "Save"}
+                              <FontAwesomeIcon icon={faCheck} className="mr-1 text-white" />
+                              <span className="!text-white">{saving ? "Saving..." : "Save"}</span>
                             </button>
                           </div>
                         </div>

@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { portfolioApi, familyApi, getStoredUser, type PortfolioSummary, type Investment, type User } from "@/lib/api";
+import { portfolioApi, familyApi, getStoredUser, type PortfolioSummary, type Investment, type User, type FamilyMember } from "@/lib/api";
 import MasterPortfolioReport from "@/components/report/MasterPortfolioReport";
+import FamilyPortfolioReport from "@/components/report/FamilyPortfolioReport";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPrint,
@@ -20,6 +21,7 @@ export default function ReportPage() {
   const [user, setUser] = useState<User | null>(null);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [investments, setInvestments] = useState<Investment[]>([]);
+  const [members, setMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [reportScope, setReportScope] = useState<"individual" | "family">("individual");
@@ -36,6 +38,7 @@ export default function ReportPage() {
         if (famRes.success && famRes.data) {
           setSummary(famRes.data.summary);
           setInvestments(famRes.data.investments || []);
+          setMembers(famRes.data.members || []);
           setFamilyMembersCount(famRes.data.members?.length || 0);
         }
       } else {
@@ -72,55 +75,15 @@ export default function ReportPage() {
     if (generating) return;
     setGenerating(true);
     try {
-      const page1 = document.getElementById("report-page-1");
-      const page2 = document.getElementById("report-page-2");
-
-      if (!page1) throw new Error("Report page 1 not found");
-
-      // Dynamic import to keep client bundle lean
-      const { toPng } = await import("html-to-image");
-      const { jsPDF } = await import("jspdf");
-
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true,
+      const { generatePortfolioReportPdf } = await import("@/lib/generatePortfolioPdf");
+      await generatePortfolioReportPdf({
+        user,
+        summary,
+        investments,
+        reportDate: new Date(),
+        reportScope,
+        members,
       });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
-      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
-      const margin = 6; // 6mm margin
-      const contentWidth = pdfWidth - margin * 2;
-
-      // Render Page 1 to high-res PNG (2x pixel ratio for 300-DPI quality)
-      const imgData1 = await toPng(page1, {
-        quality: 0.98,
-        pixelRatio: 2,
-        backgroundColor: "#ffffff",
-      });
-
-      const imgProps1 = pdf.getImageProperties(imgData1);
-      const h1 = (imgProps1.height * contentWidth) / imgProps1.width;
-      pdf.addImage(imgData1, "PNG", margin, margin, contentWidth, Math.min(h1, pdfHeight - margin * 2));
-
-      // Render Page 2 if present
-      if (page2) {
-        const imgData2 = await toPng(page2, {
-          quality: 0.98,
-          pixelRatio: 2,
-          backgroundColor: "#ffffff",
-        });
-        const imgProps2 = pdf.getImageProperties(imgData2);
-        const h2 = (imgProps2.height * contentWidth) / imgProps2.width;
-
-        pdf.addPage();
-        pdf.addImage(imgData2, "PNG", margin, margin, contentWidth, Math.min(h2, pdfHeight - margin * 2));
-      }
-
-      const prefix = reportScope === "family" ? "Phoenix_Family_Cumulative_Portfolio" : "Phoenix_Master_Portfolio";
-      const userName = user?.name ? user.name.trim().replace(/[^a-zA-Z0-9]/g, "_") : "Client";
-      pdf.save(`${prefix}_${userName}.pdf`);
     } catch (err) {
       console.error("PDF generation error:", err);
       window.print();
@@ -231,16 +194,22 @@ export default function ReportPage() {
 
       {/* Printable Report Component */}
       <div className="print-surface">
-        <MasterPortfolioReport
-          user={
-            reportScope === "family" && user
-              ? { ...user, name: `${user.name} & Family` }
-              : user
-          }
-          summary={summary}
-          investments={investments}
-          reportDate={new Date()}
-        />
+        {reportScope === "family" ? (
+          <FamilyPortfolioReport
+            primaryUser={user}
+            members={members}
+            summary={summary as any}
+            investments={investments as any}
+            reportDate={new Date()}
+          />
+        ) : (
+          <MasterPortfolioReport
+            user={user}
+            summary={summary}
+            investments={investments}
+            reportDate={new Date()}
+          />
+        )}
       </div>
 
       {/* Print Specific CSS */}

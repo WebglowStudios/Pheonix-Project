@@ -50,7 +50,7 @@ function Sidebar({
   onLogout: () => void;
 }) {
   return (
-    <aside className="w-[252px] h-full bg-[#16171e] flex flex-col flex-shrink-0">
+    <aside className="w-[252px] h-full bg-[#16171e] text-white flex flex-col flex-shrink-0">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
         <div className="w-9 h-9 rounded-full overflow-hidden bg-white flex items-center justify-center ring-2 ring-[#E8740C]/40 flex-shrink-0">
@@ -74,7 +74,7 @@ function Sidebar({
           )}
           <div className="min-w-0">
             <p className="text-white text-[13px] font-semibold truncate leading-tight">{user.name}</p>
-            <p className="text-white/40 text-[11px] truncate">{user.email}</p>
+            <p className="text-white/70 text-[11px] truncate">{user.email}</p>
           </div>
         </div>
       )}
@@ -90,10 +90,10 @@ function Sidebar({
           </div>
           <Link
             href="/admin"
-            className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-[6px] bg-[#E8740C] hover:bg-[#d06405] text-white text-xs font-bold transition-all shadow-sm no-underline"
+            className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-[6px] bg-[#E8740C] hover:bg-[#d06405] !text-white text-xs font-bold transition-all shadow-sm no-underline active:scale-95"
           >
-            <FontAwesomeIcon icon={faShieldHalved} className="text-xs" />
-            Switch to Admin Portal
+            <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-white" />
+            <span className="!text-white">Switch to Admin Portal</span>
           </Link>
         </div>
       )}
@@ -112,11 +112,11 @@ function Sidebar({
               className={`flex items-center gap-3 px-3.5 py-[9px] rounded-[8px] mb-0.5 text-[13px] font-semibold transition-all no-underline ${
                 isActive
                   ? "bg-[#E8740C] !text-white"
-                  : "!text-white/60 hover:bg-white/[0.06] hover:!text-white"
+                  : "!text-gray-200 hover:bg-white/[0.08] hover:!text-white"
               }`}
             >
               <FontAwesomeIcon icon={item.icon} className="w-[14px] flex-shrink-0" />
-              {item.label}
+              <span>{item.label}</span>
             </Link>
           );
         })}
@@ -126,10 +126,10 @@ function Sidebar({
       <div className="p-3 border-t border-white/[0.08]">
         <button
           onClick={onLogout}
-          className="flex items-center gap-3 w-full px-3.5 py-[9px] rounded-[8px] text-[13px] font-semibold text-white/50 hover:bg-[#c62828]/20 hover:text-[#f87171] transition-all"
+          className="flex items-center gap-3 w-full px-3.5 py-[9px] rounded-[8px] text-[13px] font-semibold !text-gray-300 hover:bg-[#c62828]/20 hover:!text-[#f87171] transition-all"
         >
           <FontAwesomeIcon icon={faRightFromBracket} className="w-[14px]" />
-          Sign Out
+          <span>Sign Out</span>
         </button>
       </div>
     </aside>
@@ -267,10 +267,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <Link
               href="/admin"
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#E8740C] hover:bg-[#d06405] text-white font-bold text-xs transition-all shadow hover:shadow-md no-underline"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-[#E8740C] hover:bg-[#d06405] !text-white font-bold text-xs transition-all shadow hover:shadow-md no-underline active:scale-95"
             >
-              <span>Go to Admin Dashboard</span>
-              <span>→</span>
+              <span className="!text-white">Go to Admin Dashboard</span>
+              <span className="!text-white">→</span>
             </Link>
           </div>
         )}

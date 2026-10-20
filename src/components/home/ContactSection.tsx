@@ -241,8 +241,8 @@ export default function ContactSection() {
                 <textarea name="message" rows={4} placeholder="Briefly describe your financial goals..." required className={inputClass + " resize-y"} />
               </div>
               <button type="submit" disabled={loading || submitted}
-                className={`w-full px-6 py-3 rounded-[30px] font-semibold text-base text-white border-2 transition-all ${submitted ? "bg-[#28a745] border-[#28a745]" : "bg-[#E8740C] border-[#E8740C] hover:bg-[#FF9433] hover:border-[#FF9433]"}`}>
-                {loading ? "Sending..." : submitted ? "✓ Request Received!" : "Submit Request"}
+                className={`w-full px-6 py-3 rounded-[30px] font-semibold text-base !text-white border-2 transition-all ${submitted ? "bg-[#28a745] border-[#28a745]" : "bg-[#E8740C] border-[#E8740C] hover:bg-[#FF9433] hover:border-[#FF9433]"} active:scale-95`}>
+                <span className="!text-white">{loading ? "Sending..." : submitted ? "✓ Request Received!" : "Submit Request"}</span>
               </button>
             </form>
           </div>

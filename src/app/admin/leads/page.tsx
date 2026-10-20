@@ -193,7 +193,7 @@ export default function LeadsPage() {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-2 rounded-[8px] text-sm font-semibold capitalize transition-all ${filter === f ? "bg-[#E8740C] text-white" : "bg-[#f5f5f5] text-[#555] hover:bg-[#EEE]"}`}
+              className={`px-4 py-2 rounded-[8px] text-sm font-semibold capitalize transition-all ${filter === f ? "bg-[#E8740C] !text-white" : "bg-[#f5f5f5] text-[#555] hover:bg-[#EEE]"}`}
             >
               {f}
             </button>
@@ -304,7 +304,7 @@ export default function LeadsPage() {
                               <button
                                 onClick={() => saveNotes(lead.id)}
                                 disabled={saving === lead.id + "_notes"}
-                                className="mt-2 px-4 py-2 bg-[#E8740C] text-white rounded-[8px] text-xs font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
+                                className="mt-2 px-4 py-2 bg-[#E8740C] !text-white rounded-[8px] text-xs font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all active:scale-95"
                               >
                                 {saving === lead.id + "_notes" ? "Saving..." : "Save Notes"}
                               </button>

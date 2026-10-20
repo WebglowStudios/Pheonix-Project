@@ -263,8 +263,8 @@ export default function ServiceDetailPage() {
                       <textarea rows={3} placeholder="e.g. Retirement planning in 15 years..." required className={inputClass + " resize-y"} />
                     </div>
                     <button type="submit" disabled={loading || submitted}
-                      className={`w-full px-5 py-2.5 rounded-[30px] font-semibold text-sm text-white border-2 transition-all ${submitted ? "bg-[#28a745] border-[#28a745]" : "bg-[#E8740C] border-[#E8740C] hover:bg-[#FF9433] hover:border-[#FF9433]"}`}>
-                      {loading ? "Submitting..." : submitted ? "✓ Request Received!" : "Schedule Free Audit"}
+                      className={`w-full px-5 py-2.5 rounded-[30px] font-semibold text-sm !text-white border-2 transition-all ${submitted ? "bg-[#28a745] border-[#28a745]" : "bg-[#E8740C] border-[#E8740C] hover:bg-[#FF9433] hover:border-[#FF9433]"} active:scale-95`}>
+                      <span className="!text-white">{loading ? "Submitting..." : submitted ? "✓ Request Received!" : "Schedule Free Audit"}</span>
                     </button>
                   </form>
                 </div>

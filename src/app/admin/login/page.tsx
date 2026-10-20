@@ -93,13 +93,13 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#E8740C] hover:bg-[#FF9433] text-white font-bold py-[13px] rounded-[8px] transition-all text-[0.95rem] tracking-[0.5px] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-[#E8740C] hover:bg-[#FF9433] !text-white font-bold py-[13px] rounded-[8px] transition-all text-[0.95rem] tracking-[0.5px] disabled:opacity-60 disabled:cursor-not-allowed shadow-md"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              <span className="!text-white">{loading ? "Signing in..." : "Sign In"}</span>
             </button>
           </form>
 
-          <p className="text-center text-[#4a5568] text-xs mt-[24px]">
+          <p className="text-center text-[#8892b0] text-xs mt-[24px]">
             Protected portal — authorised personnel only
           </p>
         </div>

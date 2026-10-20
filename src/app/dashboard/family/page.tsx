@@ -245,18 +245,15 @@ export default function FamilyPortfolioPage() {
     if (exportingPdf || !currentUser) return;
     setExportingPdf(true);
     try {
-      // Page 1 = summary; then one page per member who has holdings
-      const pageIds = [
-        "family-report-page-1",
-        ...members
-          .map((_, idx) => `family-report-member-${idx}`)
-          .filter((id) => document.getElementById(id) !== null),
-      ];
-      await exportReportToPdf(
-        `${currentUser.name}_Family`,
-        pageIds,
-        "Phoenix_Family_Cumulative_Statement"
-      );
+      const { generatePortfolioReportPdf } = await import("@/lib/generatePortfolioPdf");
+      await generatePortfolioReportPdf({
+        user: currentUser,
+        summary: summary as any,
+        investments: investments as any,
+        reportDate: new Date(),
+        reportScope: "family",
+        members,
+      });
       showToast("Cumulative PDF statement generated!", "success");
     } catch (err) {
       console.error("PDF generation error:", err);
@@ -306,10 +303,10 @@ export default function FamilyPortfolioPage() {
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#E8740C] hover:bg-[#d06405] text-white text-xs font-bold shadow-sm transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#E8740C] hover:bg-[#d06405] !text-white text-xs font-bold shadow-sm transition-all active:scale-95"
           >
-            <FontAwesomeIcon icon={faUserPlus} />
-            <span>Link Account</span>
+            <FontAwesomeIcon icon={faUserPlus} className="text-white" />
+            <span className="!text-white">Link Account</span>
           </button>
 
           <button
@@ -901,14 +898,14 @@ export default function FamilyPortfolioPage() {
                 <button
                   type="submit"
                   disabled={linkLoading}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#E8740C] hover:bg-[#d06405] text-white text-xs font-bold rounded-xl shadow-md transition-all disabled:opacity-50 active:scale-95"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#E8740C] hover:bg-[#d06405] !text-white text-xs font-bold rounded-xl shadow-md transition-all disabled:opacity-50 active:scale-95"
                 >
                   {linkLoading ? (
-                    <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
+                    <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm text-white" />
                   ) : (
-                    <FontAwesomeIcon icon={faUserPlus} className="text-sm" />
+                    <FontAwesomeIcon icon={faUserPlus} className="text-sm text-white" />
                   )}
-                  <span>Verify &amp; Link Account</span>
+                  <span className="!text-white">Verify &amp; Link Account</span>
                 </button>
               </div>
             </form>

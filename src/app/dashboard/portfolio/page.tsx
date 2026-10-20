@@ -390,9 +390,9 @@ export default function PortfolioPage() {
             <FontAwesomeIcon icon={faArrowsRotate} className={refreshing ? "animate-spin text-[#E8740C]" : "text-[#8a92a6]"} style={{ fontSize: 13 }} />
             {refreshing ? "Refreshing..." : "Refresh Prices"}
           </button>
-          <Link href="/dashboard/add" className="flex items-center gap-2 px-4 py-2.5 bg-[#E8740C] text-white font-semibold rounded-lg hover:bg-[#d4660b] transition-all no-underline text-sm shadow-sm">
-            <FontAwesomeIcon icon={faPlus} className="text-xs" />
-            Add Investment
+          <Link href="/dashboard/add" className="flex items-center gap-2 px-4 py-2.5 bg-[#E8740C] !text-white font-semibold rounded-lg hover:bg-[#d4660b] transition-all no-underline text-sm shadow-sm active:scale-95">
+            <FontAwesomeIcon icon={faPlus} className="text-xs text-white" />
+            <span className="!text-white">Add Investment</span>
           </Link>
         </div>
       </div>
@@ -461,9 +461,9 @@ export default function PortfolioPage() {
       ) : investments.length === 0 ? (
         <div className="bg-white rounded-xl border border-[#EAECEF] shadow-sm p-14 text-center">
           <p className="text-[#aaa] text-base mb-5 font-medium">No investments found</p>
-          <Link href="/dashboard/add" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8740C] text-white font-semibold rounded-lg no-underline text-sm hover:bg-[#d4660b] transition-colors shadow-sm">
-            <FontAwesomeIcon icon={faPlus} className="text-xs" />
-            Add Investment
+          <Link href="/dashboard/add" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8740C] !text-white font-semibold rounded-lg no-underline text-sm hover:bg-[#d4660b] transition-colors shadow-sm active:scale-95">
+            <FontAwesomeIcon icon={faPlus} className="text-xs text-white" />
+            <span className="!text-white">Add Investment</span>
           </Link>
         </div>
       ) : (

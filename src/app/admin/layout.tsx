@@ -54,7 +54,7 @@ function AdminSidebar({
   onLogout: () => void;
 }) {
   return (
-    <aside className="w-[260px] h-full bg-[#16171e] flex flex-col flex-shrink-0">
+    <aside className="w-[260px] h-full bg-[#16171e] text-white flex flex-col flex-shrink-0">
       {/* Logo area */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
         <div className="w-9 h-9 rounded-full overflow-hidden bg-white flex items-center justify-center ring-2 ring-[#E8740C]/40 flex-shrink-0">
@@ -95,7 +95,7 @@ function AdminSidebar({
             return (
               <div
                 key={`hdr-${idx}`}
-                className="text-white/40 uppercase tracking-[1.5px] text-[10px] font-bold px-3.5 pt-3.5 pb-1.5"
+                className="text-white/60 uppercase tracking-[1.5px] text-[10px] font-bold px-3.5 pt-3.5 pb-1.5"
               >
                 {item.label}
               </div>
@@ -112,7 +112,7 @@ function AdminSidebar({
               className={`flex items-center gap-3 px-3.5 py-[8px] rounded-[8px] mb-0.5 text-[13px] font-semibold transition-all no-underline ${
                 isActive
                   ? "bg-[#E8740C] !text-white shadow-sm"
-                  : "!text-white/60 hover:bg-white/[0.06] hover:!text-white"
+                  : "!text-gray-200 hover:bg-white/[0.08] hover:!text-white"
               }`}
             >
               <FontAwesomeIcon icon={item.icon!} className="w-[14px] flex-shrink-0" />
@@ -126,17 +126,17 @@ function AdminSidebar({
       <div className="p-3 border-t border-white/[0.08] flex flex-col gap-1">
         <Link
           href="/dashboard"
-          className="flex items-center gap-3 w-full px-3.5 py-[8px] rounded-[8px] text-[13px] font-semibold text-white/70 hover:bg-white/[0.08] hover:text-white transition-all no-underline"
+          className="flex items-center gap-3 w-full px-3.5 py-[8px] rounded-[8px] text-[13px] font-semibold !text-white hover:bg-white/[0.08] transition-all no-underline group"
         >
-          <FontAwesomeIcon icon={faHouse} className="w-[14px] text-[#E8740C]" />
-          Switch to User Dashboard
+          <FontAwesomeIcon icon={faHouse} className="w-[14px] text-[#E8740C] flex-shrink-0" />
+          <span className="!text-white group-hover:text-white">Switch to User Dashboard</span>
         </Link>
         <button
           onClick={onLogout}
-          className="flex items-center gap-3 w-full px-3.5 py-[9px] rounded-[8px] text-[13px] font-semibold text-white/50 hover:bg-[#c62828]/20 hover:text-[#f87171] transition-all"
+          className="flex items-center gap-3 w-full px-3.5 py-[9px] rounded-[8px] text-[13px] font-semibold !text-gray-300 hover:bg-[#c62828]/20 hover:!text-[#f87171] transition-all"
         >
           <FontAwesomeIcon icon={faRightFromBracket} className="w-[14px]" />
-          Sign Out Admin
+          <span>Sign Out Admin</span>
         </button>
       </div>
     </aside>

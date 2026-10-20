@@ -124,7 +124,7 @@ export default function FaqPage() {
                     <button key={f.key} onClick={() => setActiveFilter(f.key)}
                       className={`text-left px-5 py-[14px] border rounded-[8px] font-semibold cursor-pointer transition-all flex items-center justify-between text-[0.95rem] font-[inherit] ${
                         activeFilter === f.key
-                          ? "bg-[#E8740C] text-white border-[#E8740C]"
+                          ? "bg-[#E8740C] !text-white border-[#E8740C] shadow-sm"
                           : "bg-white text-[#333] border-[#DDD] hover:border-[#E8740C] hover:text-[#E8740C] hover:bg-[#FFF3EB]"
                       }`}>
                       {f.label}

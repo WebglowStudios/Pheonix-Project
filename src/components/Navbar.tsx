@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBars, faPhone, faEnvelope, faChartPie } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faPhone, faEnvelope, faChartPie, faUser } from "@fortawesome/free-solid-svg-icons";
 import { faWhatsapp } from "@fortawesome/free-brands-svg-icons";
 import { publicApi, getStoredUser } from "@/lib/api";
 
@@ -24,7 +24,7 @@ export default function Navbar() {
   useEffect(() => {
     const user = getStoredUser();
     setLoggedInUser(user);
-  }, []);
+  }, [pathname]);
 
   interface ContactInfo {
     phone_landline: string;
@@ -75,18 +75,28 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {/* My Portfolio — auth-aware */}
+            {/* Login / My Portfolio — auth-aware */}
             {loggedInUser ? (
-              <Link href="/dashboard" className="flex items-center gap-2 px-4 py-[9px] rounded-[30px] font-semibold bg-[#1a1b23] !text-white border-2 border-[#1a1b23] transition-all hover:bg-[#2d2d3f] hover:border-[#2d2d3f]">
-                <div className="w-5 h-5 rounded-full bg-[#E8740C] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
-                  {loggedInUser.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
-                </div>
-                My Portfolio
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 px-4 py-[9px] rounded-[30px] font-semibold text-[#444] border-2 border-[#DDD] transition-all hover:border-[#E8740C] hover:text-[#E8740C] hover:bg-[#FFF8F2]"
+              >
+                {loggedInUser.name ? (
+                  <div className="w-5 h-5 rounded-full bg-[#E8740C] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                    {loggedInUser.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                  </div>
+                ) : (
+                  <FontAwesomeIcon icon={faChartPie} className="text-sm text-[#E8740C]" />
+                )}
+                <span>My Portfolio</span>
               </Link>
             ) : (
-              <Link href="/login" className="flex items-center gap-2 px-4 py-[9px] rounded-[30px] font-semibold text-[#444] border-2 border-[#DDD] transition-all hover:border-[#E8740C] hover:text-[#E8740C]">
-                <FontAwesomeIcon icon={faChartPie} className="text-sm" />
-                My Portfolio
+              <Link
+                href="/login"
+                className="flex items-center gap-2 px-4 py-[9px] rounded-[30px] font-semibold text-[#444] border-2 border-[#DDD] transition-all hover:border-[#E8740C] hover:text-[#E8740C] hover:bg-[#FFF8F2]"
+              >
+                <FontAwesomeIcon icon={faUser} className="text-sm text-[#666]" />
+                <span>Login</span>
               </Link>
             )}
             <Link href="/contact" className="inline-block px-5 py-[10px] rounded-[30px] font-semibold bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.15)]">
@@ -127,10 +137,13 @@ export default function Navbar() {
             {link.label}
           </Link>
         ))}
-        <Link href={loggedInUser ? "/dashboard" : "/login"} onClick={() => setMenuOpen(false)}
-          className="w-full py-[14px] text-[1.05rem] font-semibold border-b border-[#DDD] transition-colors text-[#E8740C] flex items-center gap-2">
-          <FontAwesomeIcon icon={faChartPie} className="text-sm" />
-          {loggedInUser ? `My Portfolio (${loggedInUser.name.split(" ")[0]})` : "My Portfolio / Login"}
+        <Link
+          href={loggedInUser ? "/dashboard" : "/login"}
+          onClick={() => setMenuOpen(false)}
+          className="w-full py-[14px] text-[1.05rem] font-semibold border-b border-[#DDD] transition-colors text-[#E8740C] flex items-center gap-2"
+        >
+          <FontAwesomeIcon icon={loggedInUser ? faChartPie : faUser} className="text-sm" />
+          {loggedInUser ? "My Portfolio" : "Login"}
         </Link>
         <Link href="/contact" onClick={() => setMenuOpen(false)}
           className="mt-5 w-full text-center px-5 py-3 rounded-[30px] font-semibold bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433]">

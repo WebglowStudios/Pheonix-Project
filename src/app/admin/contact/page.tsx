@@ -105,9 +105,9 @@ function HomeContactTab() {
           <p className="text-[#666] text-sm mt-1">Edit the heading and subheading of the contact section on the homepage</p>
         </div>
         <button onClick={save} disabled={saving}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all">
-          <FontAwesomeIcon icon={faFloppyDisk} />
-          {saving ? "Saving..." : "Save Changes"}
+          className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all active:scale-95">
+          <FontAwesomeIcon icon={faFloppyDisk} className="text-white" />
+          <span className="!text-white">{saving ? "Saving..." : "Save Changes"}</span>
         </button>
       </div>
 
@@ -187,10 +187,10 @@ function ContactDetailsTab() {
         <button
           onClick={save}
           disabled={saving}
-          className="flex items-center gap-2 bg-[#E8740C] text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all"
+          className="flex items-center gap-2 bg-[#E8740C] !text-white rounded-[8px] px-4 py-2 text-sm font-semibold hover:bg-[#FF9433] disabled:opacity-60 transition-all active:scale-95"
         >
-          <FontAwesomeIcon icon={faFloppyDisk} />
-          {saving ? "Saving..." : "Save Changes"}
+          <FontAwesomeIcon icon={faFloppyDisk} className="text-white" />
+          <span className="!text-white">{saving ? "Saving..." : "Save Changes"}</span>
         </button>
       </div>
 
@@ -306,9 +306,9 @@ function ContactDetailsTab() {
                 input.value = "";
               }
             }}
-            className="bg-[#E8740C] text-white px-5 rounded-[8px] text-xs font-bold hover:bg-[#FF9433] transition-all whitespace-nowrap"
+            className="bg-[#E8740C] !text-white px-5 rounded-[8px] text-xs font-bold hover:bg-[#FF9433] transition-all whitespace-nowrap active:scale-95"
           >
-            Add Service
+            <span className="!text-white">Add Service</span>
           </button>
         </div>
       </div>
