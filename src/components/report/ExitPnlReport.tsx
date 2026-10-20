@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { type Transaction, type ExitReportSummary, type User, type AdminUser } from "@/lib/api";
 import { fmtIndianCurrency, fmtNumber, formatDateIndian } from "@/lib/format";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faReceipt,
@@ -79,10 +79,199 @@ export default function ExitPnlReport({
     });
   }, [transactions, search, filterType]);
 
-  // Excel Export Handler
+// Excel Export Handler with Executive Corporate Styling
   const handleExportExcel = () => {
     const wb = XLSX.utils.book_new();
+    const ws: any = {};
+    const colCount = 13;
+    let r = 0;
 
+    const brandDark = "16171E";
+    const brandOrange = "E8740C";
+    const navyHeader = "1E293B";
+    const subHeader = "334155";
+    const white = "FFFFFF";
+    const borderLight = "E2E8F0";
+    const borderMedium = "CBD5E1";
+    const rowZebra = "F8FAFC";
+    const profitGreen = "15803D";
+    const profitBg = "F0FDF4";
+    const lossRed = "B91C1C";
+    const lossBg = "FEF2F2";
+    const totalGoldBg = "FEF3C7";
+    const totalGoldText = "92400E";
+
+    const bThin = {
+      top: { style: "thin", color: { rgb: borderLight } },
+      bottom: { style: "thin", color: { rgb: borderLight } },
+      left: { style: "thin", color: { rgb: borderLight } },
+      right: { style: "thin", color: { rgb: borderLight } },
+    };
+
+    const bHeader = {
+      top: { style: "thin", color: { rgb: borderMedium } },
+      bottom: { style: "medium", color: { rgb: brandOrange } },
+      left: { style: "thin", color: { rgb: borderMedium } },
+      right: { style: "thin", color: { rgb: borderMedium } },
+    };
+
+    const bDouble = {
+      top: { style: "thin", color: { rgb: borderMedium } },
+      bottom: { style: "double", color: { rgb: "0F172A" } },
+      left: { style: "thin", color: { rgb: borderLight } },
+      right: { style: "thin", color: { rgb: borderLight } },
+    };
+
+    const setCellHelper = (
+      row: number,
+      col: number,
+      val: any,
+      style?: any,
+      numFmt?: string
+    ) => {
+      const ref = XLSX.utils.encode_cell({ r: row, c: col });
+      let t: "n" | "s" | "b" = "s";
+      let v = val;
+      if (typeof val === "number") {
+        t = "n";
+        v = isNaN(val) ? 0 : val;
+      } else if (typeof val === "boolean") {
+        t = "b";
+      } else if (val === null || val === undefined || val === "") {
+        v = "—";
+      } else {
+        v = String(val);
+      }
+      const cell: any = { v, t };
+      if (numFmt && t === "n") {
+        cell.z = numFmt;
+        if (!style) style = {};
+        style.numFmt = numFmt;
+      }
+      if (style) cell.s = style;
+      ws[ref] = cell;
+    };
+
+    const mergeHelper = (
+      sR: number,
+      sC: number,
+      eR: number,
+      eC: number,
+      style: any,
+      text?: string
+    ) => {
+      if (!ws["!merges"]) ws["!merges"] = [];
+      ws["!merges"].push({ s: { r: sR, c: sC }, e: { r: eR, c: eC } });
+      for (let ro = sR; ro <= eR; ro++) {
+        for (let co = sC; co <= eC; co++) {
+          const ref = XLSX.utils.encode_cell({ r: ro, c: co });
+          if (!ws[ref]) {
+            ws[ref] = {
+              v: ro === sR && co === sC && text !== undefined ? text : "",
+              t: "s",
+            };
+          } else if (ro === sR && co === sC && text !== undefined) {
+            ws[ref].v = text;
+          }
+          ws[ref].s = { ...(ws[ref].s || {}), ...style };
+        }
+      }
+    };
+
+    // 1. Title Banner
+    mergeHelper(
+      r,
+      0,
+      r,
+      colCount - 1,
+      {
+        fill: { fgColor: { rgb: brandDark } },
+        font: { name: "Calibri", sz: 14, bold: true, color: { rgb: white } },
+        alignment: { horizontal: "center", vertical: "center" },
+      },
+      "PHOENIX FINANCIAL SERVICES — EXIT P&L & ACTIVITY REPORT"
+    );
+    r++;
+
+    // 2. Subtitle
+    const genDate = new Date().toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+    mergeHelper(
+      r,
+      0,
+      r,
+      colCount - 1,
+      {
+        fill: { fgColor: { rgb: brandDark } },
+        font: { name: "Calibri", sz: 9, bold: true, color: { rgb: brandOrange } },
+        alignment: { horizontal: "center", vertical: "center" },
+      },
+      `Investor: ${user?.name || "Client"}  |  Generated: ${genDate}  |  Official Executed Sales & Capital Freed Ledger`
+    );
+    r++;
+
+    // 3. Spacer
+    r++;
+
+    // 4. KPI Summary Cards Header
+    mergeHelper(
+      r,
+      0,
+      r,
+      colCount - 1,
+      {
+        fill: { fgColor: { rgb: navyHeader } },
+        font: { name: "Calibri", sz: 10, bold: true, color: { rgb: white } },
+        alignment: { horizontal: "left", vertical: "center", indent: 1 },
+      },
+      "  EXECUTIVE REALIZED CAPITAL PERFORMANCE & SUMMARY"
+    );
+    r++;
+
+    // KPI Column Headers
+    const kpiTitles = [
+      "Total Realized Profit (₹)",
+      "Total Capital Proceeds (₹)",
+      "Executed Trades",
+      "Win Rate (%)",
+      "Free Shares Holdings",
+    ];
+    mergeHelper(r, 0, r, 1, { fill: { fgColor: { rgb: subHeader } }, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: white } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, kpiTitles[0]);
+    mergeHelper(r, 2, r, 3, { fill: { fgColor: { rgb: subHeader } }, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: white } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, kpiTitles[1]);
+    mergeHelper(r, 4, r, 5, { fill: { fgColor: { rgb: subHeader } }, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: white } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, kpiTitles[2]);
+    mergeHelper(r, 6, r, 7, { fill: { fgColor: { rgb: subHeader } }, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: white } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, kpiTitles[3]);
+    mergeHelper(r, 8, r, 9, { fill: { fgColor: { rgb: subHeader } }, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: white } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, kpiTitles[4]);
+    mergeHelper(r, 10, r, colCount - 1, { fill: { fgColor: { rgb: subHeader } }, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: white } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, "Status");
+    r++;
+
+    // KPI Values
+    const isGainPos = derivedSummary.totalRealizedProfit >= 0;
+    const gainCardBg = isGainPos ? profitBg : lossBg;
+    const gainCardColor = isGainPos ? profitGreen : lossRed;
+
+    mergeHelper(r, 0, r, 1, { fill: { fgColor: { rgb: gainCardBg } }, font: { name: "Calibri", sz: 12, bold: true, color: { rgb: gainCardColor } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin });
+    setCellHelper(r, 0, derivedSummary.totalRealizedProfit, { fill: { fgColor: { rgb: gainCardBg } }, font: { name: "Calibri", sz: 12, bold: true, color: { rgb: gainCardColor } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, '₹#,##0.00');
+
+    mergeHelper(r, 2, r, 3, { fill: { fgColor: { rgb: rowZebra } }, font: { name: "Calibri", sz: 12, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin });
+    setCellHelper(r, 2, derivedSummary.totalProceeds, { fill: { fgColor: { rgb: rowZebra } }, font: { name: "Calibri", sz: 12, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, '₹#,##0.00');
+
+    mergeHelper(r, 4, r, 5, { fill: { fgColor: { rgb: rowZebra } }, font: { name: "Calibri", sz: 12, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, `${derivedSummary.totalTrades} Executed`);
+
+    mergeHelper(r, 6, r, 7, { fill: { fgColor: { rgb: rowZebra } }, font: { name: "Calibri", sz: 12, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin });
+    setCellHelper(r, 6, derivedSummary.winRate / 100, { fill: { fgColor: { rgb: rowZebra } }, font: { name: "Calibri", sz: 12, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, '0.00%');
+
+    mergeHelper(r, 8, r, 9, { fill: { fgColor: { rgb: rowZebra } }, font: { name: "Calibri", sz: 12, bold: true, color: { rgb: brandOrange } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, `${derivedSummary.freeSharesCount} Positions`);
+
+    mergeHelper(r, 10, r, colCount - 1, { fill: { fgColor: { rgb: "ECFDF5" } }, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: "047857" } }, alignment: { horizontal: "center", vertical: "center" }, border: bThin }, "AUDITED LEDGER");
+    r++;
+
+    // Spacer
+    r++;
+
+    // 5. Table Column Headers
     const headers = [
       "S.No",
       "Exit / Trade Date",
@@ -98,56 +287,146 @@ export default function ExitPnlReport({
       "Remaining Units",
       "Notes & Remarks",
     ];
+    const headerRowIdx = r;
+    headers.forEach((h, cIdx) => {
+      setCellHelper(headerRowIdx, cIdx, h, {
+        fill: { fgColor: { rgb: navyHeader } },
+        font: { name: "Calibri", sz: 10, bold: true, color: { rgb: white } },
+        alignment: {
+          horizontal:
+            cIdx === 0
+              ? "center"
+              : h.includes("Name") || h.includes("Notes")
+              ? "left"
+              : h.includes("(₹)") || h.includes("Units") || h.includes("(%)")
+              ? "right"
+              : "center",
+          vertical: "center",
+          wrapText: true,
+        },
+        border: bHeader,
+      });
+    });
+    r++;
 
-    const rows: any[][] = [
-      ["PHOENIX FINANCIAL SERVICES — EXIT P&L & ACTIVITY REPORT"],
-      [`Investor: ${user?.name || "Client"} | Generated: ${new Date().toLocaleDateString("en-IN")}`],
-      [""],
-      [
-        `Total Realized Gain: ₹${derivedSummary.totalRealizedProfit.toLocaleString("en-IN")}`,
-        `Total Proceeds Released: ₹${derivedSummary.totalProceeds.toLocaleString("en-IN")}`,
-        `Total Trades: ${derivedSummary.totalTrades}`,
-        `Win Rate: ${derivedSummary.winRate}%`,
-        `Free Shares Created: ${derivedSummary.freeSharesCount}`,
-      ],
-      [""],
-      headers,
-    ];
+    // 6. Data Rows
+    let totalCostBasis = 0;
+    let totalProceeds = 0;
+    let totalGain = 0;
 
     transactions.forEach((t, idx) => {
       const costBasis = Math.round((t.units || 0) * (t.buyPrice || 0) * 100) / 100;
-      rows.push([
-        idx + 1,
-        formatDateIndian(t.sellDate || t.createdAt),
-        t.investmentName,
-        t.units,
-        t.buyPrice,
-        t.price,
-        costBasis,
-        t.totalProceeds,
+      totalCostBasis += costBasis;
+      totalProceeds += t.totalProceeds || 0;
+      totalGain += t.realizedGain || 0;
+
+      const isEven = idx % 2 === 0;
+      const rowBg = isEven ? white : rowZebra;
+      const baseStyle = {
+        fill: { fgColor: { rgb: rowBg } },
+        font: { name: "Calibri", sz: 10, color: { rgb: "0F172A" } },
+        border: bThin,
+      };
+
+      let c = 0;
+      setCellHelper(r, c++, idx + 1, { ...baseStyle, alignment: { horizontal: "center", vertical: "center" } });
+      setCellHelper(r, c++, formatDateIndian(t.sellDate || t.createdAt), { ...baseStyle, alignment: { horizontal: "center", vertical: "center" } });
+      setCellHelper(r, c++, t.investmentName, { ...baseStyle, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "left", vertical: "center", wrapText: true } });
+      setCellHelper(r, c++, t.units, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '#,##0.000');
+      setCellHelper(r, c++, t.buyPrice, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
+      setCellHelper(r, c++, t.price, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
+      setCellHelper(r, c++, costBasis, { ...baseStyle, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
+      setCellHelper(r, c++, t.totalProceeds, { ...baseStyle, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
+
+      const isTradePos = (t.realizedGain || 0) >= 0;
+      setCellHelper(
+        r,
+        c++,
         t.realizedGain,
-        `${t.realizedGainPercent >= 0 ? "+" : ""}${t.realizedGainPercent}%`,
-        t.isFreeShares ? "FREE SHARES CREATED" : t.remainingUnits === 0 ? "FULL EXIT" : "PARTIAL EXIT",
-        t.remainingUnits,
-        t.notes || "—",
-      ]);
+        {
+          fill: { fgColor: { rgb: isTradePos ? profitBg : lossBg } },
+          font: { name: "Calibri", sz: 10, bold: true, color: { rgb: isTradePos ? profitGreen : lossRed } },
+          alignment: { horizontal: "right", vertical: "center" },
+          border: bThin,
+        },
+        '₹#,##0.00'
+      );
+
+      setCellHelper(
+        r,
+        c++,
+        (t.realizedGainPercent || 0) / 100,
+        {
+          fill: { fgColor: { rgb: isTradePos ? profitBg : lossBg } },
+          font: { name: "Calibri", sz: 10, bold: true, color: { rgb: isTradePos ? profitGreen : lossRed } },
+          alignment: { horizontal: "right", vertical: "center" },
+          border: bThin,
+        },
+        '+0.00%;-0.00%;0.00%'
+      );
+
+      const statusText = t.isFreeShares ? "FREE SHARES CREATED" : t.remainingUnits === 0 ? "FULL EXIT" : "PARTIAL EXIT";
+      setCellHelper(r, c++, statusText, {
+        fill: { fgColor: { rgb: t.isFreeShares ? "FFF3EB" : rowBg } },
+        font: { name: "Calibri", sz: 9, bold: true, color: { rgb: t.isFreeShares ? brandOrange : "334155" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: bThin,
+      });
+
+      setCellHelper(r, c++, t.remainingUnits, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '#,##0.000');
+      setCellHelper(r, c++, t.notes || "—", { ...baseStyle, alignment: { horizontal: "left", vertical: "center", wrapText: true } });
+      r++;
     });
 
-    const ws = XLSX.utils.aoa_to_sheet(rows);
+    // Calculate dynamic width for Notes column
+    const maxNotesLen = transactions.reduce(
+      (max, t) => Math.max(max, (t.notes || "").length),
+      0
+    );
+    const notesColWidth = Math.min(Math.max(38, maxNotesLen + 4), 65);
+
+    // 7. Grand Total Row
+    const grandRow = r;
+    const totStyle = {
+      fill: { fgColor: { rgb: totalGoldBg } },
+      font: { name: "Calibri", sz: 10, bold: true, color: { rgb: totalGoldText } },
+      border: bDouble,
+    };
+    for (let c = 0; c < colCount; c++) {
+      setCellHelper(grandRow, c, "", totStyle);
+    }
+    setCellHelper(grandRow, 2, "GRAND TOTAL AUDITED SALES", { ...totStyle, alignment: { horizontal: "left", vertical: "center" } });
+    setCellHelper(grandRow, 6, totalCostBasis, { ...totStyle, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
+    setCellHelper(grandRow, 7, totalProceeds, { ...totStyle, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
+    setCellHelper(grandRow, 8, totalGain, { ...totStyle, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: totalGain >= 0 ? profitGreen : lossRed } }, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
+
+    const totalGainPct = totalCostBasis > 0 ? (totalGain / totalCostBasis) : 0;
+    setCellHelper(grandRow, 9, totalGainPct, { ...totStyle, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: totalGain >= 0 ? profitGreen : lossRed } }, alignment: { horizontal: "right", vertical: "center" } }, '+0.00%;-0.00%;0.00%');
+
+    // Bounds & formatting
+    ws["!ref"] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: grandRow, c: colCount - 1 } });
     ws["!cols"] = [
-      { wch: 6 },
-      { wch: 18 },
-      { wch: 32 },
-      { wch: 14 },
-      { wch: 18 },
-      { wch: 18 },
-      { wch: 18 },
-      { wch: 20 },
-      { wch: 18 },
-      { wch: 14 },
-      { wch: 22 },
-      { wch: 16 },
-      { wch: 30 },
+      { wch: 6 },  // S.No
+      { wch: 16 }, // Exit Date
+      { wch: 34 }, // Scheme Name
+      { wch: 14 }, // Units Sold
+      { wch: 18 }, // Buy Price
+      { wch: 18 }, // Sell Price
+      { wch: 20 }, // Cost Basis
+      { wch: 20 }, // Proceeds
+      { wch: 20 }, // Realized P&L
+      { wch: 14 }, // Return %
+      { wch: 24 }, // Status
+      { wch: 16 }, // Remaining Units
+      { wch: notesColWidth }, // Notes & Remarks
+    ];
+
+    ws["!autofilter"] = {
+      ref: XLSX.utils.encode_range({ s: { r: headerRowIdx, c: 0 }, e: { r: grandRow, c: colCount - 1 } }),
+    };
+
+    ws["!views"] = [
+      { state: "frozen", ySplit: headerRowIdx + 1, showGridLines: true },
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "Exit_P&L_Report");

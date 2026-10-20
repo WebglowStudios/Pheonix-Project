@@ -5,12 +5,14 @@ import Link from "next/link";
 import { portfolioApi, familyApi, getStoredUser, type PortfolioSummary, type Investment, type User, type FamilyMember } from "@/lib/api";
 import MasterPortfolioReport from "@/components/report/MasterPortfolioReport";
 import FamilyPortfolioReport from "@/components/report/FamilyPortfolioReport";
+import { exportPortfolioToExcel } from "@/lib/exportUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
   faRotateRight,
   faCircleCheck,
   faFilePdf,
+  faFileExcel,
   faDownload,
   faSpinner,
   faUsers,
@@ -91,6 +93,13 @@ export default function ReportPage() {
     }
   }
 
+  function handleDownloadExcel() {
+    exportPortfolioToExcel(user, investments, summary, {
+      isFamily: reportScope === "family",
+      members,
+    });
+  }
+
   if (loading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center gap-3">
@@ -102,8 +111,8 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen py-4 sm:py-6 px-2 sm:px-4 bg-[#F3F4F7]">
-      {/* Action Toolbar (Hidden in Print) */}
-      <div className="max-w-[1020px] mx-auto mb-5 print:hidden bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* Action Toolbar */}
+      <div className="max-w-[1020px] mx-auto mb-5 bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard"
@@ -157,6 +166,15 @@ export default function ReportPage() {
             Refresh
           </button>
           <button
+            onClick={handleDownloadExcel}
+            disabled={generating}
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-[#14532D] bg-[#DCFCE7] hover:bg-[#BBF7D0] border border-[#86EFAC] shadow-xs rounded-lg transition-all cursor-pointer disabled:opacity-50"
+            title="Download formatted Master Excel statement"
+          >
+            <FontAwesomeIcon icon={faFileExcel} className="text-xs text-[#16A34A]" />
+            <span>Export Excel</span>
+          </button>
+          <button
             onClick={handleDownloadPdf}
             disabled={generating}
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-[#E8740C] hover:bg-[#d46606] shadow-sm rounded-lg transition-all cursor-pointer hover:shadow-md disabled:opacity-75"
@@ -170,11 +188,11 @@ export default function ReportPage() {
         </div>
       </div>
 
-      {/* Tip Banner (Hidden in Print) */}
-      <div className="max-w-[1020px] mx-auto mb-4 print:hidden px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900 flex items-center gap-2">
+      {/* Info Banner */}
+      <div className="max-w-[1020px] mx-auto mb-4 px-4 py-2.5 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-900 flex items-center gap-2">
         <FontAwesomeIcon icon={faCircleCheck} className="text-blue-600 flex-shrink-0" />
         <span>
-          <strong>Pro-Tip:</strong> In your browser print dialog, select <strong>&ldquo;Save as PDF&rdquo;</strong> and make sure <strong>&ldquo;Background graphics&rdquo;</strong> is checked to retain table headers and chart colors.
+          <strong>Executive Export:</strong> Export your live statement as an official, high-resolution <strong>PDF Report</strong> or a professionally styled <strong>Master Excel Workbook</strong> complete with asset allocation, frozen headers, and accounting summaries.
         </span>
       </div>
 
