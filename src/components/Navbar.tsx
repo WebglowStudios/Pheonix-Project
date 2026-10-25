@@ -72,7 +72,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-[30px]">
             {navLinks.map((link) => (
               <Link key={link.href} href={link.href}
-                className={`font-medium transition-all duration-300 ${pathname === link.href ? "text-[#E8740C]" : "text-[#444] hover:text-[#E8740C]"}`}>
+                className={`font-semibold text-[15px] transition-all duration-300 ${pathname === link.href ? "text-[#E8740C]" : "text-[#444] hover:text-[#E8740C]"}`}>
                 {link.label}
               </Link>
             ))}
@@ -80,7 +80,7 @@ export default function Navbar() {
             {loggedInUser ? (
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 px-5 py-[10px] rounded-[30px] font-semibold bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.2)] no-underline"
+                className="inline-flex items-center gap-2 px-5 py-[10px] rounded-[30px] font-semibold text-[15px] bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.2)] no-underline"
               >
                 {loggedInUser.name ? (
                   <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-[#E8740C] text-[9px] font-bold flex-shrink-0">
@@ -94,7 +94,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 px-5 py-[10px] rounded-[30px] font-semibold bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.2)] no-underline"
+                className="inline-flex items-center gap-2 px-5 py-[10px] rounded-[30px] font-semibold text-[15px] bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.2)] no-underline"
               >
                 <FontAwesomeIcon icon={faUser} className="text-sm text-white" />
                 <span>Login</span>
