@@ -47,6 +47,35 @@ interface AboutContent {
   founder_image?: string;
 }
 
+function formatRichText(text?: string) {
+  if (!text) return null;
+  const parts = text.split(/(\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("***") && part.endsWith("***")) {
+      return (
+        <strong key={i} className="font-bold italic text-[#1F2937]">
+          {part.slice(3, -3)}
+        </strong>
+      );
+    }
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={i} className="font-bold text-[#1F2937]">
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    if (part.startsWith("*") && part.endsWith("*")) {
+      return (
+        <em key={i} className="italic text-[#1F2937] font-medium">
+          {part.slice(1, -1)}
+        </em>
+      );
+    }
+    return part;
+  });
+}
+
 const DEFAULTS: AboutContent = {
   hero_title: "About Phoenix Financial Services",
   hero_subtitle: "Most financial firms offer products. We build plans. Phoenix Financial Services was established on the belief that lasting wealth demands structure, discipline, and expertise — not generic advice. Since inception, we have partnered with families, business owners, and institutions to build financial legacies that endure beyond market cycles.",
@@ -58,9 +87,9 @@ const DEFAULTS: AboutContent = {
   founder_experience: "20+ Years of Market Experience",
   founder_name: "Chirag Chheda",
   founder_title: "Founder, Phoenix Financial Services",
-  founder_bio_1: "With over two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, research-driven approach to wealth management — one built on conviction, patience, and a deep understanding of what it takes to grow and protect long-term wealth.",
-  founder_bio_2: "In 2010, he founded Phoenix Financial Services on a simple but powerful belief: wealth creation should be thoughtful, personalised, and aligned with each investor's objectives, risk profile, and long-term interests. Not driven by product quotas or market noise.",
-  founder_bio_3: "Today, Chirag shapes Phoenix Financial Services' investment philosophy, ensuring every portfolio is designed around the individual—never a standard template.",
+  founder_bio_1: "With over **two decades of experience** across equity and debt markets, Chirag Chheda brings a *disciplined, research-driven approach* to wealth management — one built on ***conviction, patience, and a deep understanding*** of what it takes to grow and protect long-term wealth.",
+  founder_bio_2: "In 2010, he founded **Phoenix Financial Services** on a simple but powerful belief: *wealth creation should be thoughtful, personalised, and aligned with each investor's objectives, risk profile, and long-term interests.* **Not driven by product quotas or market noise.**",
+  founder_bio_3: "Today, Chirag shapes Phoenix Financial Services' investment philosophy, ensuring ***every portfolio is designed around the individual — never a standard template.***",
   founder_tagline: "Personalised thinking. Disciplined investing. Long-term perspective.",
   founder_image: "/founder.png",
   why_invest_heading: "Why Invest With Us?",
@@ -132,7 +161,7 @@ export default function AboutPage() {
               <div className="relative group max-w-[280px] sm:max-w-[340px] md:max-w-none mx-auto w-full">
                 <div className="absolute inset-0 bg-[#E8740C]/20 rounded-[16px] transform rotate-2 group-hover:rotate-1 transition-transform duration-300" />
                 <div className="relative bg-white p-3 sm:p-3.5 rounded-[16px] shadow-[0_10px_30px_rgba(0,0,0,0.08)] border border-[#E5E7EB] overflow-hidden">
-                  <div className="relative aspect-[4/4.6] w-full rounded-[12px] overflow-hidden bg-gray-100">
+                  <div className="relative aspect-[4/4.8] w-full rounded-[12px] overflow-hidden bg-gray-100 shadow-inner">
                     <Image
                       src={content.founder_image || "/founder.png"}
                       alt={`${content.founder_name || "Chirag Chheda"} — ${content.founder_title || "Founder, Phoenix Financial Services"}`}
@@ -140,14 +169,6 @@ export default function AboutPage() {
                       className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
                       priority
                     />
-                  </div>
-                  <div className="mt-3 text-center pb-0.5">
-                    <h4 className="text-base sm:text-lg font-extrabold text-[#333] tracking-[0.5px]">
-                      {content.founder_name || "Chirag Chheda"}
-                    </h4>
-                    <p className="text-[11px] sm:text-xs font-semibold text-[#E8740C] uppercase tracking-wider mt-0.5">
-                      {content.founder_title || "Founder, Phoenix Financial Services"}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -173,15 +194,24 @@ export default function AboutPage() {
                   </span>
                 </div>
 
-                <div className="space-y-3 sm:space-y-3.5 text-[#4B5563] text-[0.93rem] sm:text-[1rem] leading-[1.7]">
+                <div className="space-y-3.5 sm:space-y-4 text-[#4B5563] text-[0.93rem] sm:text-[1rem] leading-[1.75]">
                   <p>
-                    {content.founder_bio_1 || "With over two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, research-driven approach to wealth management — one built on conviction, patience, and a deep understanding of what it takes to grow and protect long-term wealth."}
+                    {formatRichText(
+                      content.founder_bio_1 ||
+                        "With over **two decades of experience** across equity and debt markets, Chirag Chheda brings a *disciplined, research-driven approach* to wealth management — one built on ***conviction, patience, and a deep understanding*** of what it takes to grow and protect long-term wealth."
+                    )}
                   </p>
                   <p>
-                    {content.founder_bio_2 || "In 2010, he founded Phoenix Financial Services on a simple but powerful belief: wealth creation should be thoughtful, personalised, and aligned with each investor's objectives, risk profile, and long-term interests. Not driven by product quotas or market noise."}
+                    {formatRichText(
+                      content.founder_bio_2 ||
+                        "In 2010, he founded **Phoenix Financial Services** on a simple but powerful belief: *wealth creation should be thoughtful, personalised, and aligned with each investor's objectives, risk profile, and long-term interests.* **Not driven by product quotas or market noise.**"
+                    )}
                   </p>
                   <p>
-                    {content.founder_bio_3 || "Today, Chirag shapes Phoenix Financial Services' investment philosophy, ensuring every portfolio is designed around the individual—never a standard template."}
+                    {formatRichText(
+                      content.founder_bio_3 ||
+                        "Today, Chirag shapes Phoenix Financial Services' investment philosophy, ensuring ***every portfolio is designed around the individual — never a standard template.***"
+                    )}
                   </p>
                 </div>
 
