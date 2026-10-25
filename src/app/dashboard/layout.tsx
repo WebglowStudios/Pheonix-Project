@@ -23,7 +23,7 @@ import {
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: faHouse, exact: true },
-  { href: "/dashboard/portfolio", label: "My Portfolio", icon: faChartPie, exact: false },
+  { href: "/dashboard/portfolio", label: "Portfolio 360", icon: faChartPie, exact: false },
   { href: "/dashboard/family", label: "Family Portfolio", icon: faUsers, exact: false },
   { href: "/dashboard/activity", label: "Exit P&L & Activity", icon: faReceipt, exact: false },
   { href: "/dashboard/add", label: "Add Investment", icon: faPlus, exact: false },

@@ -14,6 +14,7 @@ const navLinks = [
   { href: "/about", label: "About Us" },
   { href: "/services", label: "Services" },
   { href: "/faq", label: "FAQ" },
+  { href: "/contact", label: "Get in Touch" },
 ];
 
 export default function Navbar() {
@@ -75,33 +76,30 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {/* Login / My Portfolio — auth-aware */}
+            {/* Login / Portfolio 360 — orange CTA button at the last */}
             {loggedInUser ? (
               <Link
                 href="/dashboard"
-                className="flex items-center gap-2 px-4 py-[9px] rounded-[30px] font-semibold text-[#444] border-2 border-[#DDD] transition-all hover:border-[#E8740C] hover:text-[#E8740C] hover:bg-[#FFF8F2]"
+                className="inline-flex items-center gap-2 px-5 py-[10px] rounded-[30px] font-semibold bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.2)] no-underline"
               >
                 {loggedInUser.name ? (
-                  <div className="w-5 h-5 rounded-full bg-[#E8740C] flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-[#E8740C] text-[9px] font-bold flex-shrink-0">
                     {loggedInUser.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                   </div>
                 ) : (
-                  <FontAwesomeIcon icon={faChartPie} className="text-sm text-[#E8740C]" />
+                  <FontAwesomeIcon icon={faChartPie} className="text-sm text-white" />
                 )}
-                <span>My Portfolio</span>
+                <span>Portfolio 360</span>
               </Link>
             ) : (
               <Link
                 href="/login"
-                className="flex items-center gap-2 px-4 py-[9px] rounded-[30px] font-semibold text-[#444] border-2 border-[#DDD] transition-all hover:border-[#E8740C] hover:text-[#E8740C] hover:bg-[#FFF8F2]"
+                className="inline-flex items-center gap-2 px-5 py-[10px] rounded-[30px] font-semibold bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.2)] no-underline"
               >
-                <FontAwesomeIcon icon={faUser} className="text-sm text-[#666]" />
+                <FontAwesomeIcon icon={faUser} className="text-sm text-white" />
                 <span>Login</span>
               </Link>
             )}
-            <Link href="/contact" className="inline-block px-5 py-[10px] rounded-[30px] font-semibold bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] hover:border-[#FF9433] hover:shadow-[0_8px_24px_rgba(232,116,12,0.15)]">
-              Get in Touch
-            </Link>
           </div>
 
           {/* Mobile toggle */}
@@ -137,17 +135,30 @@ export default function Navbar() {
             {link.label}
           </Link>
         ))}
+
+        {/* Orange CTA Button at the end */}
         <Link
           href={loggedInUser ? "/dashboard" : "/login"}
           onClick={() => setMenuOpen(false)}
-          className="w-full py-[14px] text-[1.05rem] font-semibold border-b border-[#DDD] transition-colors text-[#E8740C] flex items-center gap-2"
+          className="mt-6 w-full flex items-center justify-center gap-2 px-5 py-3 rounded-[30px] font-semibold bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433] shadow-sm no-underline"
         >
-          <FontAwesomeIcon icon={loggedInUser ? faChartPie : faUser} className="text-sm" />
-          {loggedInUser ? "My Portfolio" : "Login"}
-        </Link>
-        <Link href="/contact" onClick={() => setMenuOpen(false)}
-          className="mt-5 w-full text-center px-5 py-3 rounded-[30px] font-semibold bg-[#E8740C] !text-white border-2 border-[#E8740C] transition-all hover:bg-[#FF9433]">
-          Get in Touch
+          {loggedInUser ? (
+            <>
+              {loggedInUser.name ? (
+                <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-[#E8740C] text-[9px] font-bold flex-shrink-0">
+                  {loggedInUser.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                </div>
+              ) : (
+                <FontAwesomeIcon icon={faChartPie} className="text-sm text-white" />
+              )}
+              <span>Portfolio 360</span>
+            </>
+          ) : (
+            <>
+              <FontAwesomeIcon icon={faUser} className="text-sm text-white" />
+              <span>Login</span>
+            </>
+          )}
         </Link>
 
         {/* Sidebar footer */}

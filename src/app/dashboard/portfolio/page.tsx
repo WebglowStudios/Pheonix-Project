@@ -356,7 +356,7 @@ export default function PortfolioPage() {
       {/* Page header */}
       <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#1a1b23]">My Portfolio</h1>
+          <h1 className="text-2xl font-extrabold text-[#1a1b23]">Portfolio 360</h1>
           <p className="text-[#8a92a6] text-sm mt-0.5 flex items-center gap-2">
             <span>{investments.length} investment{investments.length !== 1 ? "s" : ""}</span>
             {lastRefreshed && (
