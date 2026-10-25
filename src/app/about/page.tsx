@@ -35,6 +35,8 @@ interface AboutContent {
   why_invest_body: string;
   image_url: string;
   pillars?: AboutPillar[];
+  founder_eyebrow?: string;
+  founder_experience?: string;
   founder_section_heading?: string;
   founder_name?: string;
   founder_title?: string;
@@ -52,12 +54,13 @@ const DEFAULTS: AboutContent = {
   lead: "We understand that every investor brings a unique set of goals, risk appetites, and timelines to the table.",
   body_1: "Phoenix Financial Services was built around one founding belief — that comprehensive, tailored wealth solutions should be available under one roof, without compromise. Whether you are pursuing aggressive equity growth, building a stable fixed-income portfolio, or seeking sophisticated alternative strategies, our expert team is equipped to guide you at every stage.",
   body_2: "We take a disciplined, compliance-first approach — helping clients optimise portfolios, eliminate inefficiencies, and rebalance assets with precision — ensuring every decision is built around long-term net returns, not short-term noise.",
-  founder_section_heading: "About the Founder",
+  founder_eyebrow: "Advisory Leadership",
+  founder_experience: "20+ Years of Market Experience",
   founder_name: "Chirag Chheda",
   founder_title: "Founder, Phoenix Financial Services",
-  founder_bio_1: "With two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, investor-focused approach to wealth management.",
-  founder_bio_2: "In 2010, he founded Phoenix Financial Services with a simple belief: wealth creation should be thoughtful, personalised, and aligned with each investor’s objectives, risk profile, and long-term interests.",
-  founder_bio_3: "Chirag shapes the investment philosophy at Phoenix, with every portfolio designed around the individual—not a standard template.",
+  founder_bio_1: "With over two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, research-driven approach to wealth management — one built on conviction, patience, and a deep understanding of what it takes to grow and protect long-term wealth.",
+  founder_bio_2: "In 2010, he founded Phoenix Financial Services on a simple but powerful belief: wealth creation should be thoughtful, personalised, and aligned with each investor's objectives, risk profile, and long-term interests. Not driven by product quotas or market noise.",
+  founder_bio_3: "Today, Chirag shapes Phoenix Financial Services' investment philosophy, ensuring every portfolio is designed around the individual—never a standard template.",
   founder_tagline: "Personalised thinking. Disciplined investing. Long-term perspective.",
   founder_image: "/founder.png",
   why_invest_heading: "Why Invest With Us?",
@@ -151,38 +154,34 @@ export default function AboutPage() {
 
               {/* Founder Narrative Content */}
               <div>
-                <div className="flex flex-wrap items-center gap-2 mb-2">
+                <div className="flex flex-wrap items-center gap-2 mb-2.5">
                   <span className="text-[#E8740C] font-bold text-[11px] sm:text-xs uppercase tracking-[1.5px]">
-                    Advisory Leadership
+                    {content.founder_eyebrow || "Advisory Leadership"}
                   </span>
                   <span className="inline-flex items-center text-[10px] sm:text-[11px] font-semibold text-[#E8740C] bg-[#FFF3EB] px-2.5 py-0.5 rounded-full border border-[#E8740C]/25">
-                    20+ Years Experience
+                    {content.founder_experience || "20+ Years of Market Experience"}
                   </span>
                 </div>
 
-                <h2 className="text-[1.85rem] sm:text-[2.2rem] lg:text-[2.6rem] font-extrabold text-[#222] leading-tight mb-2 tracking-[0.5px]">
-                  About the <span className="text-[#E8740C]">Founder</span>
+                <h2 className="text-[1.85rem] sm:text-[2.2rem] lg:text-[2.6rem] font-extrabold text-[#222] leading-tight mb-1.5 tracking-[0.5px]">
+                  {content.founder_name || "Chirag Chheda"}
                 </h2>
 
-                <div className="mb-4 sm:mb-5 pb-3 border-b border-gray-200/80 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                  <span className="text-base sm:text-lg font-bold text-[#1F2937]">
-                    {content.founder_name || "Chirag Chheda"}
-                  </span>
-                  <span className="text-gray-300 hidden sm:inline">•</span>
-                  <span className="text-xs sm:text-sm font-semibold text-[#E8740C]">
+                <div className="mb-4 sm:mb-5 pb-3 border-b border-gray-200/80">
+                  <span className="text-xs sm:text-sm font-semibold text-[#E8740C] uppercase tracking-wider">
                     {content.founder_title || "Founder, Phoenix Financial Services"}
                   </span>
                 </div>
 
                 <div className="space-y-3 sm:space-y-3.5 text-[#4B5563] text-[0.93rem] sm:text-[1rem] leading-[1.7]">
                   <p>
-                    {content.founder_bio_1 || "With two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, investor-focused approach to wealth management."}
+                    {content.founder_bio_1 || "With over two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, research-driven approach to wealth management — one built on conviction, patience, and a deep understanding of what it takes to grow and protect long-term wealth."}
                   </p>
                   <p>
-                    {content.founder_bio_2 || "In 2010, he founded Phoenix Financial Services with a simple belief: wealth creation should be thoughtful, personalised, and aligned with each investor’s objectives, risk profile, and long-term interests."}
+                    {content.founder_bio_2 || "In 2010, he founded Phoenix Financial Services on a simple but powerful belief: wealth creation should be thoughtful, personalised, and aligned with each investor's objectives, risk profile, and long-term interests. Not driven by product quotas or market noise."}
                   </p>
                   <p>
-                    {content.founder_bio_3 || "Chirag shapes the investment philosophy at Phoenix, with every portfolio designed around the individual—not a standard template."}
+                    {content.founder_bio_3 || "Today, Chirag shapes Phoenix Financial Services' investment philosophy, ensuring every portfolio is designed around the individual—never a standard template."}
                   </p>
                 </div>
 

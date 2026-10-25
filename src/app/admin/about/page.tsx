@@ -35,6 +35,8 @@ interface AboutPageContent {
   why_invest_body: string;
   image_url: string;
   pillars?: AboutPillar[];
+  founder_eyebrow?: string;
+  founder_experience?: string;
   founder_section_heading?: string;
   founder_name?: string;
   founder_title?: string;
@@ -64,15 +66,17 @@ const PAGE_DEFAULTS: AboutPageContent = {
     "Phoenix Financial Services was built around one founding belief — that comprehensive, tailored wealth solutions should be available under one roof, without compromise.",
   body_2:
     "We take a disciplined, compliance-first approach — helping clients optimise portfolios, eliminate inefficiencies, and rebalance assets with precision.",
-  founder_section_heading: "About the Founder",
+  founder_eyebrow: "Advisory Leadership",
+  founder_experience: "20+ Years of Market Experience",
+  founder_section_heading: "",
   founder_name: "Chirag Chheda",
   founder_title: "Founder, Phoenix Financial Services",
   founder_bio_1:
-    "With two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, investor-focused approach to wealth management.",
+    "With over two decades of experience across equity and debt markets, Chirag Chheda brings a disciplined, research-driven approach to wealth management — one built on conviction, patience, and a deep understanding of what it takes to grow and protect long-term wealth.",
   founder_bio_2:
-    "In 2010, he founded Phoenix Financial Services with a simple belief: wealth creation should be thoughtful, personalised, and aligned with each investor’s objectives, risk profile, and long-term interests.",
+    "In 2010, he founded Phoenix Financial Services on a simple but powerful belief: wealth creation should be thoughtful, personalised, and aligned with each investor's objectives, risk profile, and long-term interests. Not driven by product quotas or market noise.",
   founder_bio_3:
-    "Chirag shapes the investment philosophy at Phoenix, with every portfolio designed around the individual—not a standard template.",
+    "Today, Chirag shapes Phoenix Financial Services' investment philosophy, ensuring every portfolio is designed around the individual—never a standard template.",
   founder_tagline: "Personalised thinking. Disciplined investing. Long-term perspective.",
   founder_image: "/founder.png",
   why_invest_heading: "Why Invest With Us?",
@@ -396,19 +400,31 @@ function AboutPageTab() {
         </div>
       </div>
 
-      {/* About the Founder */}
+      {/* Advisory Leadership & Founder */}
       <div className="bg-white rounded-[10px] shadow-sm p-6 mb-5">
-        <h3 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">About the Founder</h3>
+        <h3 className="font-bold text-[#333] mb-4 pb-2 border-b border-[#EEE]">Advisory Leadership &amp; Founder Profile</h3>
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Section Heading</label>
+              <label className={labelClass}>Eyebrow Tag</label>
               <input
-                value={content.founder_section_heading || ""}
-                onChange={(e) => setContent((p) => ({ ...p, founder_section_heading: e.target.value }))}
+                value={content.founder_eyebrow || ""}
+                placeholder="Advisory Leadership"
+                onChange={(e) => setContent((p) => ({ ...p, founder_eyebrow: e.target.value }))}
                 className={inputClass}
               />
             </div>
+            <div>
+              <label className={labelClass}>Experience Badge</label>
+              <input
+                value={content.founder_experience || ""}
+                placeholder="20+ Years of Market Experience"
+                onChange={(e) => setContent((p) => ({ ...p, founder_experience: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Founder Name</label>
               <input
@@ -417,12 +433,21 @@ function AboutPageTab() {
                 className={inputClass}
               />
             </div>
+            <div>
+              <label className={labelClass}>Founder Title / Role</label>
+              <input
+                value={content.founder_title || ""}
+                onChange={(e) => setContent((p) => ({ ...p, founder_title: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
           </div>
           <div>
-            <label className={labelClass}>Founder Title / Role</label>
+            <label className={labelClass}>Section Heading (Optional — leave blank to omit)</label>
             <input
-              value={content.founder_title || ""}
-              onChange={(e) => setContent((p) => ({ ...p, founder_title: e.target.value }))}
+              value={content.founder_section_heading || ""}
+              placeholder="Leave blank to omit 'About the Founder' title"
+              onChange={(e) => setContent((p) => ({ ...p, founder_section_heading: e.target.value }))}
               className={inputClass}
             />
           </div>
