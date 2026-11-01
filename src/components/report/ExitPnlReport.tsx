@@ -472,7 +472,7 @@ export default function ExitPnlReport({
       </div>
 
       {/* ── Executive Summary KPI Cards ───────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Total Realized Profit */}
         <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs relative overflow-hidden">
           <div
@@ -545,19 +545,6 @@ export default function ExitPnlReport({
           </div>
         </div>
 
-        {/* Free Shares Created */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-xs">
-          <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-            <FontAwesomeIcon icon={faStar} className="text-amber-500 text-[10px]" />
-            Free Shares Created
-          </div>
-          <div className="text-xl font-black text-amber-700 mt-1.5">
-            {derivedSummary.freeSharesCount}
-          </div>
-          <div className="text-[11px] text-emerald-700 font-semibold mt-1">
-            Positions with ₹0 risk
-          </div>
-        </div>
       </div>
 
       {/* ── Table Toolbar with Live Search & Filter Chips ──────────────── */}
