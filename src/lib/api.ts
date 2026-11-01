@@ -100,10 +100,16 @@ export interface Transaction {
   userId: string;
   investmentId: string;
   investmentName: string;
+  // Position identity — links this sell to a symbol-level open position
+  symbol?: string;
+  exchange?: string;
   type: "sell" | "buy" | "sip" | "dividend";
   units: number;
   price: number;
+  /** Original lot buy price (for reference, may differ from avgCostBefore) */
   buyPrice: number;
+  /** Weighted avg cost across ALL open lots for this symbol at time of sell */
+  avgCostBefore?: number;
   totalProceeds: number;
   realizedGain: number;
   realizedGainPercent: number;
@@ -111,6 +117,10 @@ export interface Transaction {
   isFreeShares: boolean;
   remainingUnits: number;
   remainingValue: number;
+  /** Total open qty across ALL active lots after this sell */
+  openQtyAfter?: number;
+  /** Avg cost of the remaining open position after this sell */
+  avgCostAfter?: number;
   sellDate: string;
   notes?: string;
   createdAt: string;
@@ -122,13 +132,39 @@ export interface SellResult {
   summary: {
     unitsSold: number;
     sellPrice: number;
+    avgCostUsed: number;
     totalProceeds: number;
     realizedGain: number;
     realizedGainPercent: number;
-    remainingUnits: number;
+    openQtyAfter: number;
+    avgCostAfter: number;
     isFreeShares: boolean;
     capitalRecoveredPercent: number;
   };
+}
+
+/** Aggregated open position for one symbol across all active lots */
+export interface OpenPosition {
+  symbol: string;
+  exchange: string;
+  name: string;
+  type: string;
+  lotCount: number;
+  totalUnits: number;
+  avgCost: number;
+  totalInvested: number;
+  currentPrice: number;
+  currentValue: number;
+  unrealisedGain: number;
+  returnPct: number;
+  lots: Array<{
+    _id: string;
+    buyDate?: string;
+    units: number;
+    buyPrice: number;
+    investedAmount: number;
+    currentPrice: number;
+  }>;
 }
 
 export interface ExitReportSummary {
@@ -316,6 +352,19 @@ export const portfolioApi = {
       `/api/portfolio/transactions${q}`
     );
   },
+
+  getPositions: () =>
+    request<{
+      data: OpenPosition[];
+      count: number;
+      summary: {
+        totalPositions: number;
+        totalUnderlyingLots: number;
+        totalInvested: number;
+        totalCurrentValue: number;
+        totalUnrealisedGain: number;
+      };
+    }>("/api/portfolio/positions"),
 };
 
 // ─── Family Portfolio API ──────────────────────────────────────────────────
@@ -408,6 +457,34 @@ export interface AdminLead {
   status: "new" | "read" | "contacted";
   notes: string;
   created_at: string;
+}
+
+export interface AdminProductPriceItem {
+  name: string;
+  symbol: string;
+  type: string;
+  exchange?: string;
+  currentPrice: number;
+  previousPrice?: number;
+  lastPriceUpdate?: string;
+  clientsCount: number;
+  totalUnits: number;
+  totalInvested: number;
+  holdingsCount: number;
+  isManual: boolean;
+  isMissingPrice: boolean;
+  manualNotes?: string;
+  lastUpdated?: string | null;
+  source: string;
+}
+
+export interface AdminProductPriceStats {
+  totalProducts: number;
+  unpricedCount: number;
+  manualCount: number;
+  liveCount: number;
+  totalHoldingsCount: number;
+  totalInvestedSum: number;
 }
 
 export const adminApi = {
@@ -530,6 +607,53 @@ export const adminApi = {
 
   getUserTransactions: (userId: string) =>
     request<{ transactions: Transaction[]; summary: ExitReportSummary }>(`/api/admin/users/${userId}/transactions`),
+
+  getPrices: (params?: { search?: string; type?: string; status?: string }) => {
+    const q = params
+      ? "?" +
+        new URLSearchParams(
+          Object.entries(params)
+            .filter(([, v]) => v != null && v !== "")
+            .map(([k, v]) => [k, String(v)])
+        ).toString()
+      : "";
+    return request<{ products: AdminProductPriceItem[]; stats: AdminProductPriceStats }>(`/api/admin/prices${q}`);
+  },
+
+  updateProductPrice: (payload: {
+    name?: string;
+    symbol?: string;
+    type?: string;
+    price: number;
+    notes?: string;
+  }) =>
+    request<{
+      name: string;
+      symbol: string;
+      type: string;
+      price: number;
+      modifiedCount: number;
+      updated: boolean;
+    }>("/api/admin/prices", {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+
+  bulkUpdateProductPrices: (items: Array<{
+    name?: string;
+    symbol?: string;
+    type?: string;
+    price: number;
+    notes?: string;
+  }>) =>
+    request<{
+      updatedProductsCount: number;
+      totalHoldingsUpdated: number;
+      details: unknown[];
+    }>("/api/admin/prices/bulk", {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    }),
 };
 
 // ─── Public Content API ────────────────────────────────────────────────────

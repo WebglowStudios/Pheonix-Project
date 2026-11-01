@@ -10,6 +10,7 @@ import {
   faHouse,
   faUsers,
   faInbox,
+  faCoins,
   faImage,
   faInfo,
   faBriefcase,
@@ -27,6 +28,7 @@ import {
 const NAV_ITEMS = [
   { href: "/admin", label: "Executive Dashboard", icon: faHouse },
   { href: "/admin/users", label: "Registered Clients", icon: faUsers },
+  { href: "/admin/prices", label: "Product Prices", icon: faCoins },
   { href: "/admin/leads", label: "Client Inquiries", icon: faInbox },
   { href: "/admin/promo", label: "Promo Popup", icon: faBullhorn },
   { isHeader: true, label: "Homepage Sections" },

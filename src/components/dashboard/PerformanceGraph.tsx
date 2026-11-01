@@ -22,6 +22,13 @@ interface PerformanceGraphProps {
     createdAt?: string | Date | null;
     investedAmount?: number;
     currentValue?: number;
+    // Extra fields for safe currentValue fallback computation
+    units?: number;
+    currentPrice?: number;
+    principal?: number;
+    sipAmount?: number;
+    instalments?: number;
+    status?: string;
   }>;
   totalCurrentValue?: number;
   totalInvested?: number;

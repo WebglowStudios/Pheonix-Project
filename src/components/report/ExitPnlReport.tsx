@@ -277,14 +277,14 @@ export default function ExitPnlReport({
       "Exit / Trade Date",
       "Asset / Scheme Name",
       "Units Sold",
-      "Avg Buy Price (₹)",
+      "Avg Cost (₹)",
       "Exit / Sell Price (₹)",
       "Cost Basis (₹)",
       "Total Proceeds (₹)",
       "Realized P&L (₹)",
       "Return (%)",
       "Compounding Status",
-      "Remaining Units",
+      "Open Qty After",
       "Notes & Remarks",
     ];
     const headerRowIdx = r;
@@ -315,10 +315,12 @@ export default function ExitPnlReport({
     let totalGain = 0;
 
     transactions.forEach((t, idx) => {
-      const costBasis = Math.round((t.units || 0) * (t.buyPrice || 0) * 100) / 100;
+      // Use position avg cost when available (new), fallback to lot buy price (legacy)
+      const avgCost   = t.avgCostBefore ?? t.buyPrice;
+      const costBasis = Math.round((t.units || 0) * avgCost * 100) / 100;
       totalCostBasis += costBasis;
-      totalProceeds += t.totalProceeds || 0;
-      totalGain += t.realizedGain || 0;
+      totalProceeds  += t.totalProceeds || 0;
+      totalGain      += t.realizedGain  || 0;
 
       const isEven = idx % 2 === 0;
       const rowBg = isEven ? white : rowZebra;
@@ -333,7 +335,7 @@ export default function ExitPnlReport({
       setCellHelper(r, c++, formatDateIndian(t.sellDate || t.createdAt), { ...baseStyle, alignment: { horizontal: "center", vertical: "center" } });
       setCellHelper(r, c++, t.investmentName, { ...baseStyle, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "left", vertical: "center", wrapText: true } });
       setCellHelper(r, c++, t.units, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '#,##0.000');
-      setCellHelper(r, c++, t.buyPrice, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
+      setCellHelper(r, c++, avgCost, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
       setCellHelper(r, c++, t.price, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
       setCellHelper(r, c++, costBasis, { ...baseStyle, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
       setCellHelper(r, c++, t.totalProceeds, { ...baseStyle, font: { name: "Calibri", sz: 10, bold: true, color: { rgb: "0F172A" } }, alignment: { horizontal: "right", vertical: "center" } }, '₹#,##0.00');
@@ -365,7 +367,8 @@ export default function ExitPnlReport({
         '+0.00%;-0.00%;0.00%'
       );
 
-      const statusText = t.isFreeShares ? "FREE SHARES CREATED" : t.remainingUnits === 0 ? "FULL EXIT" : "PARTIAL EXIT";
+      const openQtyAfter = t.openQtyAfter ?? t.remainingUnits ?? 0;
+      const statusText = t.isFreeShares ? "FREE SHARES CREATED" : openQtyAfter === 0 ? "FULL EXIT" : "PARTIAL EXIT";
       setCellHelper(r, c++, statusText, {
         fill: { fgColor: { rgb: t.isFreeShares ? "FFF3EB" : rowBg } },
         font: { name: "Calibri", sz: 9, bold: true, color: { rgb: t.isFreeShares ? brandOrange : "334155" } },
@@ -373,7 +376,7 @@ export default function ExitPnlReport({
         border: bThin,
       });
 
-      setCellHelper(r, c++, t.remainingUnits, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '#,##0.000');
+      setCellHelper(r, c++, openQtyAfter, { ...baseStyle, alignment: { horizontal: "right", vertical: "center" } }, '#,##0.000');
       setCellHelper(r, c++, t.notes || "—", { ...baseStyle, alignment: { horizontal: "left", vertical: "center", wrapText: true } });
       r++;
     });
@@ -617,13 +620,14 @@ export default function ExitPnlReport({
                 <th className="py-3.5 px-4">Exit Date</th>
                 <th className="py-3.5 px-4">Asset &amp; Scheme</th>
                 <th className="py-3.5 px-3">Units Sold</th>
-                <th className="py-3.5 px-3">Buy Price</th>
+                <th className="py-3.5 px-3">Avg Cost</th>
                 <th className="py-3.5 px-3">Exit Price</th>
                 <th className="py-3.5 px-3">Cost Basis (₹)</th>
                 <th className="py-3.5 px-3">Proceeds (₹)</th>
                 <th className="py-3.5 px-3">Realized P&amp;L</th>
                 <th className="py-3.5 px-3">Return (%)</th>
-                <th className="py-3.5 px-3">Compounding Status</th>
+                <th className="py-3.5 px-3">Status</th>
+                <th className="py-3.5 px-3">Open Qty After</th>
                 <th className="py-3.5 px-4 text-right">Remarks</th>
               </tr>
             </thead>
@@ -647,8 +651,9 @@ export default function ExitPnlReport({
                 </tr>
               ) : (
                 filteredList.map((t) => {
-                  const costBasis = Math.round((t.units || 0) * (t.buyPrice || 0) * 100) / 100;
-                  const isProfit = (t.realizedGain || 0) >= 0;
+                  const avgCost   = t.avgCostBefore ?? t.buyPrice;
+                  const costBasis = Math.round((t.units || 0) * avgCost * 100) / 100;
+                  const isProfit  = (t.realizedGain || 0) >= 0;
 
                   return (
                     <tr key={t._id} className="hover:bg-amber-50/20 transition-colors group">
@@ -661,10 +666,15 @@ export default function ExitPnlReport({
                       </td>
 
                       {/* Asset Name */}
-                      <td className="py-3.5 px-4 font-bold text-gray-900 max-w-[240px]">
+                      <td className="py-3.5 px-4 font-bold text-gray-900 max-w-[200px]">
                         <div className="truncate" title={t.investmentName}>
                           {t.investmentName}
                         </div>
+                        {t.symbol && (
+                          <div className="text-[10px] text-gray-400 font-mono mt-0.5">
+                            {t.symbol}{t.exchange ? ` · ${t.exchange}` : ""}
+                          </div>
+                        )}
                       </td>
 
                       {/* Units Sold */}
@@ -672,9 +682,14 @@ export default function ExitPnlReport({
                         {fmtNumber(t.units, 2)}
                       </td>
 
-                      {/* Buy Price */}
+                      {/* Avg Cost — position-level weighted avg (new), fallback to lot buy price */}
                       <td className="py-3.5 px-3 whitespace-nowrap text-gray-600">
-                        {fmtIndianCurrency(t.buyPrice)}
+                        <div>{fmtIndianCurrency(t.avgCostBefore ?? t.buyPrice)}</div>
+                        {t.avgCostBefore != null && t.avgCostBefore !== t.buyPrice && (
+                          <div className="text-[10px] text-gray-400 mt-0.5" title="Original lot buy price">
+                            Lot: {fmtIndianCurrency(t.buyPrice)}
+                          </div>
+                        )}
                       </td>
 
                       {/* Exit Price */}
@@ -682,9 +697,9 @@ export default function ExitPnlReport({
                         {fmtIndianCurrency(t.price)}
                       </td>
 
-                      {/* Cost Basis */}
+                      {/* Cost Basis — uses avg cost */}
                       <td className="py-3.5 px-3 whitespace-nowrap text-gray-700">
-                        {fmtIndianCurrency(costBasis)}
+                        {fmtIndianCurrency(Math.round((t.units || 0) * (t.avgCostBefore ?? t.buyPrice) * 100) / 100)}
                       </td>
 
                       {/* Total Proceeds */}
@@ -726,14 +741,32 @@ export default function ExitPnlReport({
                             <FontAwesomeIcon icon={faStar} className="text-[8px] text-emerald-600" />
                             FREE SHARES
                           </span>
-                        ) : t.remainingUnits === 0 ? (
+                        ) : (t.openQtyAfter ?? t.remainingUnits) === 0 ? (
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600">
                             FULL EXIT
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                            PARTIAL ({fmtNumber(t.remainingUnits, 2)} left)
+                            OPEN ({fmtNumber(t.openQtyAfter ?? t.remainingUnits ?? 0, 2)} left)
                           </span>
+                        )}
+                      </td>
+
+                      {/* Open Qty After — position-level remaining qty */}
+                      <td className="py-3.5 px-3 whitespace-nowrap">
+                        <span
+                          className={`font-bold text-sm ${
+                            (t.openQtyAfter ?? t.remainingUnits ?? 0) > 0
+                              ? "text-indigo-700"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {fmtNumber(t.openQtyAfter ?? t.remainingUnits ?? 0, 2)}
+                        </span>
+                        {t.avgCostAfter != null && (t.openQtyAfter ?? 0) > 0 && (
+                          <div className="text-[10px] text-gray-400 mt-0.5">
+                            @ {fmtIndianCurrency(t.avgCostAfter)} avg
+                          </div>
                         )}
                       </td>
 

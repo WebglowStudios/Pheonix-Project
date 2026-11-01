@@ -216,6 +216,11 @@ export interface PerformancePoint {
 /**
  * Generates historical performance time-series points based on holding entry dates
  * and current value progression.
+ *
+ * Fix (2026-11-02): Previous version had a spike bug caused by:
+ *  1. `currentValue` being undefined/NaN for raw API investments → finalGain = NaN → ∞ spike
+ *  2. Closed positions (units=0) included with investedAmount > 0 but currentValue = 0 → distortion
+ *  3. No NaN guard on arithmetic → silent corruption propagated through all points
  */
 export function generatePerformanceTimeline(
   investments: Array<{
@@ -224,6 +229,13 @@ export function generatePerformanceTimeline(
     createdAt?: string | Date | null;
     investedAmount?: number;
     currentValue?: number;
+    // Raw market fields for safe fallback value computation
+    units?: number;
+    currentPrice?: number;
+    principal?: number;
+    sipAmount?: number;
+    instalments?: number;
+    status?: string;
   }>,
   timeframe: PerformanceTimeframe = "ALL"
 ): PerformancePoint[] {
@@ -232,17 +244,58 @@ export function generatePerformanceTimeline(
   const now = new Date();
   let startDate = new Date();
 
+  // ── Safe currentValue resolver ──────────────────────────────────────────────
+  // The backend sometimes omits the computed `currentValue` field on raw investment objects.
+  // We resolve it safely: currentValue → units×currentPrice → principal → investedAmount.
+  function resolveCurrentValue(inv: typeof investments[number]): number {
+    // Closed positions contribute ₹0 unrealised current value
+    if (inv.status === "closed") return 0;
+
+    // Trust backend-computed currentValue when present and valid
+    if (typeof inv.currentValue === "number" && !isNaN(inv.currentValue) && inv.currentValue > 0) {
+      return inv.currentValue;
+    }
+
+    // Market assets: units × live price
+    if (
+      typeof inv.units === "number" && inv.units > 0 &&
+      typeof inv.currentPrice === "number" && inv.currentPrice > 0
+    ) {
+      return inv.units * inv.currentPrice;
+    }
+
+    // Fixed income: principal (interest estimated elsewhere)
+    if (typeof inv.principal === "number" && inv.principal > 0) return inv.principal;
+
+    // SIP: aggregate invested (no live NAV growth estimate without extra data)
+    if (typeof inv.sipAmount === "number" && typeof inv.instalments === "number" && inv.instalments > 0) {
+      return inv.sipAmount * inv.instalments;
+    }
+
+    // Flat fallback — no gain, no loss shown (better than NaN spike)
+    return inv.investedAmount || 0;
+  }
+
+  // Exclude closed positions from the timeline — they distort the trajectory
+  // (₹0 current value against a non-zero investedAmount creates a false dip)
+  const activeInvestments = investments.filter((inv) => inv.status !== "closed");
+  if (activeInvestments.length === 0) return [];
+
   // Find earliest investment date
   let earliest = now.getTime();
-  const normalized = investments.map((inv) => {
+  const normalized = activeInvestments.map((inv) => {
     const rawDate = inv.buyDate || inv.sipStartDate || inv.createdAt;
     const d = rawDate ? new Date(rawDate) : now;
     const time = isNaN(d.getTime()) ? now.getTime() : d.getTime();
     if (time < earliest) earliest = time;
+
+    const invested = inv.investedAmount || 0;
+    const currentVal = resolveCurrentValue(inv);
+
     return {
       time,
-      invested: inv.investedAmount || 0,
-      currentValue: inv.currentValue ?? inv.investedAmount ?? 0,
+      invested,
+      currentValue: currentVal,
     };
   });
 
@@ -266,7 +319,7 @@ export function generatePerformanceTimeline(
   // Sort investments by chronological time
   normalized.sort((a, b) => a.time - b.time);
 
-  // Generate 8-10 equidistant sampling date points between startDate and now
+  // Generate 10 equidistant sampling date points between startDate and now
   const pointCount = 10;
   const timeStep = (now.getTime() - startDate.getTime()) / (pointCount - 1);
   const points: PerformancePoint[] = [];
@@ -277,27 +330,46 @@ export function generatePerformanceTimeline(
 
     // Filter investments made on or before targetTime
     const activeInvs = normalized.filter((i) => i.time <= targetTime);
-    let investedSoFar = activeInvs.reduce((s, i) => s + i.invested, 0);
 
-    // Compute interpolated valuation progression:
-    // When time progresses from acquisition to now, gain matures toward currentValue
-    let valueSoFar = 0;
-    activeInvs.forEach((inv) => {
-      const ageRatio =
-        now.getTime() > inv.time
-          ? Math.min(1, Math.max(0, (targetTime - inv.time) / (now.getTime() - inv.time)))
-          : 1;
-      const finalGain = inv.currentValue - inv.invested;
-      // Growth curve: smoothly scales from cost to final value
-      const pointVal = inv.invested + finalGain * Math.pow(ageRatio, 0.85);
-      valueSoFar += pointVal;
-    });
-
-    // If no investments before this date, project baseline zero or first investment's start
-    if (activeInvs.length === 0 && normalized.length > 0) {
-      investedSoFar = 0;
-      valueSoFar = 0;
+    if (activeInvs.length === 0) {
+      // No investments before this sample point — emit a zero baseline
+      const day = pDate.getDate();
+      const month = pDate.toLocaleString("en-US", { month: "short" });
+      points.push({
+        date: pDate.toISOString().split("T")[0],
+        label: `${day}-${month}`,
+        value: 0,
+        invested: 0,
+        gain: 0,
+        gainPct: 0,
+      });
+      continue;
     }
+
+    let investedSoFar = 0;
+    let valueSoFar = 0;
+
+    activeInvs.forEach((inv) => {
+      investedSoFar += inv.invested;
+
+      // ageRatio: 0.0 at time of acquisition → 1.0 at today
+      // Guards against division-by-zero when inv.time === now
+      const totalDuration = now.getTime() - inv.time;
+      const ageRatio =
+        totalDuration > 0
+          ? Math.min(1, Math.max(0, (targetTime - inv.time) / totalDuration))
+          : 1;
+
+      const finalGain = inv.currentValue - inv.invested;
+
+      // Smooth power-curve from invested → currentValue.
+      // If finalGain is NaN (missing data), fall back to flat invested.
+      const interpolated = isNaN(finalGain)
+        ? inv.invested
+        : inv.invested + finalGain * Math.pow(ageRatio, 0.85);
+
+      valueSoFar += isNaN(interpolated) ? inv.invested : interpolated;
+    });
 
     const gain = valueSoFar - investedSoFar;
     const gainPct = investedSoFar > 0 ? (gain / investedSoFar) * 100 : 0;
