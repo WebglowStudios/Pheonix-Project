@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { adminApi, AdminUser } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -18,6 +19,7 @@ import {
   faUserPlus,
   faExternalLinkAlt,
   faSpinner,
+  faFileImport,
 } from "@fortawesome/free-solid-svg-icons";
 import AdminUserSneakPeekModal from "@/components/admin/AdminUserSneakPeekModal";
 import CreateUserModal from "@/components/admin/CreateUserModal";
@@ -435,6 +437,16 @@ export default function AdminUsersPage() {
                           <FontAwesomeIcon icon={faEye} className="text-xs" />
                           <span>Sneak Peek</span>
                         </button>
+
+                        {/* Bulk Import Button */}
+                        <Link
+                          href={`/admin/users/${user.id || (user as any)._id}/import`}
+                          title="Bulk import investments via Excel sheet"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-green-300 bg-green-50 text-green-700 hover:bg-green-600 hover:!text-white transition-all text-xs font-bold shadow-xs active:scale-95"
+                        >
+                          <FontAwesomeIcon icon={faFileImport} className="text-xs" />
+                          <span className="hidden sm:inline">Import</span>
+                        </Link>
 
                         <button
                           onClick={() => handleToggleRole(user)}

@@ -153,9 +153,6 @@ View leads: ${siteUrl}/admin/leads
 }
 
 export async function sendUserThankYouEmail(data: LeadEmailData) {
-  // Set to true when ready to enable auto-responder emails to visitors
-  const ENABLE_USER_THANK_YOU_EMAIL = false;
-  if (!ENABLE_USER_THANK_YOU_EMAIL) return;
 
   const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "connect@phoenixfiserv.co.in";
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://phoenixfiserv.co.in").replace(/\/$/, "");

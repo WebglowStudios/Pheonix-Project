@@ -93,6 +93,11 @@ export interface Investment {
   currentValue?: number;
   gain?: number;
   gainPercent?: number;
+  // Tax & holding period (computed by backend)
+  holdingDays?: number | null;
+  taxLabel?: "STCG" | "LTCG" | "Slab Rate" | "Flat 30%";
+  taxRate?: number | null;
+  estimatedTax?: number | null;
 }
 
 export interface Transaction {
@@ -284,6 +289,12 @@ export const authApi = {
 
   changePassword: (payload: { currentPassword: string; newPassword: string }) =>
     request<never>("/api/auth/change-password", { method: "POST", body: JSON.stringify(payload) }),
+
+  forgotPassword: (email: string) =>
+    request<never>("/api/auth/forgot-password", { method: "POST", body: JSON.stringify({ email }) }),
+
+  resetPassword: (token: string, payload: { newPassword: string; confirmPassword: string }) =>
+    request<never>(`/api/auth/reset-password/${token}`, { method: "POST", body: JSON.stringify(payload) }),
 };
 
 // ─── Prices API ────────────────────────────────────────────────────────────
@@ -597,6 +608,12 @@ export const adminApi = {
     request<{ success: boolean; data: Investment; message?: string }>(`/api/admin/investments/${id}/category`, {
       method: "PATCH",
       body: JSON.stringify({ category }),
+    }),
+
+  bulkImportInvestments: (userId: string, rows: Partial<Investment>[]) =>
+    request<never>(`/api/admin/users/${userId}/investments/bulk-import`, {
+      method: "POST",
+      body: JSON.stringify({ rows }),
     }),
 
   sellInvestment: (id: string, payload: { units: number; sellPrice: number; sellDate?: string; notes?: string }) =>
