@@ -781,8 +781,13 @@ export default function AdminUserSneakPeekModal({ user, isOpen, onClose }: Props
                               {/* Name & Symbol */}
                               <td className="py-3 px-4 font-semibold text-gray-900 max-w-[280px]">
                                 <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta.label}>
-                                  <div className="truncate font-bold text-gray-900 group-hover:text-[#E8740C] transition-colors flex items-center gap-1.5" title={inv.name}>
+                                  <div className="truncate font-bold text-gray-900 group-hover:text-[#E8740C] transition-colors flex items-center gap-1.5 flex-wrap" title={inv.name}>
                                     <span>{inv.name}</span>
+                                    {inv.lotCount && inv.lotCount > 1 ? (
+                                      <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-[#E8740C]/10 text-[#E8740C] border border-[#E8740C]/30" title={`${inv.lotCount} purchase lots combined`}>
+                                        {inv.lotCount} LOTS
+                                      </span>
+                                    ) : null}
                                     {inv.isFreeShare && (
                                       <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
                                         FREE

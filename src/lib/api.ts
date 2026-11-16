@@ -55,6 +55,25 @@ export type InvestmentType =
 
 export type EdeohCategory = "equity" | "debt" | "elss" | "others" | "hybrid";
 
+export interface InvestmentLot {
+  _id: string;
+  buyDate?: string;
+  units?: number;
+  buyPrice?: number;
+  investedAmount: number;
+  currentPrice?: number;
+  currentValue?: number;
+  gain?: number;
+  gainPercent?: number;
+  holdingDays?: number | null;
+  taxLabel?: "STCG" | "LTCG" | "Slab Rate" | "Flat 30%" | string;
+  taxRate?: number | null;
+  estimatedTax?: number | null;
+  notes?: string;
+  folioNumber?: string;
+  createdAt?: string;
+}
+
 export interface Investment {
   _id: string;
   userId: string;
@@ -95,9 +114,14 @@ export interface Investment {
   gainPercent?: number;
   // Tax & holding period (computed by backend)
   holdingDays?: number | null;
-  taxLabel?: "STCG" | "LTCG" | "Slab Rate" | "Flat 30%";
+  taxLabel?: "STCG" | "LTCG" | "Slab Rate" | "Flat 30%" | string;
   taxRate?: number | null;
   estimatedTax?: number | null;
+  // Multi-lot consolidated position metadata
+  lotCount?: number;
+  lots?: InvestmentLot[];
+  firstBuyDate?: string;
+  latestBuyDate?: string;
 }
 
 export interface Transaction {

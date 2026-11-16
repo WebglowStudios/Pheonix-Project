@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { portfolioApi, Investment } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faScaleBalanced, faArrowTrendUp, faArrowTrendDown,
   faCircleInfo, faCalendarDays, faReceipt, faChartPie,
+  faChevronDown, faChevronUp, faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -64,6 +65,16 @@ export default function TaxPlanningPage() {
   const [loading, setLoading]         = useState(true);
   const [filter, setFilter]           = useState<"all" | "STCG" | "LTCG" | "Slab Rate" | "Flat 30%">("all");
   const [sortBy, setSortBy]           = useState<"holdingDays" | "gain" | "estimatedTax">("holdingDays");
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
 
   useEffect(() => {
     portfolioApi.getAll().then((res) => {
@@ -89,10 +100,17 @@ export default function TaxPlanningPage() {
     return s;
   }, 0);
 
-  const holdingDaysArr = withTax.map((i) => i.holdingDays).filter((d): d is number => typeof d === "number");
-  const avgHoldingDays = holdingDaysArr.length
-    ? Math.round(holdingDaysArr.reduce((a, b) => a + b, 0) / holdingDaysArr.length)
-    : 0;
+  // Capital-weighted average holding days
+  let totalInvestedWithDays = 0;
+  let weightedDaysSum = 0;
+  withTax.forEach((i) => {
+    if (typeof i.holdingDays === "number") {
+      const amt = i.investedAmount || 0;
+      totalInvestedWithDays += amt;
+      weightedDaysSum += i.holdingDays * amt;
+    }
+  });
+  const avgHoldingDays = totalInvestedWithDays > 0 ? Math.round(weightedDaysSum / totalInvestedWithDays) : 0;
 
   // ── Filtered + sorted display list ───────────────────────────────────────
   const displayed = [...withTax]
@@ -238,53 +256,156 @@ export default function TaxPlanningPage() {
                 const gain        = inv.gain ?? 0;
                 const isProfit    = gain >= 0;
                 const buyDateStr  = inv.buyDate || inv.sipStartDate;
+                const isExpanded  = expandedIds.has(inv._id);
 
                 return (
-                  <tr key={inv._id} className="hover:bg-[#f8fafc] transition-colors">
-                    <td className={tdCls}>
-                      <p className="font-semibold text-[#1a2740] truncate max-w-[180px]">{inv.name}</p>
-                      {inv.symbol && <p className="text-[11px] text-[#94a3b8] font-mono">{inv.symbol}</p>}
-                    </td>
-                    <td className={tdCls}>
-                      <span className="px-2 py-0.5 bg-[#f0f4ff] text-[#4f6ef7] text-[11px] font-semibold rounded-full">
-                        {inv.type?.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className={tdCls + " text-[#64748b]"}>
-                      {buyDateStr
-                        ? new Date(buyDateStr).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
-                        : "—"}
-                    </td>
-                    <td className={tdCls + " text-center font-mono font-semibold text-[#1a2740]"}>
-                      {holdingLabel(inv.holdingDays)}
-                    </td>
-                    <td className={tdCls + " text-right text-[#64748b]"}>
-                      {fmt(inv.investedAmount)}
-                    </td>
-                    <td className={tdCls + " text-right font-semibold"}>
-                      {fmt(inv.currentValue ?? inv.investedAmount)}
-                    </td>
-                    <td className={tdCls + " text-right"}>
-                      <span className={isProfit ? "text-green-600 font-bold" : "text-red-500 font-bold"}>
-                        {isProfit ? "+" : ""}{fmt(gain)}
-                      </span>
-                      <br />
-                      <span className={`text-[11px] ${isProfit ? "text-green-500" : "text-red-400"}`}>
-                        {isProfit ? "+" : ""}{(inv.gainPercent ?? 0).toFixed(1)}%
-                      </span>
-                    </td>
-                    <td className={tdCls + " text-center"}>
-                      <TaxBadge label={inv.taxLabel} />
-                    </td>
-                    <td className={tdCls + " text-right"}>
-                      {inv.estimatedTax === null || inv.estimatedTax === undefined
-                        ? <span className="text-[#94a3b8] text-xs">At slab</span>
-                        : gain <= 0
-                        ? <span className="text-green-600 text-xs font-semibold">No tax</span>
-                        : <span className="text-red-600 font-bold">{fmt(inv.estimatedTax)}</span>
-                      }
-                    </td>
-                  </tr>
+                  <React.Fragment key={inv._id}>
+                    <tr className="hover:bg-[#f8fafc] transition-colors">
+                      <td className={tdCls}>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-semibold text-[#1a2740] truncate max-w-[180px]" title={inv.name}>{inv.name}</p>
+                          {inv.lotCount && inv.lotCount > 1 ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleExpand(inv._id)}
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-[#E8740C]/10 text-[#E8740C] border border-[#E8740C]/30 hover:bg-[#E8740C] hover:text-white transition-all cursor-pointer"
+                              title="Click to toggle purchase tranches"
+                            >
+                              <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} className="text-[8px]" />
+                              <span>{inv.lotCount} Tranches</span>
+                            </button>
+                          ) : null}
+                        </div>
+                        {inv.symbol && <p className="text-[11px] text-[#94a3b8] font-mono">{inv.symbol}</p>}
+                      </td>
+                      <td className={tdCls}>
+                        <span className="px-2 py-0.5 bg-[#f0f4ff] text-[#4f6ef7] text-[11px] font-semibold rounded-full">
+                          {inv.type?.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className={tdCls + " text-[#64748b]"}>
+                        {buyDateStr
+                          ? new Date(buyDateStr).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+                          : "—"}
+                        {inv.lotCount && inv.lotCount > 1 ? (
+                          <span className="text-[10px] text-[#94a3b8] block">latest purchase</span>
+                        ) : null}
+                      </td>
+                      <td className={tdCls + " text-center font-mono font-semibold text-[#1a2740]"}>
+                        {holdingLabel(inv.holdingDays)}
+                        {inv.lotCount && inv.lotCount > 1 ? (
+                          <span className="text-[10px] text-[#94a3b8] block font-sans font-normal">weighted avg</span>
+                        ) : null}
+                      </td>
+                      <td className={tdCls + " text-right text-[#64748b]"}>
+                        {fmt(inv.investedAmount)}
+                      </td>
+                      <td className={tdCls + " text-right font-semibold"}>
+                        {fmt(inv.currentValue ?? inv.investedAmount)}
+                      </td>
+                      <td className={tdCls + " text-right"}>
+                        <span className={isProfit ? "text-green-600 font-bold" : "text-red-500 font-bold"}>
+                          {isProfit ? "+" : ""}{fmt(gain)}
+                        </span>
+                        <br />
+                        <span className={`text-[11px] ${isProfit ? "text-green-500" : "text-red-400"}`}>
+                          {isProfit ? "+" : ""}{(inv.gainPercent ?? 0).toFixed(1)}%
+                        </span>
+                      </td>
+                      <td className={tdCls + " text-center"}>
+                        <TaxBadge label={inv.taxLabel} />
+                      </td>
+                      <td className={tdCls + " text-right"}>
+                        {inv.estimatedTax === null || inv.estimatedTax === undefined
+                          ? <span className="text-[#94a3b8] text-xs">At slab</span>
+                          : gain <= 0
+                          ? <span className="text-green-600 text-xs font-semibold">No tax</span>
+                          : <span className="text-red-600 font-bold">{fmt(inv.estimatedTax)}</span>
+                        }
+                      </td>
+                    </tr>
+                    {isExpanded && inv.lots && inv.lots.length > 0 && (
+                      <tr key={`${inv._id}-tranches`} className="bg-[#FAFBFD] border-b border-[#EAECEF]">
+                        <td colSpan={9} className="px-6 py-3.5">
+                          <div className="bg-white rounded-xl border border-[#EAECEF] p-3.5 shadow-2xs">
+                            <div className="flex items-center justify-between mb-2 pb-2 border-b border-[#F0F2F5] flex-wrap gap-2">
+                              <p className="text-xs font-bold text-[#1a1b23] flex items-center gap-1.5">
+                                <FontAwesomeIcon icon={faLayerGroup} className="text-[#E8740C] text-[10px]" />
+                                Individual Purchase Tranches &amp; Tax Status ({inv.lots.length} lots)
+                              </p>
+                              <span className="text-[11px] text-[#8a92a6]">
+                                Each tranche is tracked individually for FY2024-25 LTCG / STCG rules
+                              </span>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="text-[10px] uppercase font-bold text-[#8a92a6] border-b border-[#F0F2F5]">
+                                    <th className="text-left py-1.5 px-2">Tranche / Date</th>
+                                    <th className="text-right py-1.5 px-2">Units</th>
+                                    <th className="text-right py-1.5 px-2">Buy NAV</th>
+                                    <th className="text-right py-1.5 px-2">Invested</th>
+                                    <th className="text-right py-1.5 px-2">Current Value</th>
+                                    <th className="text-right py-1.5 px-2">Gain / Loss</th>
+                                    <th className="text-center py-1.5 px-2">Holding Period</th>
+                                    <th className="text-center py-1.5 px-2">Tax Class</th>
+                                    <th className="text-right py-1.5 px-2">Est. Tax</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[#F5F7FA]">
+                                  {inv.lots.map((lot, idx) => {
+                                    const lotCv = lot.currentValue ?? lot.investedAmount;
+                                    const lotGain = lotCv - lot.investedAmount;
+                                    const lotProfit = lotGain >= 0;
+                                    const lotDate = lot.buyDate;
+                                    return (
+                                      <tr key={lot._id || idx} className="hover:bg-[#FAFBFD]">
+                                        <td className="py-2 px-2 font-medium text-[#1a1b23]">
+                                          <span className="font-bold text-[#E8740C] mr-1.5">#{inv.lots!.length - idx}</span>
+                                          {lotDate ? new Date(lotDate).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums font-mono text-[#555]">
+                                          {lot.units ? lot.units.toLocaleString("en-IN") : "—"}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums text-[#555]">
+                                          {lot.buyPrice ? `₹${lot.buyPrice.toLocaleString("en-IN")}` : "—"}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums font-semibold text-[#1a1b23]">
+                                          ₹{lot.investedAmount.toLocaleString("en-IN")}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums font-semibold text-[#1a1b23]">
+                                          ₹{lotCv.toLocaleString("en-IN")}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums font-medium">
+                                          <span className={lotProfit ? "text-emerald-600 font-bold" : "text-rose-500 font-bold"}>
+                                            {lotProfit ? "+" : ""}₹{Math.abs(lotGain).toLocaleString("en-IN")}
+                                          </span>
+                                        </td>
+                                        <td className="py-2 px-2 text-center text-[#1a2740] font-mono font-semibold">
+                                          {holdingLabel(lot.holdingDays)}
+                                        </td>
+                                        <td className="py-2 px-2 text-center">
+                                          <TaxBadge label={lot.taxLabel} />
+                                        </td>
+                                        <td className="py-2 px-2 text-right">
+                                          {lot.estimatedTax === null || lot.estimatedTax === undefined
+                                            ? <span className="text-[#94a3b8] text-[11px]">Slab</span>
+                                            : lotGain <= 0
+                                            ? <span className="text-green-600 text-[11px] font-semibold">No tax</span>
+                                            : <span className="text-red-600 font-bold">₹{lot.estimatedTax.toLocaleString("en-IN")}</span>
+                                          }
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>

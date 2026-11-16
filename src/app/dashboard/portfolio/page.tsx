@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Fragment } from "react";
 import Link from "next/link";
 import { portfolioApi, pricesApi, type Investment } from "@/lib/api";
 import InvestmentNotePopup from "@/components/InvestmentNotePopup";
@@ -13,7 +13,7 @@ import {
   faLandmark, faLeaf, faHandHoldingDollar, faSackDollar,
   faFileContract, faRing, faBitcoinSign, faClock, faTriangleExclamation,
   faCircleCheck, faCircleXmark, faFilePdf, faBuildingColumns,
-  faScaleBalanced, faReceipt,
+  faScaleBalanced, faReceipt, faChevronDown, faChevronUp, faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -281,6 +281,16 @@ export default function PortfolioPage() {
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [error, setError] = useState("");
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
@@ -508,8 +518,10 @@ export default function PortfolioPage() {
                   const cv = inv.currentValue ?? inv.investedAmount;
                   const gain = inv.gain ?? 0;
                   const gainPct = inv.gainPercent ?? 0;
+                  const isExpanded = expandedIds.has(inv._id);
                   return (
-                    <tr key={inv._id} className="border-b border-[#F5F7FA] hover:bg-[#FAFBFC] transition-colors group">
+                    <Fragment key={inv._id}>
+                      <tr className="border-b border-[#F5F7FA] hover:bg-[#FAFBFC] transition-colors group">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: meta?.bg ?? "#f5f5f5" }}>
@@ -517,13 +529,27 @@ export default function PortfolioPage() {
                           </div>
                           <div className="min-w-0">
                             <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta?.label}>
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <p className="font-semibold text-[#1a1b23] text-[13px] truncate max-w-[180px]">{inv.name}</p>
                                 {inv.isFreeShare && (
                                   <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
                                     FREE
                                   </span>
                                 )}
+                                {inv.lotCount && inv.lotCount > 1 ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleExpand(inv._id);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-[#E8740C]/10 text-[#E8740C] border border-[#E8740C]/30 hover:bg-[#E8740C] hover:text-white transition-all cursor-pointer"
+                                    title="Click to view all purchase lots & dates"
+                                  >
+                                    <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} className="text-[8px]" />
+                                    <span>{inv.lotCount} Purchases</span>
+                                  </button>
+                                ) : null}
                               </div>
                             </InvestmentNotePopup>
                             {inv.symbol ? (
@@ -601,7 +627,87 @@ export default function PortfolioPage() {
                         </div>
                       </td>
                     </tr>
-                  );
+                    {isExpanded && inv.lots && inv.lots.length > 0 && (
+                      <tr key={`${inv._id}-lots`} className="bg-[#FAFBFD] border-b border-[#EAECEF]">
+                        <td colSpan={7} className="px-6 py-3.5">
+                          <div className="bg-white rounded-xl border border-[#EAECEF] p-3.5 shadow-2xs">
+                            <div className="flex items-center justify-between mb-2 pb-2 border-b border-[#F0F2F5] flex-wrap gap-2">
+                              <p className="text-xs font-bold text-[#1a1b23] flex items-center gap-1.5">
+                                <FontAwesomeIcon icon={faLayerGroup} className="text-[#E8740C] text-[10px]" />
+                                Purchase Lots &amp; Tranche Breakdown ({inv.lots.length} tranches)
+                              </p>
+                              <div className="flex items-center gap-3 text-[11px] text-[#8a92a6]">
+                                <span>Weighted Avg Cost: <strong className="text-[#1a1b23]">₹{inv.buyPrice?.toLocaleString("en-IN") || "—"}</strong></span>
+                                <span>•</span>
+                                <span>Total Invested: <strong className="text-[#1a1b23]">₹{inv.investedAmount.toLocaleString("en-IN")}</strong></span>
+                              </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs">
+                                <thead>
+                                  <tr className="text-[10px] uppercase font-bold text-[#8a92a6] border-b border-[#F0F2F5]">
+                                    <th className="text-left py-1.5 px-2">Tranche / Date</th>
+                                    <th className="text-right py-1.5 px-2">Units / Qty</th>
+                                    <th className="text-right py-1.5 px-2">Buy NAV / Price</th>
+                                    <th className="text-right py-1.5 px-2">Invested</th>
+                                    <th className="text-right py-1.5 px-2">Current Value</th>
+                                    <th className="text-right py-1.5 px-2">Gain / Loss</th>
+                                    <th className="text-center py-1.5 px-2">Holding</th>
+                                    <th className="text-center py-1.5 px-2">Tax Class</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[#F5F7FA]">
+                                  {inv.lots.map((lot, idx) => {
+                                    const lotCv = lot.currentValue ?? lot.investedAmount;
+                                    const lotGain = lotCv - lot.investedAmount;
+                                    const lotProfit = lotGain >= 0;
+                                    return (
+                                      <tr key={lot._id || idx} className="hover:bg-[#FAFBFD]">
+                                        <td className="py-2 px-2 font-medium text-[#1a1b23]">
+                                          <span className="font-bold text-[#E8740C] mr-1.5">#{inv.lots!.length - idx}</span>
+                                          {formatDate(lot.buyDate) || "—"}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums font-mono text-[#555]">
+                                          {lot.units ? lot.units.toLocaleString("en-IN") : "—"}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums text-[#555]">
+                                          {lot.buyPrice ? `₹${lot.buyPrice.toLocaleString("en-IN")}` : "—"}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums font-semibold text-[#1a1b23]">
+                                          ₹{lot.investedAmount.toLocaleString("en-IN")}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums font-semibold text-[#1a1b23]">
+                                          ₹{lotCv.toLocaleString("en-IN")}
+                                        </td>
+                                        <td className="py-2 px-2 text-right tabular-nums font-medium">
+                                          <span className={lotProfit ? "text-emerald-600 font-bold" : "text-rose-500 font-bold"}>
+                                            {lotProfit ? "+" : ""}₹{Math.abs(lotGain).toLocaleString("en-IN")}
+                                          </span>
+                                        </td>
+                                        <td className="py-2 px-2 text-center text-[#777]">
+                                          {lot.holdingDays !== null && lot.holdingDays !== undefined ? `${lot.holdingDays}d` : "—"}
+                                        </td>
+                                        <td className="py-2 px-2 text-center">
+                                          <span className={`inline-flex px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                            lot.taxLabel === "LTCG" ? "bg-green-100 text-green-800 border border-green-200" :
+                                            lot.taxLabel === "STCG" ? "bg-amber-100 text-amber-800 border border-amber-200" :
+                                            "bg-gray-100 text-gray-700"
+                                          }`}>
+                                            {lot.taxLabel || "—"}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
                 })}
               </tbody>
             </table>
@@ -626,6 +732,11 @@ export default function PortfolioPage() {
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md" style={{ background: meta?.bg, color: meta?.color }}>
                         {meta?.label}
                       </span>
+                      {inv.lotCount && inv.lotCount > 1 ? (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#E8740C]/10 text-[#E8740C] border border-[#E8740C]/20">
+                          {inv.lotCount} purchases
+                        </span>
+                      ) : null}
                       {(() => {
                         const edeoh = getEdeohMeta(inv.category);
                         if (!edeoh) return null;

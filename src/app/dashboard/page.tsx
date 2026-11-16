@@ -272,13 +272,22 @@ export default function DashboardPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={TYPE_META[inv.type!]?.label}>
-                              <p className="font-semibold text-[#1a1b23] text-sm truncate">{inv.name}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="font-semibold text-[#1a1b23] text-sm truncate">{inv.name}</p>
+                                {inv.lotCount && inv.lotCount > 1 ? (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-[#E8740C]/10 text-[#E8740C] border border-[#E8740C]/20 shrink-0">
+                                    {inv.lotCount} purchases
+                                  </span>
+                                ) : null}
+                              </div>
                             </InvestmentNotePopup>
                             <p className="text-[#8a92a6] text-xs">{TYPE_META[inv.type!]?.label ?? inv.type}</p>
                           </div>
                           <div className="text-right flex-shrink-0">
                             <p className="font-bold text-[#1a1b23] text-sm tabular-nums">{fmt(inv.investedAmount ?? 0)}</p>
-                            <p className="text-[#aaa] text-xs">{timeAgo(inv.createdAt!)}</p>
+                            <p className="text-[#aaa] text-xs">
+                              {timeAgo(inv.latestBuyDate || inv.buyDate || inv.createdAt!)}
+                            </p>
                           </div>
                         </div>
                       ))}
