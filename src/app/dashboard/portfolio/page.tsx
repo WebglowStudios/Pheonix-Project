@@ -48,9 +48,7 @@ const FILTER_TABS = [
   { value: "fd",          label: "FD" },
   { value: "ppf_epf",     label: "PPF / EPF" },
   { value: "gold",        label: "Gold" },
-  { value: "nps",         label: "NPS" },
   { value: "bond",        label: "Bonds" },
-  { value: "crypto",      label: "Crypto" },
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
