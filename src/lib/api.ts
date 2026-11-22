@@ -51,7 +51,7 @@ export interface User {
 
 export type InvestmentType =
   | "stock" | "mutual_fund" | "sip" | "ppf" | "epf"
-  | "fd" | "nps" | "bond" | "gold" | "crypto" | "aif" | "reit_invit";
+  | "fd" | "nps" | "bond" | "gold" | "crypto" | "aif" | "sif" | "reit_invit";
 
 export type EdeohCategory = "equity" | "debt" | "elss" | "others" | "hybrid";
 
@@ -374,6 +374,17 @@ export const portfolioApi = {
 
   remove: (id: string) =>
     request<never>(`/api/portfolio/${id}`, { method: "DELETE" }),
+
+  bulkImport: (rows: any[]) =>
+    request<{
+      importedCount: number;
+      skippedCount: number;
+      created: { row: number; name: string }[];
+      skipped: { row: number; name: string; reason: string }[];
+    }>("/api/portfolio/bulk-import", {
+      method: "POST",
+      body: JSON.stringify({ rows }),
+    }),
 
   sell: (id: string, payload: { units: number; sellPrice: number; sellDate?: string; notes?: string }) =>
     request<SellResult>(`/api/portfolio/${id}/sell`, {

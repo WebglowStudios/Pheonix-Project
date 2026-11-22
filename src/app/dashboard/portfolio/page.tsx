@@ -23,6 +23,7 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string }> = 
   mutual_fund: { label: "Mutual Fund",   color: "#2E7D32", bg: "#EAF5EB" },
   sip:         { label: "SIP",           color: "#E8740C", bg: "#FFF3EB" },
   aif:         { label: "AIF",           color: "#4E342E", bg: "#EFEBE9" },
+  sif:         { label: "SIF",           color: "#004D40", bg: "#E0F2F1" },
   fd:          { label: "Fixed Deposit", color: "#6A1B9A", bg: "#F4E8FB" },
   ppf:         { label: "PPF",           color: "#E65100", bg: "#FBE9E7" },
   epf:         { label: "EPF",           color: "#00838F", bg: "#E0F7FA" },
@@ -34,7 +35,7 @@ const TYPE_META: Record<string, { label: string; color: string; bg: string }> = 
 
 const TYPE_ICONS: Record<string, ReturnType<typeof Object.values>[0]> = {
   stock: faChartLine, mutual_fund: faChartPie, sip: faCoins,
-  aif: faBuildingColumns,
+  aif: faBuildingColumns, sif: faBuildingColumns,
   fd: faLandmark, ppf: faLeaf, epf: faHandHoldingDollar,
   nps: faSackDollar, bond: faFileContract, gold: faRing, crypto: faBitcoinSign,
 };

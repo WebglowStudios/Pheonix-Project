@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import * as XLSX from "xlsx";
 import { portfolioApi, pricesApi, type InvestmentType } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -9,6 +11,7 @@ import {
   faLandmark, faSackDollar, faFileContract, faRing, faBitcoinSign,
   faBuildingColumns, faArrowLeft, faCheck, faBolt, faTriangleExclamation,
   faMagnifyingGlass, faSpinner, faCircleCheck, faLayerGroup,
+  faFileExcel, faUpload, faDownload, faTrash, faTimesCircle, faPlus, faEye,
 } from "@fortawesome/free-solid-svg-icons";
 
 // ─── Investment type catalogue ───────────────────────────────────────────────
@@ -30,15 +33,126 @@ export const OTHER_PRODUCTS: {
   icon: ReturnType<typeof Object.values>[0];
 }[] = [
   { value: "sip",    label: "SIP (Systematic Plan)",        desc: "Monthly recurring mutual fund plan", color: "#E8740C", bg: "#FFF3EB", icon: faCoins },
+  { value: "sif",    label: "SIF (Specialised Investment)", desc: "Specialised Investment Fund / Structured institutional", color: "#004D40", bg: "#E0F2F1", icon: faBuildingColumns },
+  { value: "aif",    label: "AIF (Alternative Investment)",desc: "Category I/II/III private funds",   color: "#4E342E", bg: "#EFEBE9", icon: faBuildingColumns },
   { value: "gold",   label: "Gold / SGB",                   desc: "Physical gold, digital gold or SGB",  color: "#B8860B", bg: "#FDF8E1", icon: faRing },
   { value: "ppf",    label: "PPF (Public Provident Fund)",  desc: "Govt-backed 15-year tax-free scheme", color: "#E65100", bg: "#FBE9E7", icon: faLeaf },
   { value: "epf",    label: "EPF / PF (Provident Fund)",    desc: "Employee Provident Fund balance",    color: "#00838F", bg: "#E0F7FA", icon: faHandHoldingDollar },
   { value: "nps",    label: "NPS (National Pension Scheme)",desc: "Retirement pension fund (Tier I/II)", color: "#F57F17", bg: "#FFF9E6", icon: faSackDollar },
-  { value: "aif",    label: "AIF (Alternative Investment)",desc: "Category I/II/III private funds",   color: "#4E342E", bg: "#EFEBE9", icon: faBuildingColumns },
   { value: "crypto", label: "Crypto Assets",                desc: "Bitcoin, Ethereum & digital assets", color: "#4527A0", bg: "#EDE7F6", icon: faBitcoinSign },
 ];
 
 const TYPES = [...MAIN_PRODUCTS, ...OTHER_PRODUCTS];
+
+// ─── Excel Template & Import Definitions ─────────────────────────────────────
+
+const VALID_IMPORT_TYPES = [
+  "stock", "mutual_fund", "sip", "ppf", "epf",
+  "fd", "nps", "bond", "gold", "crypto", "aif", "sif", "reit_invit",
+];
+
+const TEMPLATE_COLUMNS = [
+  "type", "name", "symbol", "exchange", "units", "buyPrice",
+  "buyDate", "investedAmount", "currentPrice",
+  "sipAmount", "sipStartDate", "instalments",
+  "principal", "interestRate", "maturityDate", "tenureMonths",
+  "institution", "category", "folioNumber", "notes",
+];
+
+const SAMPLE_ROWS = [
+  {
+    type: "stock", name: "Reliance Industries Limited", symbol: "RELIANCE", exchange: "NSE",
+    units: 10, buyPrice: 2400, buyDate: "2024-01-15", investedAmount: 24000,
+    currentPrice: 2650, category: "equity", notes: "Core equity holding",
+  },
+  {
+    type: "mutual_fund", name: "Helios Large & Mid Cap Fund - Regular Plan - Growth", symbol: "152002", exchange: "",
+    units: 500, buyPrice: 45.5, buyDate: "2023-06-01", investedAmount: 22750,
+    currentPrice: 52.3, category: "equity", folioNumber: "91028374",
+  },
+  {
+    type: "sip", name: "Invesco India Focused Fund - Regular Plan - Growth", symbol: "148921", exchange: "",
+    investedAmount: 50000, sipAmount: 5000, sipStartDate: "2023-01-01",
+    instalments: 10, avgNav: 94.5, category: "equity",
+  },
+  {
+    type: "sif", name: "Edelweiss Specialised Investment Fund", institution: "Edelweiss AMC",
+    investedAmount: 1000000, currentPrice: 1080000, buyDate: "2024-02-01",
+    category: "others", notes: "Long/Short Equity Strategy",
+  },
+  {
+    type: "aif", name: "ASK Indian Opportunities AIF", institution: "ASK Investment Managers",
+    investedAmount: 5000000, currentPrice: 5400000, buyDate: "2023-08-15",
+    category: "others", notes: "Category III Equity",
+  },
+  {
+    type: "fd", name: "HDFC Bank Fixed Deposit", institution: "HDFC Bank",
+    principal: 200000, interestRate: 7.25, maturityDate: "2026-03-31",
+    tenureMonths: 24, investedAmount: 200000, category: "debt",
+  },
+  {
+    type: "gold", name: "Sovereign Gold Bond 2023-24 Series IV", symbol: "SGB2024",
+    units: 20, buyPrice: 6250, buyDate: "2024-02-20", investedAmount: 125000,
+    currentPrice: 7100, category: "others",
+  },
+  {
+    type: "bond", name: "Government of India 7.18% GS 2033", units: 100,
+    buyPrice: 100, buyDate: "2023-10-10", investedAmount: 10000,
+    interestRate: 7.18, maturityDate: "2033-08-14", category: "debt",
+  },
+];
+
+function downloadTemplate() {
+  const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS, { header: TEMPLATE_COLUMNS });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Holdings_Template");
+  XLSX.writeFile(wb, "Phoenix_Investment_Import_Template.xlsx");
+}
+
+function mapImportRow(raw: Record<string, any>) {
+  const get = (key: string) => {
+    const val = raw[key] ?? raw[key.toLowerCase()] ?? raw[key.toUpperCase()] ?? "";
+    return typeof val === "string" ? val.trim() : val;
+  };
+
+  const units = parseFloat(get("units")) || 0;
+  const buyPrice = parseFloat(get("buyPrice") || get("buy_price")) || 0;
+  let investedAmount = parseFloat(get("investedAmount") || get("invested_amount") || get("principal")) || 0;
+  if (investedAmount <= 0 && units > 0 && buyPrice > 0) {
+    investedAmount = units * buyPrice;
+  }
+
+  return {
+    type: (String(get("type") || "")).toLowerCase().trim(),
+    name: String(get("name") || ""),
+    symbol: String(get("symbol") || "").toUpperCase(),
+    exchange: String(get("exchange") || "").toUpperCase(),
+    units,
+    buyPrice,
+    buyDate: get("buyDate") || get("buy_date"),
+    investedAmount,
+    currentPrice: parseFloat(get("currentPrice") || get("current_price")) || 0,
+    sipAmount: parseFloat(get("sipAmount") || get("sip_amount")) || 0,
+    sipStartDate: get("sipStartDate") || get("sip_start_date"),
+    instalments: parseInt(get("instalments")) || 0,
+    avgNav: parseFloat(get("avgNav") || get("avg_nav")) || 0,
+    principal: parseFloat(get("principal")) || 0,
+    interestRate: parseFloat(get("interestRate") || get("interest_rate")) || 0,
+    maturityDate: get("maturityDate") || get("maturity_date"),
+    tenureMonths: parseInt(get("tenureMonths") || get("tenure_months")) || 0,
+    institution: String(get("institution") || ""),
+    category: String(get("category") || "").toLowerCase(),
+    folioNumber: String(get("folioNumber") || get("folio_number") || ""),
+    notes: String(get("notes") || ""),
+  };
+}
+
+function validateImportRow(row: ReturnType<typeof mapImportRow>): string | null {
+  if (!VALID_IMPORT_TYPES.includes(row.type)) return `Invalid type "${row.type}"`;
+  if (!row.name) return "Name is required";
+  if (!row.investedAmount || row.investedAmount <= 0) return "investedAmount must be > 0";
+  return null;
+}
 
 const ic = "w-full border border-[#CBD5E1] rounded-xl px-4 py-3 text-sm sm:text-base text-[#1a1b23] outline-none focus:border-[#E8740C] focus:ring-2 focus:ring-[#E8740C]/10 bg-white placeholder:text-[#94A3B8] transition-all";
 
@@ -408,6 +522,72 @@ function TypeForm({ type, form, upd }: {
         </Field>
       </>);
 
+    case "sif":
+      return (<>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Fund House / AMC / Issuer" required>
+            <input
+              placeholder="e.g. Edelweiss, 360 ONE, Tata SIF, ICICI"
+              value={form.institution as string}
+              onChange={e => upd("institution", e.target.value)}
+              className={ic}
+            />
+          </Field>
+          <Field label="SIF Strategy / Class">
+            <select
+              value={form.notes as string}
+              onChange={e => upd("notes", e.target.value)}
+              className={ic}
+            >
+              <option value="Long/Short Equity SIF">Long/Short Equity SIF</option>
+              <option value="Active Derivative & Yield Strategy">Active Derivative & Yield Strategy</option>
+              <option value="Structured Debt / Hybrid SIF">Structured Debt / Hybrid SIF</option>
+              <option value="Special Situations & Unlisted">Special Situations & Unlisted</option>
+            </select>
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Capital Invested (₹)" required>
+            <input
+              type="number"
+              min="0"
+              placeholder="1000000"
+              value={form.investedAmount as string}
+              onChange={e => upd("investedAmount", e.target.value)}
+              className={ic}
+            />
+          </Field>
+          <Field label="Current Value / Statement Value (₹)">
+            <input
+              type="number"
+              min="0"
+              placeholder="1050000"
+              value={form.currentPrice as string}
+              onChange={e => upd("currentPrice", e.target.value)}
+              className={ic}
+            />
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Investment Date">
+            <input
+              type="date"
+              value={form.buyDate as string}
+              onChange={e => upd("buyDate", e.target.value)}
+              className={ic}
+            />
+          </Field>
+          <Field label="Folio / Account ID (optional)">
+            <input
+              placeholder="e.g. SIF-88910"
+              value={form.folioNumber as string}
+              onChange={e => upd("folioNumber", e.target.value)}
+              className={ic}
+            />
+          </Field>
+        </div>
+      </>);
+
     case "gold":
       return (<>
         <div className="grid grid-cols-2 gap-4">
@@ -519,7 +699,7 @@ export default function AddInvestmentPage() {
     setSelectedType(t);
     setForm({
       ...EMPTY_FORM,
-      notes: t === "aif" ? "Category III — Long/Short Equity" : "",
+      notes: t === "aif" ? "Category III — Long/Short Equity" : t === "sif" ? "Long/Short Equity SIF" : "",
     });
     setAutofillMsg("");
     setStep(2);
@@ -593,13 +773,13 @@ export default function AddInvestmentPage() {
       ...Object.fromEntries(Object.entries(form).filter(([, v]) => v !== "" && v !== 0)),
     };
 
-    // Ensure AIF investedAmount is captured
-    if (selectedType === "aif") {
+    // Ensure AIF and SIF investedAmount is captured
+    if (selectedType === "aif" || selectedType === "sif") {
       payload.investedAmount = Number(form.investedAmount || form.principal || 0);
       if (form.currentPrice) payload.currentPrice = Number(form.currentPrice);
       if (form.folioNumber) payload.folioNumber = String(form.folioNumber);
       if (form.remarks) {
-        payload.notes = `${form.notes || "Category III"} | ${form.remarks}`;
+        payload.notes = `${form.notes || (selectedType === "sif" ? "SIF Strategy" : "Category III")} | ${form.remarks}`;
       }
     }
 
@@ -612,6 +792,90 @@ export default function AddInvestmentPage() {
     }
   }
 
+  // ─── Excel Bulk Upload State & Handlers ──────────────────────────────────
+  const [mode, setMode] = useState<"manual" | "excel">("manual");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [excelRows, setExcelRows] = useState<ReturnType<typeof mapImportRow>[]>([]);
+  const [excelErrors, setExcelErrors] = useState<Record<number, string>>({});
+  const [excelFileName, setExcelFileName] = useState("");
+  const [excelImporting, setExcelImporting] = useState(false);
+  const [excelResult, setExcelResult] = useState<{
+    importedCount: number;
+    skippedCount: number;
+    created?: { row: number; name: string }[];
+    skipped?: { row: number; name: string; reason: string }[];
+  } | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const parseExcelFile = useCallback((file: File) => {
+    setExcelResult(null);
+    setExcelRows([]);
+    setExcelErrors({});
+    setExcelFileName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const wb = XLSX.read(data, { type: "array", cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json<Record<string, any>>(ws, { defval: "" });
+
+        const mapped = raw.map(mapImportRow);
+        const errMap: Record<number, string> = {};
+        mapped.forEach((r, i) => {
+          const err = validateImportRow(r);
+          if (err) errMap[i] = err;
+        });
+
+        setExcelRows(mapped);
+        setExcelErrors(errMap);
+      } catch (err: any) {
+        alert("Failed to parse Excel file. Please ensure it is a valid .xlsx, .xls, or .csv file.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }, []);
+
+  const handleExcelDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) parseExcelFile(file);
+  }, [parseExcelFile]);
+
+  const removeExcelRow = (i: number) => {
+    setExcelRows((r) => r.filter((_, idx) => idx !== i));
+    setExcelErrors((err) => {
+      const copy = { ...err };
+      delete copy[i];
+      return copy;
+    });
+  };
+
+  const validExcelRows = excelRows.filter((_, i) => !excelErrors[i]);
+
+  async function handleExcelImport() {
+    if (validExcelRows.length === 0) return;
+    setExcelImporting(true);
+    try {
+      const res = await portfolioApi.bulkImport(validExcelRows);
+      const payload = (res.data ?? res as unknown) as {
+        importedCount: number;
+        skippedCount: number;
+        created?: { row: number; name: string }[];
+        skipped?: { row: number; name: string; reason: string }[];
+      };
+      setExcelResult(payload);
+      setExcelRows([]);
+      setExcelFileName("");
+    } catch (err: any) {
+      alert(err.message || "Bulk import failed. Please check your file and try again.");
+    } finally {
+      setExcelImporting(false);
+    }
+  }
+
   const typeMeta = selectedType ? TYPES.find(t => t.value === selectedType) : null;
   const isSearchableType =
     selectedType === "stock" ||
@@ -621,36 +885,288 @@ export default function AddInvestmentPage() {
 
   return (
     <div className="max-w-[960px] mx-auto px-1 sm:px-4">
-      {/* Header */}
-      <div className="mb-7">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1a1b23] tracking-tight">Add Investment</h1>
-        <p className="text-[#64748B] text-sm sm:text-base mt-1.5 font-medium">
-          {step === 1 ? "Select the type of investment to add to your portfolio." : "Fill in the details below to complete tracking."}
-        </p>
+      {/* Header & Mode Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-7">
+        <div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#1a1b23] tracking-tight">Add Investment</h1>
+          <p className="text-[#64748B] text-sm sm:text-base mt-1.5 font-medium">
+            {mode === "excel"
+              ? "Upload an Excel or CSV file to import multiple holdings at once."
+              : step === 1
+              ? "Select the type of investment to add to your portfolio."
+              : "Fill in the details below to complete tracking."}
+          </p>
+        </div>
+
+        {/* Mode Selector Tabs */}
+        <div className="inline-flex items-center p-1 bg-gray-100 rounded-xl border border-gray-200/80 shrink-0 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setMode("manual")}
+            className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
+              mode === "manual"
+                ? "bg-white text-[#1a1b23] shadow-xs"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            <FontAwesomeIcon icon={faPlus} className="text-xs text-[#E8740C]" />
+            Manual Entry
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("excel")}
+            className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer flex items-center gap-2 ${
+              mode === "excel"
+                ? "bg-[#1b5e20] text-white shadow-xs"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            <FontAwesomeIcon icon={faFileExcel} className={`text-xs ${mode === "excel" ? "text-white" : "text-emerald-600"}`} />
+            Upload Excel
+          </button>
+        </div>
       </div>
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-3 mb-8">
-        {([1, 2] as const).map(s => (
-          <div key={s} className="flex items-center gap-2.5">
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all border-2 ${
-              step > s
-                ? "bg-[#1b5e20] border-[#1b5e20] text-white"
-                : step === s
-                ? "bg-[#E8740C] border-[#E8740C] text-white shadow-sm"
-                : "bg-white border-[#CBD5E1] text-[#94A3B8]"
-            }`}>
-              {step > s ? <FontAwesomeIcon icon={faCheck} className="text-xs" /> : s}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* MODE: EXCEL BULK IMPORT                                            */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {mode === "excel" && (
+        <div className="space-y-6">
+          {/* Result banner */}
+          {excelResult && (
+            <div className="bg-white rounded-2xl shadow-sm border border-[#e2e8f0] p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center shrink-0">
+                    <FontAwesomeIcon icon={faCircleCheck} className="text-green-600 text-2xl" />
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-[#1a1b23] text-lg">Import Complete!</p>
+                    <p className="text-sm text-[#64748b] mt-0.5">
+                      <strong className="text-green-600 font-bold">{excelResult.importedCount} holdings added</strong> to your portfolio
+                      {excelResult.skippedCount > 0 && (
+                        <span className="text-amber-600 font-semibold ml-2">· {excelResult.skippedCount} skipped</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExcelResult(null);
+                      setExcelRows([]);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
+                  >
+                    Upload Another
+                  </button>
+                  <Link
+                    href="/dashboard/portfolio"
+                    className="px-5 py-2.5 rounded-xl bg-[#E8740C] text-white text-xs font-bold hover:bg-[#cf6509] transition-all cursor-pointer shadow-sm no-underline inline-flex items-center gap-2"
+                  >
+                    <FontAwesomeIcon icon={faEye} className="text-xs" />
+                    <span>View in Portfolio</span>
+                  </Link>
+                </div>
+              </div>
             </div>
-            <span className={`text-sm sm:text-base font-bold ${step >= s ? "text-[#1a1b23]" : "text-[#94A3B8]"}`}>
-              {s === 1 ? "Select Type" : "Enter Details"}
-            </span>
-            {s < 2 && (
-              <div className={`h-0.5 w-10 sm:w-16 mx-1 ${step > s ? "bg-[#1b5e20]" : "bg-[#E2E8F0]"}`} />
-            )}
+          )}
+
+          {/* Upload Zone & Template Card */}
+          <div className="bg-white rounded-2xl border border-[#EAECEF] p-6 sm:p-8 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-[#F0F2F5]">
+              <div>
+                <p className="font-extrabold text-[#1a1b23] text-lg flex items-center gap-2">
+                  <FontAwesomeIcon icon={faFileExcel} className="text-green-600" />
+                  Excel &amp; CSV Bulk Importer
+                </p>
+                <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+                  Upload an Excel sheet (.xlsx, .xls) or CSV with your holdings. Stocks, Mutual Funds, SIF, SIP, AIF, FD, Bonds, and Gold are supported.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={downloadTemplate}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#E8740C] border border-[#E8740C]/30 text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs"
+              >
+                <FontAwesomeIcon icon={faDownload} />
+                <span>Download Sample Template</span>
+              </button>
+            </div>
+
+            {/* Dropzone */}
+            <div
+              onDrop={handleExcelDrop}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onClick={() => fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition-all ${
+                dragOver
+                  ? "border-[#E8740C] bg-[#FFF8F3]"
+                  : "border-[#CBD5E1] hover:border-[#E8740C] bg-[#FAFBFD] hover:bg-[#FFFDFB]"
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) parseExcelFile(file);
+                }}
+                className="hidden"
+              />
+              <div className="w-16 h-16 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mx-auto mb-4 shadow-2xs">
+                <FontAwesomeIcon icon={faUpload} className="text-2xl" />
+              </div>
+              <p className="font-extrabold text-[#1a1b23] text-base sm:text-lg">
+                {excelFileName ? excelFileName : "Drop your Excel or CSV file here"}
+              </p>
+              <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+                Supports .xlsx, .xls, and .csv files. Or <span className="text-[#E8740C] font-bold underline">browse from your computer</span>
+              </p>
+            </div>
           </div>
-        ))}
-      </div>
+
+          {/* Parsed Rows Preview */}
+          {excelRows.length > 0 && (
+            <div className="bg-white rounded-2xl border border-[#EAECEF] p-6 shadow-sm space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#F0F2F5]">
+                <div>
+                  <p className="font-extrabold text-[#1a1b23] text-base">File Preview</p>
+                  <p className="text-xs text-[#64748B] mt-0.5">
+                    Found <strong>{excelRows.length}</strong> rows · <strong className="text-green-600">{validExcelRows.length} ready to import</strong>
+                    {Object.keys(excelErrors).length > 0 && (
+                      <span className="text-red-500 font-bold ml-1.5">({Object.keys(excelErrors).length} rows have errors)</span>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExcelRows([]);
+                      setExcelErrors({});
+                      setExcelFileName("");
+                    }}
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-all cursor-pointer"
+                  >
+                    Clear File
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExcelImport}
+                    disabled={excelImporting || validExcelRows.length === 0}
+                    className="px-6 py-2 rounded-xl bg-[#1b5e20] text-white text-xs font-extrabold hover:bg-[#144718] transition-all cursor-pointer disabled:opacity-50 shadow-sm flex items-center gap-2"
+                  >
+                    {excelImporting ? (
+                      <>
+                        <FontAwesomeIcon icon={faSpinner} className="animate-spin text-xs" />
+                        <span>Importing {validExcelRows.length} Holdings...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faCheck} className="text-xs" />
+                        <span>Import {validExcelRows.length} Holdings</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-x-auto max-h-96">
+                <table className="w-full text-xs">
+                  <thead className="bg-[#FAFBFD] border-b border-[#F0F2F5] text-[#8a92a6] uppercase font-bold sticky top-0">
+                    <tr>
+                      <th className="py-2.5 px-3 text-left w-12">#</th>
+                      <th className="py-2.5 px-3 text-left w-24">Type</th>
+                      <th className="py-2.5 px-3 text-left">Investment Name</th>
+                      <th className="py-2.5 px-3 text-left w-28">Symbol / Code</th>
+                      <th className="py-2.5 px-3 text-right w-28">Invested (₹)</th>
+                      <th className="py-2.5 px-3 text-left w-24">Date</th>
+                      <th className="py-2.5 px-3 text-center w-28">Status</th>
+                      <th className="py-2.5 px-3 text-center w-14">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#F5F7FA]">
+                    {excelRows.map((r, idx) => {
+                      const err = excelErrors[idx];
+                      return (
+                        <tr key={idx} className={err ? "bg-red-50/50" : "hover:bg-gray-50/50"}>
+                          <td className="py-2 px-3 font-mono text-[#8a92a6]">{idx + 1}</td>
+                          <td className="py-2 px-3">
+                            <span className="px-2 py-0.5 rounded font-bold uppercase text-[10px] bg-gray-100 text-gray-700">
+                              {r.type || "—"}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 font-semibold text-[#1a1b23] max-w-[200px] truncate" title={r.name}>
+                            {r.name || "—"}
+                          </td>
+                          <td className="py-2 px-3 font-mono text-[#64748B]">{r.symbol || r.folioNumber || "—"}</td>
+                          <td className="py-2 px-3 text-right font-semibold text-[#1a1b23] tabular-nums">
+                            ₹{r.investedAmount ? r.investedAmount.toLocaleString("en-IN") : "0"}
+                          </td>
+                          <td className="py-2 px-3 text-[#64748B]">{r.buyDate ? String(r.buyDate).substring(0, 10) : "—"}</td>
+                          <td className="py-2 px-3 text-center">
+                            {err ? (
+                              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700" title={err}>
+                                {err}
+                              </span>
+                            ) : (
+                              <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">
+                                Valid
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2 px-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => removeExcelRow(idx)}
+                              className="text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                              title="Remove row"
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* MODE: MANUAL ENTRY                                                 */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {mode === "manual" && (<>
+        {/* Step indicator */}
+        <div className="flex items-center gap-3 mb-8">
+          {([1, 2] as const).map(s => (
+            <div key={s} className="flex items-center gap-2.5">
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all border-2 ${
+                step > s
+                  ? "bg-[#1b5e20] border-[#1b5e20] text-white"
+                  : step === s
+                  ? "bg-[#E8740C] border-[#E8740C] text-white shadow-sm"
+                  : "bg-white border-[#CBD5E1] text-[#94A3B8]"
+              }`}>
+                {step > s ? <FontAwesomeIcon icon={faCheck} className="text-xs" /> : s}
+              </div>
+              <span className={`text-sm sm:text-base font-bold ${step >= s ? "text-[#1a1b23]" : "text-[#94A3B8]"}`}>
+                {s === 1 ? "Select Type" : "Enter Details"}
+              </span>
+              {s < 2 && (
+                <div className={`h-0.5 w-10 sm:w-16 mx-1 ${step > s ? "bg-[#1b5e20]" : "bg-[#E2E8F0]"}`} />
+              )}
+            </div>
+          ))}
+        </div>
 
       {/* Step 1: Type selection (4 Main Products + 1 Single Option with Dropdown for Others) */}
       {step === 1 && (
@@ -859,6 +1375,7 @@ export default function AddInvestmentPage() {
           </form>
         </div>
       )}
+      </>)}
     </div>
   );
 }
