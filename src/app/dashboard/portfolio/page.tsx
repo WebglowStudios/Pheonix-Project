@@ -483,31 +483,31 @@ export default function PortfolioPage() {
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b border-[#F0F2F5] bg-[#FAFBFC]">
-                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest w-[260px]">
+                  <th className="text-left px-5 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest min-w-[280px]">
                     Investment
                   </th>
-                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest">
+                  <th className="text-left px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest w-[110px] whitespace-nowrap">
                     Type
                   </th>
                   <th
-                    className="text-right px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest cursor-pointer hover:text-[#E8740C] select-none"
+                    className="text-right px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest cursor-pointer hover:text-[#E8740C] select-none w-[130px] whitespace-nowrap"
                     onClick={() => toggleSort("investedAmount")}
                   >
                     Invested <SortIcon field="investedAmount" />
                   </th>
-                  <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest hidden lg:table-cell">
+                  <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest hidden lg:table-cell w-[140px] whitespace-nowrap">
                     Current Value
                   </th>
-                  <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest hidden xl:table-cell">
+                  <th className="text-right px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest hidden xl:table-cell w-[130px] whitespace-nowrap">
                     Gain / Loss
                   </th>
                   <th
-                    className="text-right px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest hidden lg:table-cell cursor-pointer hover:text-[#E8740C] select-none"
+                    className="text-right px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest hidden lg:table-cell cursor-pointer hover:text-[#E8740C] select-none w-[110px] whitespace-nowrap"
                     onClick={() => toggleSort("lastPriceUpdate")}
                   >
                     Updated <SortIcon field="lastPriceUpdate" />
                   </th>
-                  <th className="text-center px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest w-[80px]">
+                  <th className="text-center px-4 py-3 text-[11px] font-semibold text-[#8a92a6] uppercase tracking-widest w-[130px] whitespace-nowrap">
                     Actions
                   </th>
                 </tr>
@@ -527,12 +527,12 @@ export default function PortfolioPage() {
                           <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: meta?.bg ?? "#f5f5f5" }}>
                             <FontAwesomeIcon icon={TYPE_ICONS[inv.type] ?? faSackDollar} style={{ color: meta?.color ?? "#999" }} className="text-xs" />
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <InvestmentNotePopup notes={inv.notes} itemName={inv.name} itemType={meta?.label}>
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <p className="font-semibold text-[#1a1b23] text-[13px] truncate max-w-[180px]">{inv.name}</p>
+                                <p className="font-semibold text-[#1a1b23] text-[13px] leading-snug break-words" title={inv.name}>{inv.name}</p>
                                 {inv.isFreeShare && (
-                                  <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                  <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0 whitespace-nowrap">
                                     FREE
                                   </span>
                                 )}
@@ -543,7 +543,7 @@ export default function PortfolioPage() {
                                       e.stopPropagation();
                                       toggleExpand(inv._id);
                                     }}
-                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-[#E8740C]/10 text-[#E8740C] border border-[#E8740C]/30 hover:bg-[#E8740C] hover:text-white transition-all cursor-pointer"
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-[#E8740C]/10 text-[#E8740C] border border-[#E8740C]/30 hover:bg-[#E8740C] hover:text-white transition-all cursor-pointer shrink-0 whitespace-nowrap"
                                     title="Click to view all purchase lots & dates"
                                   >
                                     <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} className="text-[8px]" />
@@ -560,7 +560,7 @@ export default function PortfolioPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 whitespace-nowrap">
                         <div className="flex flex-col gap-1 items-start">
                           <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-semibold" style={{ background: meta?.bg ?? "#f5f5f5", color: meta?.color ?? "#555" }}>
                             {meta?.label ?? inv.type}
@@ -585,22 +585,22 @@ export default function PortfolioPage() {
                           })()}
                         </div>
                       </td>
-                      <td className="px-4 py-3.5 text-right font-semibold text-[#1a1b23] tabular-nums text-[13px]">
+                      <td className="px-4 py-3.5 text-right font-semibold text-[#1a1b23] tabular-nums text-[13px] whitespace-nowrap">
                         ₹{inv.investedAmount.toLocaleString("en-IN")}
                       </td>
-                      <td className="px-4 py-3.5 text-right hidden lg:table-cell">
+                      <td className="px-4 py-3.5 text-right hidden lg:table-cell whitespace-nowrap">
                         <p className="font-bold text-[#1a1b23] tabular-nums text-[13px]">₹{cv.toLocaleString("en-IN")}</p>
                         {inv.lastPriceUpdate && (
                           <span className="text-[10px] font-bold text-[#E8740C] tracking-wide">LIVE</span>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 text-right hidden xl:table-cell">
+                      <td className="px-4 py-3.5 text-right hidden xl:table-cell whitespace-nowrap">
                         <GainBadge gain={gain} pct={gainPct} />
                       </td>
-                      <td className="px-4 py-3.5 text-right text-[#aaa] text-xs hidden lg:table-cell tabular-nums">
+                      <td className="px-4 py-3.5 text-right text-[#aaa] text-xs hidden lg:table-cell tabular-nums whitespace-nowrap">
                         {timeAgo(inv.lastPriceUpdate) ?? formatDate(inv.buyDate)}
                       </td>
-                      <td className="px-4 py-3.5">
+                      <td className="px-4 py-3.5 whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => setSellingInv(inv)}

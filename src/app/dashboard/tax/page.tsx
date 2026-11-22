@@ -233,15 +233,15 @@ export default function TaxPlanningPage() {
           <table className="w-full">
             <thead className="bg-[#f8fafc] border-b border-[#e2e8f0]">
               <tr>
-                <th className={thCls}>Investment</th>
-                <th className={thCls}>Type</th>
-                <th className={thCls}>Buy Date</th>
-                <th className={thCls + " text-center"}>Holding</th>
-                <th className={thCls + " text-right"}>Invested</th>
-                <th className={thCls + " text-right"}>Current Value</th>
-                <th className={thCls + " text-right"}>Gain / Loss</th>
-                <th className={thCls + " text-center"}>Tax Class</th>
-                <th className={thCls + " text-right"}>Est. Tax</th>
+                <th className={thCls + " min-w-[260px]"}>Investment</th>
+                <th className={thCls + " w-[110px] whitespace-nowrap"}>Type</th>
+                <th className={thCls + " w-[110px] whitespace-nowrap"}>Buy Date</th>
+                <th className={thCls + " text-center w-[90px] whitespace-nowrap"}>Holding</th>
+                <th className={thCls + " text-right w-[120px] whitespace-nowrap"}>Invested</th>
+                <th className={thCls + " text-right w-[130px] whitespace-nowrap"}>Current Value</th>
+                <th className={thCls + " text-right w-[120px] whitespace-nowrap"}>Gain / Loss</th>
+                <th className={thCls + " text-center w-[110px] whitespace-nowrap"}>Tax Class</th>
+                <th className={thCls + " text-right w-[110px] whitespace-nowrap"}>Est. Tax</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f5f9]">
@@ -263,12 +263,12 @@ export default function TaxPlanningPage() {
                     <tr className="hover:bg-[#f8fafc] transition-colors">
                       <td className={tdCls}>
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="font-semibold text-[#1a2740] truncate max-w-[180px]" title={inv.name}>{inv.name}</p>
+                          <p className="font-semibold text-[#1a2740] leading-snug break-words" title={inv.name}>{inv.name}</p>
                           {inv.lotCount && inv.lotCount > 1 ? (
                             <button
                               type="button"
                               onClick={() => toggleExpand(inv._id)}
-                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-[#E8740C]/10 text-[#E8740C] border border-[#E8740C]/30 hover:bg-[#E8740C] hover:text-white transition-all cursor-pointer"
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-[#E8740C]/10 text-[#E8740C] border border-[#E8740C]/30 hover:bg-[#E8740C] hover:text-white transition-all cursor-pointer shrink-0 whitespace-nowrap"
                               title="Click to toggle purchase tranches"
                             >
                               <FontAwesomeIcon icon={isExpanded ? faChevronUp : faChevronDown} className="text-[8px]" />
